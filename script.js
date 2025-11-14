@@ -459,6 +459,7 @@ function analyzeData() {
 
     // テーブル更新
     updatePlayerStatsTable();
+    updatePlayerRoleCountsTable();
 
     // ランキング更新
     updateRankings();
@@ -582,6 +583,60 @@ function updatePlayerStatsTable() {
 
         const row = document.createElement('tr');
         row.innerHTML = rowHtml.replace('<tr>', '').replace('</tr>', '');
+        tbody.appendChild(row);
+    });
+}
+
+function updatePlayerRoleCountsTable() {
+    const table = document.getElementById('playerRoleCountsTable');
+    const tbody = document.getElementById('playerRoleCountsBody');
+    if (!table || !tbody) return;
+
+    const thead = table.querySelector('thead');
+
+    if (!AppState.allRoles.length) {
+        if (thead) thead.innerHTML = '';
+        tbody.innerHTML = '<tr><td class="text-muted">データがありません</td></tr>';
+        return;
+    }
+
+    const headerColumns = AppState.allRoles
+        .map(role => `<th>${role}プレイ数</th>`)
+        .join('');
+    if (thead) {
+        thead.innerHTML = `<tr><th>プレイヤー名</th>${headerColumns}</tr>`;
+    }
+
+    const sortedPlayers = Object.values(AppState.playerStats)
+        .sort((a, b) => b.games - a.games || b.wins - a.wins);
+
+    if (!sortedPlayers.length) {
+        tbody.innerHTML = `<tr><td colspan="${AppState.allRoles.length + 1}" class="text-center text-muted">データがありません</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = '';
+
+    sortedPlayers.forEach(player => {
+        let rowHtml = `<td><strong>${player.name}</strong></td>`;
+
+        AppState.allRoles.forEach(role => {
+            const roleData = player.roleStats[role] || { games: 0 };
+            const gamesPlayed = roleData.games || 0;
+
+            let roleClass = 'role-color-other';
+            if (role === 'Impostor') roleClass = 'role-color-impostor';
+            if (role === 'Crewmate') roleClass = 'role-color-crewmate';
+
+            const countDisplay = gamesPlayed > 0
+                ? `<span class="${roleClass}">${gamesPlayed}</span>`
+                : '<span class="text-muted">0</span>';
+
+            rowHtml += `<td>${countDisplay}</td>`;
+        });
+
+        const row = document.createElement('tr');
+        row.innerHTML = rowHtml;
         tbody.appendChild(row);
     });
 }
@@ -1003,6 +1058,7 @@ function recalculateStats() {
     updateSummary();
     renderCharts();
     updatePlayerStatsTable();
+    updatePlayerRoleCountsTable();
     updateRankings();
     updateRoleAnalysis();
     updateGamesList();
