@@ -2,6 +2,7 @@
 let gameData = [];
 let playerStats = {};
 let charts = {};
+let allRoles = []; // すべてのロール一覧
 
 // ================== ユーティリティ関数 ==================
 function showSpinner() {
@@ -164,6 +165,17 @@ function analyzeData() {
         });
     });
 
+    // すべてのロール一覧を取得
+    allRoles = [];
+    Object.values(playerStats).forEach(player => {
+        Object.keys(player.roleStats).forEach(role => {
+            if (!allRoles.includes(role)) {
+                allRoles.push(role);
+            }
+        });
+    });
+    allRoles.sort(); // アルファベット順にソート
+
     // サマリー更新
     updateSummary();
 
@@ -213,46 +225,48 @@ function renderCharts() {
 function renderWinRateChart() {
     const ctx = document.getElementById('winRateChart').getContext('2d');
 
-    // 勝利と敗北を集計
-    let totalWins = 0;
-    let totalLosses = 0;
+    // プレイヤー別勝率を集計
+    const playerData = Object.values(playerStats)
+        .sort((a, b) => b.games - a.games || b.wins - a.wins)
+        .slice(0, 15); // TOP 15プレイヤー
 
-    Object.values(playerStats).forEach(player => {
-        totalWins += player.wins;
-        totalLosses += player.games - player.wins;
-    });
+    const playerNames = playerData.map(p => p.name);
+    const winRates = playerData.map(p => ((p.wins / p.games) * 100).toFixed(1));
 
     if (charts.winRate) {
         charts.winRate.destroy();
     }
 
     charts.winRate = new Chart(ctx, {
-        type: 'doughnut',
+        type: 'bar',
         data: {
-            labels: ['勝利', '敗北'],
+            labels: playerNames,
             datasets: [{
-                data: [totalWins, totalLosses],
-                backgroundColor: [
-                    'rgba(0, 208, 132, 0.8)',
-                    'rgba(255, 46, 99, 0.8)'
-                ],
-                borderColor: [
-                    '#00d084',
-                    '#ff2e63'
-                ],
+                label: '勝率 (%)',
+                data: winRates,
+                backgroundColor: 'rgba(8, 253, 216, 0.6)',
+                borderColor: '#08fdd8',
                 borderWidth: 2
             }]
         },
         options: {
+            indexAxis: 'x',
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    labels: {
-                        color: '#b0b8c1',
-                        font: { size: 13 }
-                    },
-                    position: 'bottom'
+                    labels: { color: '#b0b8c1' }
+                }
+            },
+            scales: {
+                y: {
+                    ticks: { color: '#b0b8c1' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                    max: 100
+                },
+                x: {
+                    ticks: { color: '#b0b8c1' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
                 }
             }
         }
@@ -463,8 +477,28 @@ function renderRoleAnalysisChart() {
 // ================== テーブル更新 ==================
 function updatePlayerStatsTable() {
     const tbody = document.getElementById('playerStatsBody');
-    tbody.innerHTML = '';
+    const thead = document.getElementById('playerStatsTable').getElementsByTagName('thead')[0];
 
+    // テーブルヘッダーを動的に生成
+    let headerHtml = `
+        <tr>
+            <th>プレイヤー名</th>
+            <th>ゲーム数</th>
+            <th>勝利数</th>
+            <th>勝率</th>
+            <th>生存率</th>
+    `;
+
+    // すべてのロール列を追加
+    allRoles.forEach(role => {
+        headerHtml += `<th>${role}勝率</th>`;
+    });
+
+    headerHtml += `</tr>`;
+    thead.innerHTML = headerHtml;
+
+    // テーブルボディを生成
+    tbody.innerHTML = '';
     const sortedPlayers = Object.values(playerStats)
         .sort((a, b) => b.games - a.games || b.wins - a.wins);
 
@@ -472,32 +506,31 @@ function updatePlayerStatsTable() {
         const winRate = percentageString(player.wins, player.games);
         const survivalRate = percentageString(player.games - player.deaths, player.games);
 
-        const impostor = player.roleStats['Impostor'] || { games: 0, wins: 0 };
-        const crewmate = player.roleStats['Crewmate'] || { games: 0, wins: 0 };
-        const imposturWinRate = percentageString(impostor.wins, impostor.games);
-        const crewmateWinRate = percentageString(crewmate.wins, crewmate.games);
+        let rowHtml = `
+            <tr>
+                <td><strong>${player.name}</strong></td>
+                <td>${player.games}</td>
+                <td>${player.wins}</td>
+                <td><span class="badge badge-success">${winRate}</span></td>
+                <td><span class="badge badge-info">${survivalRate}</span></td>
+        `;
 
-        // その他ロール
-        let otherWins = 0, otherGames = 0;
-        Object.entries(player.roleStats).forEach(([role, stats]) => {
-            if (role !== 'Impostor' && role !== 'Crewmate') {
-                otherWins += stats.wins;
-                otherGames += stats.games;
-            }
+        // 各ロール別勝率を表示
+        allRoles.forEach(role => {
+            const roleData = player.roleStats[role] || { games: 0, wins: 0 };
+            const roleWinRate = percentageString(roleData.wins, roleData.games);
+
+            let roleClass = 'role-color-other';
+            if (role === 'Impostor') roleClass = 'role-color-impostor';
+            if (role === 'Crewmate') roleClass = 'role-color-crewmate';
+
+            rowHtml += `<td><span class="${roleClass}">${roleWinRate}</span></td>`;
         });
-        const otherWinRate = percentageString(otherWins, otherGames);
+
+        rowHtml += `</tr>`;
 
         const row = document.createElement('tr');
-        row.innerHTML = `
-            <td><strong>${player.name}</strong></td>
-            <td>${player.games}</td>
-            <td>${player.wins}</td>
-            <td><span class="badge badge-success">${winRate}</span></td>
-            <td><span class="badge badge-info">${survivalRate}</span></td>
-            <td><span class="role-color-impostor">${imposturWinRate}</span></td>
-            <td><span class="role-color-crewmate">${crewmateWinRate}</span></td>
-            <td><span class="role-color-other">${otherWinRate}</span></td>
-        `;
+        row.innerHTML = rowHtml.replace('<tr>', '').replace('</tr>', '');
         tbody.appendChild(row);
     });
 }
