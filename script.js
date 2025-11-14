@@ -1,14 +1,123 @@
-// ================== グローバル状態 ==================
-let gameData = [];
-let playerStats = {};
-let charts = {};
-let allRoles = []; // すべてのロール一覧
-let filteredGameData = []; // フィルタリング済みゲームデータ
-let filterStartDate = null;
-let filterEndDate = null;
+// ================== グローバル状態管理 ==================
+// すべての状態を AppState オブジェクトに集約
+const AppState = {
+    gameData: [],
+    playerStats: {},
+    charts: {},
+    allRoles: [],
+    filteredGameData: [],
+    filterStartDate: null,
+    filterEndDate: null,
 
-// Chart クラスの参照（グローバルに確保）
-const ChartClass = window.Chart || null;
+    reset() {
+        this.gameData = [];
+        this.playerStats = {};
+        this.charts = {};
+        this.allRoles = [];
+        this.filteredGameData = [];
+        this.filterStartDate = null;
+        this.filterEndDate = null;
+    },
+
+    destroyAllCharts() {
+        Object.keys(this.charts).forEach(key => {
+            try {
+                if (this.charts[key] && typeof this.charts[key].destroy === 'function') {
+                    this.charts[key].destroy();
+                }
+            } catch (e) {
+                console.error(`チャート ${key} の破棄に失敗:`, e);
+            }
+        });
+        this.charts = {};
+    }
+};
+
+// ================== 定数 ==================
+const CONSTANTS = {
+    TOP_WINS: 10,
+    TOP_WIN_RATE: 10,
+    MIN_GAMES_FOR_RATE: 3,
+    QUICK_FILTER_OPTIONS: [3, 6, 12, 24, 48, 72, 96, 120, 144, 168, 720],
+    CHART_COLORS: {
+        impostor: '#ff2e63',
+        crewmate: '#00d084',
+        other: '#08fdd8',
+        palette: [
+            '#ff2e63', '#08fdd8', '#ffd60a', '#4cc9f0', '#c8b6ff',
+            '#f72585', '#00d9ff', '#ffbe0b', '#3a86ff', '#8338ec'
+        ]
+    },
+    ROLE_COLORS: {
+        'Impostor': 'rgba(255, 46, 99, 0.7)',
+        'Crewmate': 'rgba(0, 208, 132, 0.7)',
+        'Other': 'rgba(8, 253, 216, 0.7)'
+    },
+    ROLE_BORDERS: {
+        'Impostor': '#ff2e63',
+        'Crewmate': '#00d084',
+        'Other': '#08fdd8'
+    }
+};
+
+// ================== ヘルパー関数 ==================
+function resetCanvasContext(elementId) {
+    const canvas = document.getElementById(elementId);
+    if (canvas) {
+        canvas.width = canvas.width;
+    }
+}
+
+function getRoleColor(role) {
+    if (role === 'Impostor') return CONSTANTS.ROLE_COLORS['Impostor'];
+    if (role === 'Crewmate') return CONSTANTS.ROLE_COLORS['Crewmate'];
+    return CONSTANTS.ROLE_COLORS['Other'];
+}
+
+function getRoleBorderColor(role) {
+    if (role === 'Impostor') return CONSTANTS.ROLE_BORDERS['Impostor'];
+    if (role === 'Crewmate') return CONSTANTS.ROLE_BORDERS['Crewmate'];
+    return CONSTANTS.ROLE_BORDERS['Other'];
+}
+
+// ================== Chart テンプレート ==================
+function getDefaultChartOptions() {
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: { color: '#ffffff' }
+            }
+        }
+    };
+}
+
+function createDoughnutChart(ctx, labels, data, backgroundColor, tooltipCallback) {
+    return new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: backgroundColor
+            }]
+        },
+        options: {
+            ...getDefaultChartOptions(),
+            maintainAspectRatio: true,
+            plugins: {
+                ...getDefaultChartOptions().plugins,
+                tooltip: {
+                    callbacks: {
+                        label: tooltipCallback
+                    }
+                }
+            }
+        }
+    });
+}
 
 // ================== ユーティリティ関数 ==================
 function showSpinner() {
@@ -59,6 +168,9 @@ window.addEventListener('DOMContentLoaded', () => {
     console.log('DOMContentLoaded イベント発火');
     console.log('ページのプロトコル:', window.location.protocol);
 
+    // イベントリスナーの登録
+    setupEventListeners();
+
     // file:// プロトコルの場合はfetchが使えないため、代替手段を使用
     if (window.location.protocol === 'file:') {
         console.log('file:// プロトコルで実行されています。自動読み込みはスキップします。');
@@ -67,6 +179,27 @@ window.addEventListener('DOMContentLoaded', () => {
         tryAutoLoadGameHistory();
     }
 });
+
+function setupEventListeners() {
+    // ファイル選択ボタン
+    const selectFileBtn = document.getElementById('selectFileBtn');
+    if (selectFileBtn) {
+        selectFileBtn.addEventListener('click', () => {
+            document.getElementById('fileInput').click();
+        });
+    }
+
+    // フィルターボタン
+    const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+    if (applyFiltersBtn) {
+        applyFiltersBtn.addEventListener('click', applyFilters);
+    }
+
+    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', clearFilters);
+    }
+}
 
 async function tryAutoLoadGameHistory() {
     console.log('tryAutoLoadGameHistory() 実行開始');
@@ -87,30 +220,32 @@ async function tryAutoLoadGameHistory() {
         // ファイルが見つからない場合はファイル選択画面のままにする
         console.log('game_history.jsonlが見つかりません。エラー:', error.message);
     }
-} function loadGameHistoryFromText(text) {
+}
+
+function loadGameHistoryFromText(text) {
     console.log('loadGameHistoryFromText() 実行開始');
     showSpinner();
     try {
         const lines = text.trim().split('\n').filter(line => line.length > 0);
         console.log('パースされた行数:', lines.length);
 
-        gameData = [];
+        AppState.gameData = [];
         let parseErrorCount = 0;
         for (const line of lines) {
             try {
-                gameData.push(JSON.parse(line));
+                AppState.gameData.push(JSON.parse(line));
             } catch (e) {
                 parseErrorCount++;
                 console.error('行のパースエラー:', e);
             }
         }
 
-        console.log('正常にパースされたゲーム数:', gameData.length);
+        console.log('正常にパースされたゲーム数:', AppState.gameData.length);
         if (parseErrorCount > 0) {
             console.log('パースエラー数:', parseErrorCount);
         }
 
-        if (gameData.length === 0) {
+        if (AppState.gameData.length === 0) {
             console.log('有効なゲームデータがありません');
             showToast('有効なゲームデータが見つかりません', 'danger');
             hideSpinner();
@@ -127,7 +262,7 @@ async function tryAutoLoadGameHistory() {
         document.getElementById('dashboard').style.display = 'block';
 
         console.log('読み込み完了');
-        showToast(`${gameData.length}件のゲームデータを自動読み込みしました`, 'success');
+        showToast(`${AppState.gameData.length}件のゲームデータを自動読み込みしました`, 'success');
     } catch (error) {
         console.error('ファイル読み込みエラー:', error);
         showToast('ファイル読み込みエラー: ' + error.message, 'danger');
@@ -184,14 +319,14 @@ async function handleFileSelect(file) {
 
 // ================== データ分析 ==================
 function analyzeData() {
-    playerStats = {};
+    AppState.playerStats = {};
 
     // プレイヤーごとの統計を集計
-    gameData.forEach(game => {
+    AppState.gameData.forEach(game => {
         game.players.forEach(player => {
             const playerName = player.player_name;
-            if (!playerStats[playerName]) {
-                playerStats[playerName] = {
+            if (!AppState.playerStats[playerName]) {
+                AppState.playerStats[playerName] = {
                     name: playerName,
                     uuid: player.player_uuid,
                     games: 0,
@@ -201,7 +336,7 @@ function analyzeData() {
                 };
             }
 
-            const stats = playerStats[playerName];
+            const stats = AppState.playerStats[playerName];
             stats.games++;
 
             if (player.is_winner) {
@@ -228,18 +363,18 @@ function analyzeData() {
     });
 
     // すべてのロール一覧を取得
-    allRoles = [];
-    Object.values(playerStats).forEach(player => {
+    AppState.allRoles = [];
+    Object.values(AppState.playerStats).forEach(player => {
         Object.keys(player.roleStats).forEach(role => {
-            if (!allRoles.includes(role)) {
-                allRoles.push(role);
+            if (!AppState.allRoles.includes(role)) {
+                AppState.allRoles.push(role);
             }
         });
     });
-    allRoles.sort(); // アルファベット順にソート
+    AppState.allRoles.sort(); // アルファベット順にソート
 
     // フィルタリングを初期化
-    filteredGameData = gameData;
+    AppState.filteredGameData = AppState.gameData;
     initializeFilters();
 
     // サマリー更新
@@ -262,26 +397,16 @@ function analyzeData() {
 }
 
 function updateSummary() {
-    const totalGames = filteredGameData.length;
-    let playerCount = Object.keys(playerStats).length;
+    const totalGames = AppState.filteredGameData.length;
+    let playerCount = Object.keys(AppState.playerStats).length;
 
     document.getElementById('totalGames').textContent = totalGames;
     document.getElementById('totalPlayers').textContent = playerCount;
 }
 
 function renderCharts() {
-    // すべての既存チャートを破棄
-    Object.keys(charts).forEach(key => {
-        try {
-            if (charts[key] && typeof charts[key].destroy === 'function') {
-                charts[key].destroy();
-            }
-        } catch (e) {
-            console.error(`チャート ${key} の破棄に失敗:`, e);
-        }
-    });
-    charts = {};
-
+    // 既存チャートを AppState で管理する関数で破棄
+    AppState.destroyAllCharts();
     renderRoleAnalysisChart();
 }
 
@@ -290,7 +415,7 @@ function renderRoleAnalysisChart() {
 
     // ロール別勝率を集計
     const roleStats = {};
-    gameData.forEach(game => {
+    AppState.gameData.forEach(game => {
         game.players.forEach(player => {
             const role = player.main_role;
             if (!roleStats[role]) {
@@ -308,48 +433,22 @@ function renderRoleAnalysisChart() {
         ((roleStats[role].wins / roleStats[role].games) * 100).toFixed(1)
     );
 
-    if (charts.roleAnalysis) {
-        charts.roleAnalysis.destroy();
+    if (AppState.charts.roleAnalysis) {
+        AppState.charts.roleAnalysis.destroy();
     }
 
-    charts.roleAnalysis = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: roles.map(role => `${role} (${roleStats[role].wins}/${roleStats[role].games})`),
-            datasets: [{
-                data: winRates,
-                backgroundColor: roles.map((role) => {
-                    if (role === 'Impostor') return 'rgba(255, 46, 99, 0.7)';
-                    if (role === 'Crewmate') return 'rgba(0, 208, 132, 0.7)';
-                    return 'rgba(8, 253, 216, 0.7)';
-                }),
-                borderColor: roles.map((role) => {
-                    if (role === 'Impostor') return '#ff2e63';
-                    if (role === 'Crewmate') return '#00d084';
-                    return '#08fdd8';
-                }),
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { color: '#ffffff' }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function (context) {
-                            const winRate = context.parsed;
-                            return context.label + ': 勝率 ' + winRate + '%';
-                        }
-                    }
-                }
-            }
-        }
-    });
+    AppState.charts.roleAnalysis = createDoughnutChart(
+        ctx,
+        roles.map(role => `${role} (${roleStats[role].wins}/${roleStats[role].games})`),
+        winRates,
+        roles.map(role => getRoleColor(role)),
+        (context) => context.label + ': 勝率 ' + context.parsed + '%'
+    );
+
+    // borderを追加（createDoughnutChartのオプション拡張）
+    AppState.charts.roleAnalysis.data.datasets[0].borderColor = roles.map(role => getRoleBorderColor(role));
+    AppState.charts.roleAnalysis.data.datasets[0].borderWidth = 2;
+    AppState.charts.roleAnalysis.update();
 }
 
 // ================== テーブル更新 ==================
@@ -368,7 +467,7 @@ function updatePlayerStatsTable() {
     `;
 
     // すべてのロール列を追加
-    allRoles.forEach(role => {
+    AppState.allRoles.forEach(role => {
         headerHtml += `<th>${role}勝率</th>`;
     });
 
@@ -377,7 +476,7 @@ function updatePlayerStatsTable() {
 
     // テーブルボディを生成
     tbody.innerHTML = '';
-    const sortedPlayers = Object.values(playerStats)
+    const sortedPlayers = Object.values(AppState.playerStats)
         .sort((a, b) => b.games - a.games || b.wins - a.wins);
 
     sortedPlayers.forEach(player => {
@@ -394,7 +493,7 @@ function updatePlayerStatsTable() {
         `;
 
         // 各ロール別勝率を表示
-        allRoles.forEach(role => {
+        AppState.allRoles.forEach(role => {
             const roleData = player.roleStats[role] || { games: 0, wins: 0 };
             const roleWinRate = percentageString(roleData.wins, roleData.games);
 
@@ -420,9 +519,9 @@ function updateRankings() {
     const winsContainer = document.getElementById('winsRanking');
     winsContainer.innerHTML = '';
 
-    const winsSorted = Object.values(playerStats)
+    const winsSorted = Object.values(AppState.playerStats)
         .sort((a, b) => b.wins - a.wins)
-        .slice(0, 10);
+        .slice(0, CONSTANTS.TOP_WINS);
 
     winsSorted.forEach((player, idx) => {
         const li = document.createElement('li');
@@ -440,10 +539,10 @@ function updateRankings() {
     const rateContainer = document.getElementById('winRateRanking');
     rateContainer.innerHTML = '';
 
-    const rateSorted = Object.values(playerStats)
-        .filter(p => p.games >= 3)
+    const rateSorted = Object.values(AppState.playerStats)
+        .filter(p => p.games >= CONSTANTS.MIN_GAMES_FOR_RATE)
         .sort((a, b) => (b.wins / b.games) - (a.wins / a.games))
-        .slice(0, 10);
+        .slice(0, CONSTANTS.TOP_WIN_RATE);
 
     rateSorted.forEach((player, idx) => {
         const winRate = ((player.wins / player.games) * 100).toFixed(1);
@@ -460,21 +559,20 @@ function updateRankings() {
 
     // ランキング用チャート作成前に、既存のランキングチャートを破棄
     console.log('既存ランキングチャートの破棄を試みます');
-    console.log('charts.winsChart:', charts.winsChart ? 'exists' : 'null');
-    console.log('charts.winRateChart:', charts.winRateChart ? 'exists' : 'null');
+    console.log('charts.winsChart:', AppState.charts.winsChart ? 'exists' : 'null');
+    console.log('charts.winRateChart:', AppState.charts.winRateChart ? 'exists' : 'null');
 
     try {
-        if (charts.winsChart && typeof charts.winsChart.destroy === 'function') {
+        if (AppState.charts.winsChart && typeof AppState.charts.winsChart.destroy === 'function') {
             console.log('winsChart を破棄中...');
-            charts.winsChart.destroy();
-            charts.winsChart = null;
+            AppState.charts.winsChart.destroy();
+            AppState.charts.winsChart = null;
             console.log('winsChart を破棄しました');
         }
-        if (charts.winRateChart && typeof charts.winRateChart.destroy === 'function') {
+        if (AppState.charts.winRateChart && typeof AppState.charts.winRateChart.destroy === 'function') {
             console.log('winRateChart を破棄中...');
-
-            charts.winRateChart.destroy();
-            charts.winRateChart = null;
+            AppState.charts.winRateChart.destroy();
+            AppState.charts.winRateChart = null;
         }
     } catch (e) {
         console.error('ランキングチャートの破棄に失敗:', e);
@@ -484,45 +582,21 @@ function updateRankings() {
     console.log('winsChart 作成開始');
     const winsChartCtx = document.getElementById('winsRankingChart');
     if (winsChartCtx) {
-        // Canvas をリセット
-        console.log('winsChart canvas をリセット');
-        winsChartCtx.width = winsChartCtx.width;
-
+        resetCanvasContext('winsRankingChart');
         try {
             console.log('winsChart を新規作成中...');
-            charts.winsChart = new Chart(winsChartCtx.getContext('2d'), {
-                type: 'doughnut',
-                data: {
-                    labels: winsSorted.map(p => p.name),
-                    datasets: [{
-                        data: winsSorted.map(p => p.wins),
-                        backgroundColor: [
-                            '#ff2e63', '#08fdd8', '#ffd60a', '#4cc9f0', '#c8b6ff',
-                            '#f72585', '#00d9ff', '#ffbe0b', '#3a86ff', '#8338ec'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { color: '#ffffff' }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const value = context.parsed;
-                                    const percentage = ((value / total) * 100).toFixed(1);
-                                    return context.label + ': ' + value + ' (' + percentage + '%)';
-                                }
-                            }
-                        }
-                    }
+            AppState.charts.winsChart = createDoughnutChart(
+                winsChartCtx.getContext('2d'),
+                winsSorted.map(p => p.name),
+                winsSorted.map(p => p.wins),
+                CONSTANTS.CHART_COLORS.palette,
+                function (context) {
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const value = context.parsed;
+                    const percentage = ((value / total) * 100).toFixed(1);
+                    return context.label + ': ' + value + ' (' + percentage + '%)';
                 }
-            });
+            );
             console.log('winsChart 作成成功');
         } catch (e) {
             console.error('winsChart 作成エラー:', e);
@@ -533,43 +607,19 @@ function updateRankings() {
     console.log('winRateChart 作成開始');
     const winRateChartCtx = document.getElementById('winRateRankingChart');
     if (winRateChartCtx) {
-        // Canvas をリセット
-        console.log('winRateChart canvas をリセット');
-        winRateChartCtx.width = winRateChartCtx.width;
-
+        resetCanvasContext('winRateRankingChart');
         try {
             console.log('winRateChart を新規作成中...');
-            charts.winRateChart = new Chart(winRateChartCtx.getContext('2d'), {
-                type: 'doughnut',
-                data: {
-                    labels: rateSorted.map(p => p.name),
-                    datasets: [{
-                        data: rateSorted.map(p => ((p.wins / p.games) * 100).toFixed(1)),
-                        backgroundColor: [
-                            '#ff2e63', '#08fdd8', '#ffd60a', '#4cc9f0', '#c8b6ff',
-                            '#f72585', '#00d9ff', '#ffbe0b', '#3a86ff', '#8338ec'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { color: '#ffffff' }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    const winRate = context.parsed;
-                                    return context.label + ': 勝率 ' + winRate + '%';
-                                }
-                            }
-                        }
-                    }
+            AppState.charts.winRateChart = createDoughnutChart(
+                winRateChartCtx.getContext('2d'),
+                rateSorted.map(p => p.name),
+                rateSorted.map(p => ((p.wins / p.games) * 100).toFixed(1)),
+                CONSTANTS.CHART_COLORS.palette,
+                function (context) {
+                    const winRate = context.parsed;
+                    return context.label + ': 勝率 ' + winRate + '%';
                 }
-            });
+            );
             console.log('winRateChart 作成成功');
         } catch (e) {
             console.error('winRateChart 作成エラー:', e);
@@ -580,7 +630,7 @@ function updateRankings() {
 
 function updateRoleAnalysis() {
     const roleStats = {};
-    gameData.forEach(game => {
+    AppState.gameData.forEach(game => {
         game.players.forEach(player => {
             const role = player.main_role;
             if (!roleStats[role]) {
@@ -619,7 +669,7 @@ function updateGamesList() {
     tbody.innerHTML = '';
 
     // 逆順（最新から表示）
-    gameData.slice().reverse().forEach(game => {
+    AppState.gameData.slice().reverse().forEach(game => {
         const row = document.createElement('tr');
         const duration = formatDuration(game.start_time, game.end_time);
         const playerNames = game.players.map(p => p.player_name).join(', ');
@@ -638,8 +688,8 @@ function updateGamesList() {
         });
 
         // ロール情報を「メインロール(サブロール1, ...): 人数」形式で表示
-        // 表示順を統一するため、allRolesの順序に従う
-        const roleInfo = allRoles
+        // 表示順を統一するため、AppState.allRolesの順序に従う
+        const roleInfo = AppState.allRoles
             .filter(role => roleMap[role])
             .map(role => {
                 const count = game.players.filter(p => p.main_role === role).length;
@@ -685,9 +735,9 @@ function initializeFilters() {
     };
 
     // 日付入力のデフォルト値を設定（全データを表示）
-    if (gameData.length > 0) {
-        const minDate = new Date(gameData[0].start_time);
-        const maxDate = new Date(gameData[gameData.length - 1].start_time);
+    if (AppState.gameData.length > 0) {
+        const minDate = new Date(AppState.gameData[0].start_time);
+        const maxDate = new Date(AppState.gameData[AppState.gameData.length - 1].start_time);
 
         document.getElementById('filterStartDate').value = formatDateTime(minDate);
         document.getElementById('filterEndDate').value = formatDateTime(maxDate);
@@ -734,23 +784,23 @@ function applyFilters() {
     const endDateInput = document.getElementById('filterEndDate').value;
 
     // フィルタ条件を設定
-    filterStartDate = startDateInput ? new Date(startDateInput) : null;
-    filterEndDate = endDateInput ? new Date(endDateInput) : null;
+    AppState.filterStartDate = startDateInput ? new Date(startDateInput) : null;
+    AppState.filterEndDate = endDateInput ? new Date(endDateInput) : null;
 
     // ゲームデータをフィルタリング
-    filteredGameData = gameData.filter(game => {
+    AppState.filteredGameData = AppState.gameData.filter(game => {
         const gameDate = new Date(game.start_time);
 
         // 日付フィルタ
-        if (filterStartDate && gameDate < filterStartDate) return false;
-        if (filterEndDate && gameDate > filterEndDate) return false;
+        if (AppState.filterStartDate && gameDate < AppState.filterStartDate) return false;
+        if (AppState.filterEndDate && gameDate > AppState.filterEndDate) return false;
 
         return true;
     });
 
     // フィルタ適用後、統計を再計算
     recalculateStats();
-    showToast(`${filteredGameData.length}件のゲームでフィルタリングしました`, 'success');
+    showToast(`${AppState.filteredGameData.length}件のゲームでフィルタリングしました`, 'success');
 }
 
 function clearFilters() {
@@ -759,9 +809,9 @@ function clearFilters() {
     document.getElementById('filterEndDate').value = '';
     document.getElementById('quickFilterSelect').value = '';
 
-    filterStartDate = null;
-    filterEndDate = null;
-    filteredGameData = gameData;
+    AppState.filterStartDate = null;
+    AppState.filterEndDate = null;
+    AppState.filteredGameData = AppState.gameData;
 
     // 統計を再計算
     recalculateStats();
@@ -770,13 +820,13 @@ function clearFilters() {
 
 function recalculateStats() {
     // フィルター済みデータで統計を再計算
-    playerStats = {};
+    AppState.playerStats = {};
 
-    filteredGameData.forEach(game => {
+    AppState.filteredGameData.forEach(game => {
         game.players.forEach(player => {
             const playerName = player.player_name;
-            if (!playerStats[playerName]) {
-                playerStats[playerName] = {
+            if (!AppState.playerStats[playerName]) {
+                AppState.playerStats[playerName] = {
                     name: playerName,
                     uuid: player.player_uuid,
                     games: 0,
@@ -786,7 +836,7 @@ function recalculateStats() {
                 };
             }
 
-            const stats = playerStats[playerName];
+            const stats = AppState.playerStats[playerName];
             stats.games++;
 
             if (player.is_winner) {
