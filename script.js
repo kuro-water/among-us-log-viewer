@@ -7,6 +7,9 @@ let filteredGameData = []; // フィルタリング済みゲームデータ
 let filterStartDate = null;
 let filterEndDate = null;
 
+// Chart クラスの参照（グローバルに確保）
+const ChartClass = window.Chart || null;
+
 // ================== ユーティリティ関数 ==================
 function showSpinner() {
     document.getElementById('spinner').classList.add('show');
@@ -267,6 +270,18 @@ function updateSummary() {
 }
 
 function renderCharts() {
+    // すべての既存チャートを破棄
+    Object.keys(charts).forEach(key => {
+        try {
+            if (charts[key] && typeof charts[key].destroy === 'function') {
+                charts[key].destroy();
+            }
+        } catch (e) {
+            console.error(`チャート ${key} の破棄に失敗:`, e);
+        }
+    });
+    charts = {};
+
     renderWinRateChart();
     renderMapStatsChart();
     renderTimelineChart();
@@ -306,17 +321,17 @@ function renderWinRateChart() {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    labels: { color: '#b0b8c1' }
+                    labels: { color: '#ffffff' }
                 }
             },
             scales: {
                 y: {
-                    ticks: { color: '#b0b8c1' },
+                    ticks: { color: '#e0e0e0' },
                     grid: { color: 'rgba(255, 255, 255, 0.1)' },
                     max: 100
                 },
                 x: {
-                    ticks: { color: '#b0b8c1' },
+                    ticks: { color: '#e0e0e0' },
                     grid: { color: 'rgba(255, 255, 255, 0.1)' }
                 }
             }
@@ -360,16 +375,16 @@ function renderMapStatsChart() {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    labels: { color: '#b0b8c1' }
+                    labels: { color: '#ffffff' }
                 }
             },
             scales: {
                 x: {
-                    ticks: { color: '#b0b8c1' },
+                    ticks: { color: '#e0e0e0' },
                     grid: { color: 'rgba(255, 255, 255, 0.1)' }
                 },
                 y: {
-                    ticks: { color: '#b0b8c1' },
+                    ticks: { color: '#e0e0e0' },
                     grid: { color: 'rgba(255, 255, 255, 0.1)' }
                 }
             }
@@ -437,16 +452,16 @@ function renderTimelineChart() {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    labels: { color: '#b0b8c1' }
+                    labels: { color: '#ffffff' }
                 }
             },
             scales: {
                 x: {
-                    ticks: { color: '#b0b8c1' },
+                    ticks: { color: '#e0e0e0' },
                     grid: { color: 'rgba(255, 255, 255, 0.1)' }
                 },
                 y: {
-                    ticks: { color: '#b0b8c1' },
+                    ticks: { color: '#e0e0e0' },
                     grid: { color: 'rgba(255, 255, 255, 0.1)' }
                 }
             }
@@ -507,17 +522,17 @@ function renderRoleAnalysisChart() {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    labels: { color: '#b0b8c1' }
+                    labels: { color: '#ffffff' }
                 }
             },
             scales: {
                 y: {
-                    ticks: { color: '#b0b8c1' },
+                    ticks: { color: '#e0e0e0' },
                     grid: { color: 'rgba(255, 255, 255, 0.1)' },
                     max: 100
                 },
                 x: {
-                    ticks: { color: '#b0b8c1' },
+                    ticks: { color: '#e0e0e0' },
                     grid: { color: 'rgba(255, 255, 255, 0.1)' }
                 }
             }
@@ -587,6 +602,8 @@ function updatePlayerStatsTable() {
 }
 
 function updateRankings() {
+    console.log('updateRankings() 実行開始');
+
     // 勝利数ランキング
     const winsContainer = document.getElementById('winsRanking');
     winsContainer.innerHTML = '';
@@ -600,7 +617,7 @@ function updateRankings() {
         li.className = 'player-badge';
         li.innerHTML = `
             <div style="padding: 0.75rem 0;">
-                <strong>${idx + 1}. ${player.name}</strong>
+                <strong style="color: var(--secondary-color);">${idx + 1}. ${player.name}</strong>
                 <div style="font-size: 0.9rem; color: var(--text-secondary);">${player.wins}勝 (${player.games}ゲーム)</div>
             </div>
         `;
@@ -622,12 +639,131 @@ function updateRankings() {
         li.className = 'player-badge';
         li.innerHTML = `
             <div style="padding: 0.75rem 0;">
-                <strong>${idx + 1}. ${player.name}</strong>
+                <strong style="color: var(--secondary-color);">${idx + 1}. ${player.name}</strong>
                 <div style="font-size: 0.9rem; color: var(--text-secondary);">${winRate}% (${player.wins}/${player.games})</div>
             </div>
         `;
         rateContainer.appendChild(li);
     });
+
+    // ランキング用チャート作成前に、既存のランキングチャートを破棄
+    console.log('既存ランキングチャートの破棄を試みます');
+    console.log('charts.winsChart:', charts.winsChart ? 'exists' : 'null');
+    console.log('charts.winRateChart:', charts.winRateChart ? 'exists' : 'null');
+
+    try {
+        if (charts.winsChart && typeof charts.winsChart.destroy === 'function') {
+            console.log('winsChart を破棄中...');
+            charts.winsChart.destroy();
+            charts.winsChart = null;
+            console.log('winsChart を破棄しました');
+        }
+        if (charts.winRateChart && typeof charts.winRateChart.destroy === 'function') {
+            console.log('winRateChart を破棄中...');
+
+            charts.winRateChart.destroy();
+            charts.winRateChart = null;
+        }
+    } catch (e) {
+        console.error('ランキングチャートの破棄に失敗:', e);
+    }
+
+    // 勝利数ランキングの円グラフ
+    console.log('winsChart 作成開始');
+    const winsChartCtx = document.getElementById('winsRankingChart');
+    if (winsChartCtx) {
+        // Canvas をリセット
+        console.log('winsChart canvas をリセット');
+        winsChartCtx.width = winsChartCtx.width;
+
+        try {
+            console.log('winsChart を新規作成中...');
+            charts.winsChart = new Chart(winsChartCtx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: winsSorted.map(p => p.name),
+                    datasets: [{
+                        data: winsSorted.map(p => p.wins),
+                        backgroundColor: [
+                            '#ff2e63', '#08fdd8', '#ffd60a', '#4cc9f0', '#c8b6ff',
+                            '#f72585', '#00d9ff', '#ffbe0b', '#3a86ff', '#8338ec'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#ffffff' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const value = context.parsed;
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return context.label + ': ' + value + ' (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            console.log('winsChart 作成成功');
+        } catch (e) {
+            console.error('winsChart 作成エラー:', e);
+        }
+    }
+
+    // 勝率ランキングの円グラフ
+    console.log('winRateChart 作成開始');
+    const winRateChartCtx = document.getElementById('winRateRankingChart');
+    if (winRateChartCtx) {
+        // Canvas をリセット
+        console.log('winRateChart canvas をリセット');
+        winRateChartCtx.width = winRateChartCtx.width;
+
+        try {
+            console.log('winRateChart を新規作成中...');
+            charts.winRateChart = new Chart(winRateChartCtx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: rateSorted.map(p => p.name),
+                    datasets: [{
+                        data: rateSorted.map(p => ((p.wins / p.games) * 100).toFixed(1)),
+                        backgroundColor: [
+                            '#ff2e63', '#08fdd8', '#ffd60a', '#4cc9f0', '#c8b6ff',
+                            '#f72585', '#00d9ff', '#ffbe0b', '#3a86ff', '#8338ec'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#ffffff' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const winRate = context.parsed;
+                                    return context.label + ': 勝率 ' + winRate + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            console.log('winRateChart 作成成功');
+        } catch (e) {
+            console.error('winRateChart 作成エラー:', e);
+        }
+    }
+    console.log('updateRankings() 実行完了');
 }
 
 function updateRoleAnalysis() {
@@ -704,14 +840,21 @@ function updateGamesList() {
             })
             .join(', ');
 
+        // 勝利メンバーを取得
+        const winners = game.players
+            .filter(p => p.is_winner)
+            .map(p => p.player_name)
+            .join(', ');
+
         row.innerHTML = `
-            <td>${formatDate(game.start_time)}</td>
             <td><strong>${game.map_name}</strong></td>
             <td>${game.player_count}</td>
             <td><span class="badge badge-success">${game.winner_team}</span></td>
+            <td><small>${winners}</small></td>
             <td>${duration}</td>
             <td><small>${playerNames}</small></td>
             <td><small>${roleInfo}</small></td>
+            <td>${formatDate(game.start_time)}</td>
         `;
         tbody.appendChild(row);
     });
