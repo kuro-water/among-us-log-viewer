@@ -676,6 +676,34 @@ function updateGamesList() {
         const duration = formatDuration(game.start_time, game.end_time);
         const playerNames = game.players.map(p => p.player_name).join(', ');
 
+        // 役職とサブロールを集計
+        const roleMap = {}; // role -> set of sub_roles
+        game.players.forEach(p => {
+            const role = p.main_role;
+            if (!roleMap[role]) {
+                roleMap[role] = new Set();
+            }
+            // サブロールを追加
+            if (p.sub_roles && p.sub_roles.length > 0) {
+                p.sub_roles.forEach(subRole => roleMap[role].add(subRole));
+            }
+        });
+
+        // ロール情報を「メインロール(サブロール1, ...): 人数」形式で表示
+        // 表示順を統一するため、allRolesの順序に従う
+        const roleInfo = allRoles
+            .filter(role => roleMap[role])
+            .map(role => {
+                const count = game.players.filter(p => p.main_role === role).length;
+                const subRoles = Array.from(roleMap[role]).sort().join(', ');
+                if (subRoles) {
+                    return `${role}(${subRoles}): ${count}`;
+                } else {
+                    return `${role}: ${count}`;
+                }
+            })
+            .join(', ');
+
         row.innerHTML = `
             <td>${formatDate(game.start_time)}</td>
             <td><strong>${game.map_name}</strong></td>
@@ -683,6 +711,7 @@ function updateGamesList() {
             <td><span class="badge badge-success">${game.winner_team}</span></td>
             <td>${duration}</td>
             <td><small>${playerNames}</small></td>
+            <td><small>${roleInfo}</small></td>
         `;
         tbody.appendChild(row);
     });
