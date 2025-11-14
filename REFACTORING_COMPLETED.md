@@ -1,6 +1,6 @@
 # ✅ リファクタリング実装完了レポート
 
-**実施日**: 2025年11月14日  
+**実施日**: 2025 年 11 月 14 日  
 **プロジェクト**: Among Us ゲーム履歴ビューワー  
 **バージョン**: v1.5
 
@@ -12,12 +12,12 @@
 
 ### 📈 成果サマリー
 
-| 項目 | 改善前 | 改善後 | 削減率 |
-|------|--------|--------|--------|
-| script.js | 820行 | 751行 | **8.4%削減** |
-| index.html | 251行 | 238行 | **5.2%削減** |
-| style.css | 330行 | 277行 | **16.1%削減** |
-| **合計** | **1,401行** | **1,266行** | **9.6%削減** ✅ |
+| 項目       | 改善前       | 改善後       | 削減率          |
+| ---------- | ------------ | ------------ | --------------- |
+| script.js  | 820 行       | 751 行       | **8.4%削減**    |
+| index.html | 251 行       | 238 行       | **5.2%削減**    |
+| style.css  | 330 行       | 277 行       | **16.1%削減**   |
+| **合計**   | **1,401 行** | **1,266 行** | **9.6%削減** ✅ |
 
 ---
 
@@ -26,7 +26,7 @@
 ### 1️⃣ グローバル状態管理を AppState に統合
 
 **対象**: script.js  
-**変更**: 9個のグローバル変数 → 単一の `AppState` オブジェクト
+**変更**: 9 個のグローバル変数 → 単一の `AppState` オブジェクト
 
 ```javascript
 // 改善前: 9個のグローバル変数
@@ -37,7 +37,7 @@ let allRoles = [];
 let filteredGameData = [];
 let filterStartDate = null;
 let filterEndDate = null;
-const ChartClass = window.Chart || null;  // 未使用
+const ChartClass = window.Chart || null; // 未使用
 
 // 改善後: 1個のオブジェクト
 const AppState = {
@@ -48,16 +48,21 @@ const AppState = {
     filteredGameData: [],
     filterStartDate: null,
     filterEndDate: null,
-    
-    destroyAllCharts() { /* ... */ },
-    reset() { /* ... */ }
+
+    destroyAllCharts() {
+        /* ... */
+    },
+    reset() {
+        /* ... */
+    },
 };
 ```
 
 **メリット**:
-- グローバルスコープ汚染を最小化
-- 状態管理が一元化
-- `AppState.reset()` で全状態をリセット可能
+
+-   グローバルスコープ汚染を最小化
+-   状態管理が一元化
+-   `AppState.reset()` で全状態をリセット可能
 
 **実装ファイル**: `script.js` 全体
 
@@ -81,22 +86,24 @@ const AppState = {
 ```
 
 **JavaScript 追加**:
+
 ```javascript
 function setupEventListeners() {
-    document.getElementById('selectFileBtn').addEventListener('click', () => {
-        document.getElementById('fileInput').click();
+    document.getElementById("selectFileBtn").addEventListener("click", () => {
+        document.getElementById("fileInput").click();
     });
-    document.getElementById('applyFiltersBtn').addEventListener('click', applyFilters);
-    document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
+    document.getElementById("applyFiltersBtn").addEventListener("click", applyFilters);
+    document.getElementById("clearFiltersBtn").addEventListener("click", clearFilters);
 }
 ```
 
 **メリット**:
-- HTML/JavaScript の関心分離
-- セキュリティ向上（XSS対策）
-- イベント管理が一元化
 
-**削減**: HTML 14行削減
+-   HTML/JavaScript の関心分離
+-   セキュリティ向上（XSS 対策）
+-   イベント管理が一元化
+
+**削減**: HTML 14 行削減
 
 ---
 
@@ -113,15 +120,15 @@ function resetCanvasContext(elementId) {
 }
 
 function getRoleColor(role) {
-    if (role === 'Impostor') return CONSTANTS.ROLE_COLORS['Impostor'];
-    if (role === 'Crewmate') return CONSTANTS.ROLE_COLORS['Crewmate'];
-    return CONSTANTS.ROLE_COLORS['Other'];
+    if (role === "Impostor") return CONSTANTS.ROLE_COLORS["Impostor"];
+    if (role === "Crewmate") return CONSTANTS.ROLE_COLORS["Crewmate"];
+    return CONSTANTS.ROLE_COLORS["Other"];
 }
 
 function getRoleBorderColor(role) {
-    if (role === 'Impostor') return CONSTANTS.ROLE_BORDERS['Impostor'];
-    if (role === 'Crewmate') return CONSTANTS.ROLE_BORDERS['Crewmate'];
-    return CONSTANTS.ROLE_BORDERS['Other'];
+    if (role === "Impostor") return CONSTANTS.ROLE_BORDERS["Impostor"];
+    if (role === "Crewmate") return CONSTANTS.ROLE_BORDERS["Crewmate"];
+    return CONSTANTS.ROLE_BORDERS["Other"];
 }
 
 // 定数化
@@ -130,36 +137,46 @@ const CONSTANTS = {
     TOP_WIN_RATE: 10,
     MIN_GAMES_FOR_RATE: 3,
     CHART_COLORS: {
-        impostor: '#ff2e63',
-        crewmate: '#00d084',
-        other: '#08fdd8',
+        impostor: "#ff2e63",
+        crewmate: "#00d084",
+        other: "#08fdd8",
         palette: [
-            '#ff2e63', '#08fdd8', '#ffd60a', '#4cc9f0', '#c8b6ff',
-            '#f72585', '#00d9ff', '#ffbe0b', '#3a86ff', '#8338ec'
-        ]
+            "#ff2e63",
+            "#08fdd8",
+            "#ffd60a",
+            "#4cc9f0",
+            "#c8b6ff",
+            "#f72585",
+            "#00d9ff",
+            "#ffbe0b",
+            "#3a86ff",
+            "#8338ec",
+        ],
     },
     ROLE_COLORS: {
-        'Impostor': 'rgba(255, 46, 99, 0.7)',
-        'Crewmate': 'rgba(0, 208, 132, 0.7)',
-        'Other': 'rgba(8, 253, 216, 0.7)'
+        Impostor: "rgba(255, 46, 99, 0.7)",
+        Crewmate: "rgba(0, 208, 132, 0.7)",
+        Other: "rgba(8, 253, 216, 0.7)",
     },
     ROLE_BORDERS: {
-        'Impostor': '#ff2e63',
-        'Crewmate': '#00d084',
-        'Other': '#08fdd8'
-    }
+        Impostor: "#ff2e63",
+        Crewmate: "#00d084",
+        Other: "#08fdd8",
+    },
 };
 ```
 
 **改善箇所**:
-- `updateRankings()` で `resetCanvasContext()` を使用
-- 魔法の数字（3、10）を定数化
-- カラー定義を一元管理
+
+-   `updateRankings()` で `resetCanvasContext()` を使用
+-   魔法の数字（3、10）を定数化
+-   カラー定義を一元管理
 
 **メリット**:
-- DRY原則に従う
-- 保守性向上（色変更は定数変更のみ）
-- 値の意味が明確化
+
+-   DRY 原則に従う
+-   保守性向上（色変更は定数変更のみ）
+-   値の意味が明確化
 
 ---
 
@@ -176,19 +193,19 @@ function getDefaultChartOptions() {
         maintainAspectRatio: false,
         plugins: {
             legend: {
-                position: 'bottom',
-                labels: { color: '#ffffff' }
-            }
-        }
+                position: "bottom",
+                labels: {color: "#ffffff"},
+            },
+        },
     };
 }
 
 function createDoughnutChart(ctx, labels, data, backgroundColor, tooltipCallback) {
     return new Chart(ctx, {
-        type: 'doughnut',
+        type: "doughnut",
         data: {
             labels: labels,
-            datasets: [{ data, backgroundColor }]
+            datasets: [{data, backgroundColor}],
         },
         options: {
             ...getDefaultChartOptions(),
@@ -196,42 +213,51 @@ function createDoughnutChart(ctx, labels, data, backgroundColor, tooltipCallback
             plugins: {
                 ...getDefaultChartOptions().plugins,
                 tooltip: {
-                    callbacks: { label: tooltipCallback }
-                }
-            }
-        }
+                    callbacks: {label: tooltipCallback},
+                },
+            },
+        },
     });
 }
 ```
 
 **使用例（改善前）**:
+
 ```javascript
 // ~30行の冗長なコード
-AppState.charts.winsChart = new Chart(winsChartCtx.getContext('2d'), {
-    type: 'doughnut',
-    data: { /* ... */ },
-    options: { /* 長い設定 */ }
+AppState.charts.winsChart = new Chart(winsChartCtx.getContext("2d"), {
+    type: "doughnut",
+    data: {
+        /* ... */
+    },
+    options: {
+        /* 長い設定 */
+    },
 });
 ```
 
 **使用例（改善後）**:
+
 ```javascript
 // ~5行に削減
 AppState.charts.winsChart = createDoughnutChart(
-    winsChartCtx.getContext('2d'),
-    winsSorted.map(p => p.name),
-    winsSorted.map(p => p.wins),
+    winsChartCtx.getContext("2d"),
+    winsSorted.map((p) => p.name),
+    winsSorted.map((p) => p.wins),
     CONSTANTS.CHART_COLORS.palette,
-    (context) => { /* tooltip */ }
+    (context) => {
+        /* tooltip */
+    }
 );
 ```
 
-**削減**: ~50行のコード削減
+**削減**: ~50 行のコード削減
 
 **メリット**:
-- 新規チャート追加時の開発速度向上
-- Chart 設定の一貫性確保
-- 保守性向上
+
+-   新規チャート追加時の開発速度向上
+-   Chart 設定の一貫性確保
+-   保守性向上
 
 ---
 
@@ -239,37 +265,39 @@ AppState.charts.winsChart = createDoughnutChart(
 
 ### リファクタリング前後の比較
 
-| 指標 | 改善前 | 改善後 | 改善度 |
-|------|--------|--------|--------|
-| 総行数 | 1,401行 | 1,266行 | **9.6% 削減** |
-| グローバル変数 | 9個 | 1個 | **88.9% 削減** |
-| インライン onclick | 3個 | 0個 | **100% 削減** |
-| Chart テンプレート | なし | あり | **新規追加** |
-| 定数化 | なし | あり | **新規追加** |
+| 指標               | 改善前   | 改善後   | 改善度         |
+| ------------------ | -------- | -------- | -------------- |
+| 総行数             | 1,401 行 | 1,266 行 | **9.6% 削減**  |
+| グローバル変数     | 9 個     | 1 個     | **88.9% 削減** |
+| インライン onclick | 3 個     | 0 個     | **100% 削減**  |
+| Chart テンプレート | なし     | あり     | **新規追加**   |
+| 定数化             | なし     | あり     | **新規追加**   |
 
 ---
 
 ## 🚀 推奨される次ステップ
 
-### 中優先度（2-3週間で実装推奨）
+### 中優先度（2-3 週間で実装推奨）
 
-1. **HTML インラインスタイル削除** (推定 2-3時間)
-   - `style=` 属性をCSSクラスに移行
-   - `.filter-controls`, `.chart-container-small` などクラスを追加
+1. **HTML インラインスタイル削除** (推定 2-3 時間)
 
-2. **長い関数の分割** (推定 4-5時間)
-   - `updateRankings()` (170行) を分割
-   - `updateGamesList()` (70行) を分割
-   - `recalculateStats()` (50行) を分割
+    - `style=` 属性を CSS クラスに移行
+    - `.filter-controls`, `.chart-container-small` などクラスを追加
 
-3. **ユーティリティ関数を utils.js に分離** (推定 2-3時間)
-   - `formatDate()`, `formatDuration()`, `percentageString()` を `utils.js` に移行
+2. **長い関数の分割** (推定 4-5 時間)
 
-### 低優先度（1か月以降）
+    - `updateRankings()` (170 行) を分割
+    - `updateGamesList()` (70 行) を分割
+    - `recalculateStats()` (50 行) を分割
 
-- CSS の BEM 命名規則適用
-- エラーハンドリング統一
-- テスト導入（Jest/Vitest）
+3. **ユーティリティ関数を utils.js に分離** (推定 2-3 時間)
+    - `formatDate()`, `formatDuration()`, `percentageString()` を `utils.js` に移行
+
+### 低優先度（1 か月以降）
+
+-   CSS の BEM 命名規則適用
+-   エラーハンドリング統一
+-   テスト導入（Jest/Vitest）
 
 ---
 
@@ -283,12 +311,13 @@ AppState.charts.winsChart = createDoughnutChart(
 
 ## ✨ まとめ
 
-**高優先度リファクタリング 4項目を完全実装し、約135行（9.6%）のコード削減を達成しました。**
+**高優先度リファクタリング 4 項目を完全実装し、約 135 行（9.6%）のコード削減を達成しました。**
 
 主な成果:
-- ✅ グローバル汚染を 9個 → 1個に集約
-- ✅ イベント管理を一元化（セキュリティ向上）
-- ✅ 定数化と関数化により保守性向上
-- ✅ Chart 設定をテンプレート化
+
+-   ✅ グローバル汚染を 9 個 → 1 個に集約
+-   ✅ イベント管理を一元化（セキュリティ向上）
+-   ✅ 定数化と関数化により保守性向上
+-   ✅ Chart 設定をテンプレート化
 
 コード品質が大幅に向上し、今後の機能追加・保守がより容易になりました。

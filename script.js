@@ -189,15 +189,89 @@ function setupEventListeners() {
         });
     }
 
-    // フィルターボタン
+    // ===== フィルタリング方式の切り替え =====
+    const filterModeRadios = document.querySelectorAll('input[name="filterMode"]');
+    filterModeRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const mode = e.target.value;
+            const dateTimeSection = document.getElementById('dateTimeFilterSection');
+            const gameCountSection = document.getElementById('gameCountFilterSection');
+
+            if (mode === 'datetime') {
+                dateTimeSection.style.display = '';
+                gameCountSection.style.display = 'none';
+            } else if (mode === 'gamecount') {
+                dateTimeSection.style.display = 'none';
+                gameCountSection.style.display = '';
+            }
+        });
+    });
+
+    // ===== 日時フィルタリングのボタン =====
     const applyFiltersBtn = document.getElementById('applyFiltersBtn');
     if (applyFiltersBtn) {
-        applyFiltersBtn.addEventListener('click', applyFilters);
+        applyFiltersBtn.addEventListener('click', () => {
+            applyFilters();
+        });
     }
 
     const clearFiltersBtn = document.getElementById('clearFiltersBtn');
     if (clearFiltersBtn) {
         clearFiltersBtn.addEventListener('click', clearFilters);
+    }
+
+    // ===== 試合数フィルタリングのボタン =====
+    const applyGameCountFiltersBtn = document.getElementById('applyGameCountFiltersBtn');
+    if (applyGameCountFiltersBtn) {
+        applyGameCountFiltersBtn.addEventListener('click', () => {
+            filterByGameCountInput();
+        });
+    }
+
+    const clearGameCountFiltersBtn = document.getElementById('clearGameCountFiltersBtn');
+    if (clearGameCountFiltersBtn) {
+        clearGameCountFiltersBtn.addEventListener('click', () => {
+            clearFilters();
+        });
+    }
+
+    // 直近試合数のボタン
+    const incGameCountBtn = document.getElementById('incGameCountBtn');
+    if (incGameCountBtn) {
+        incGameCountBtn.addEventListener('click', () => {
+            const input = document.getElementById('gameCountInput');
+            input.value = Math.max(1, (parseInt(input.value) || 0) + 1);
+        });
+    }
+
+    const decGameCountBtn = document.getElementById('decGameCountBtn');
+    if (decGameCountBtn) {
+        decGameCountBtn.addEventListener('click', () => {
+            const input = document.getElementById('gameCountInput');
+            input.value = Math.max(1, (parseInt(input.value) || 0) - 1);
+        });
+    }
+
+    // 直近試合数の入力欄 - Enterキーで適用
+    const gameCountInput = document.getElementById('gameCountInput');
+    if (gameCountInput) {
+        gameCountInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                filterByGameCountInput();
+            }
+        });
+    }
+
+    // ===== クイックフィルタードロップダウン（日時フィルタ用） =====
+    const quickFilterSelect = document.getElementById('quickFilterSelect');
+    if (quickFilterSelect) {
+        quickFilterSelect.addEventListener('change', function () {
+            const value = this.value;
+            if (!value) return;
+
+            // 時間フィルター
+            filterByHours(parseInt(value));
+        });
     }
 }
 
@@ -413,9 +487,9 @@ function renderCharts() {
 function renderRoleAnalysisChart() {
     const ctx = document.getElementById('roleAnalysisChart').getContext('2d');
 
-    // ロール別勝率を集計
+    // ロール別勝率を集計（フィルタリング済みデータを使用）
     const roleStats = {};
-    AppState.gameData.forEach(game => {
+    AppState.filteredGameData.forEach(game => {
         game.players.forEach(player => {
             const role = player.main_role;
             if (!roleStats[role]) {
@@ -630,7 +704,8 @@ function updateRankings() {
 
 function updateRoleAnalysis() {
     const roleStats = {};
-    AppState.gameData.forEach(game => {
+    // フィルタリング済みゲームデータを使用
+    AppState.filteredGameData.forEach(game => {
         game.players.forEach(player => {
             const role = player.main_role;
             if (!roleStats[role]) {
@@ -668,8 +743,8 @@ function updateGamesList() {
     const tbody = document.getElementById('gamesBody');
     tbody.innerHTML = '';
 
-    // 逆順（最新から表示）
-    AppState.gameData.slice().reverse().forEach(game => {
+    // 逆順（最新から表示）、フィルタリング済みデータを使用
+    AppState.filteredGameData.slice().reverse().forEach(game => {
         const row = document.createElement('tr');
         const duration = formatDuration(game.start_time, game.end_time);
         const playerNames = game.players.map(p => p.player_name).join(', ');
@@ -743,19 +818,36 @@ function initializeFilters() {
         document.getElementById('filterEndDate').value = formatDateTime(maxDate);
     }
 
+    // 直近試合数のデフォルト値
+    const gameCountInput = document.getElementById('gameCountInput');
+    if (gameCountInput) {
+        gameCountInput.value = '20';
+    }
+
     // クイックフィルタードロップダウンのデフォルト値を「直近24時間」に設定
     document.getElementById('quickFilterSelect').value = '24';
 
     // クイックフィルタードロップダウンのchange イベントリスナーを追加
     document.getElementById('quickFilterSelect').addEventListener('change', function () {
-        const hours = this.value;
-        if (hours) {
-            filterByHours(parseInt(hours));
-        }
-    });
-}
+        const value = this.value;
+        if (!value) return;
 
-function filterByHours(hours) {
+        // 時間フィルター
+        filterByHours(parseInt(value));
+    });
+
+    // 「直近試合で適用」ボタン機能
+    const applyGameCountBtn = document.getElementById('applyFiltersBtn');
+    if (applyGameCountBtn) {
+        // 元のクリックハンドラを保持して、gameCountInputがフォーカスされている時の処理を追加
+        gameCountInput.addEventListener('focus', () => {
+            applyGameCountBtn.dataset.gameCountMode = 'true';
+        });
+        gameCountInput.addEventListener('blur', () => {
+            applyGameCountBtn.dataset.gameCountMode = 'false';
+        });
+    }
+} function filterByHours(hours) {
     // 現在時刻
     const now = new Date();
     // 指定時間前
@@ -777,6 +869,54 @@ function filterByHours(hours) {
 
     // フィルターを即座に適用
     applyFilters();
+}
+
+function filterByGameCount(gameCount) {
+    // 最新ゲーム数を取得（降順にソート）
+    const sortedGames = AppState.gameData.slice().reverse();
+
+    if (sortedGames.length <= gameCount) {
+        // ゲーム数がフィルター数以下の場合は全データ
+        AppState.filteredGameData = AppState.gameData;
+    } else {
+        // 最新のゲーム数をスライス
+        const recentGames = sortedGames.slice(0, gameCount);
+        // 元の時系列順に戻す
+        AppState.filteredGameData = recentGames.reverse();
+    }
+
+    // フィルター条件をクリア（日時フィルターは無視）
+    AppState.filterStartDate = null;
+    AppState.filterEndDate = null;
+
+    // 入力欄もクリア
+    document.getElementById('filterStartDate').value = '';
+    document.getElementById('filterEndDate').value = '';
+
+    // フィルタ適用後、統計を再計算
+    recalculateStats();
+    showToast(`直近${gameCount}試合でフィルタリングしました`, 'success');
+}
+
+// gameCountInput の値を読み込んでフィルタリングを実行
+function filterByGameCountInput() {
+    const gameCountInput = document.getElementById('gameCountInput');
+    if (!gameCountInput) {
+        console.error('gameCountInput element not found');
+        return;
+    }
+
+    const value = parseInt(gameCountInput.value);
+
+    // バリデーション
+    if (isNaN(value) || value < 1) {
+        alert('1以上の数値を入力してください');
+        gameCountInput.value = '1';
+        return;
+    }
+
+    // フィルタリングを実行
+    filterByGameCount(value);
 }
 
 function applyFilters() {
@@ -808,6 +948,7 @@ function clearFilters() {
     document.getElementById('filterStartDate').value = '';
     document.getElementById('filterEndDate').value = '';
     document.getElementById('quickFilterSelect').value = '';
+    document.getElementById('gameCountInput').value = '20';
 
     AppState.filterStartDate = null;
     AppState.filterEndDate = null;

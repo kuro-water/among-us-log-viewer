@@ -32,9 +32,7 @@
                         <p class="mb-2"><strong>game_history.jsonlをここにドラッグ&ドロップ</strong></p>
                         <p class="text-muted">または下のボタンをクリックして選択</p>
                         <input type="file" id="fileInput" accept=".jsonl" style="display: none" />
-                        <button class="btn btn-primary mt-3" id="selectFileBtn">
-                            ファイルを選択
-                        </button>
+                        <button class="btn btn-primary mt-3" id="selectFileBtn">ファイルを選択</button>
                     </div>
                     <div id="uploadStatus" class="mt-3"></div>
                 </div>
@@ -62,7 +60,39 @@
                 <div class="card mb-4">
                     <div class="card-header">🔍 フィルタリング</div>
                     <div class="card-body">
-                        <div class="row g-3">
+                        <!-- フィルタリング方式の選択 -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold">フィルタリング方式を選択:</label>
+                                <div class="btn-group w-100" role="group">
+                                    <input
+                                        type="radio"
+                                        class="btn-check"
+                                        name="filterMode"
+                                        id="filterModeDateTime"
+                                        value="datetime"
+                                        checked
+                                    />
+                                    <label class="btn btn-outline-primary" for="filterModeDateTime"
+                                        >📅 日時でフィルタリング</label
+                                    >
+
+                                    <input
+                                        type="radio"
+                                        class="btn-check"
+                                        name="filterMode"
+                                        id="filterModeGameCount"
+                                        value="gamecount"
+                                    />
+                                    <label class="btn btn-outline-primary" for="filterModeGameCount"
+                                        >🎮 直近試合でフィルタリング</label
+                                    >
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 日時フィルタリングセクション（デフォルト表示） -->
+                        <div id="dateTimeFilterSection" class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">開始日時</label>
                                 <input type="datetime-local" id="filterStartDate" class="form-control" />
@@ -73,7 +103,8 @@
                             </div>
                             <div class="col-md-12" style="display: flex; align-items: flex-end; gap: 10px">
                                 <select id="quickFilterSelect" class="form-select" style="flex: 1">
-                                    <option value="">直近時間を選択...</option>
+                                    <option value="">フィルターを選択...</option>
+                                    <option value="">--- 直近時間 ---</option>
                                     <option value="3">直近3時間</option>
                                     <option value="6">直近6時間</option>
                                     <option value="12">直近12時間</option>
@@ -86,12 +117,42 @@
                                     <option value="168">直近7日</option>
                                     <option value="720">直近30日</option>
                                 </select>
-                                <button class="btn btn-primary" id="applyFiltersBtn" style="flex: 1">
-                                    フィルターを適用
-                                </button>
-                                <button class="btn btn-secondary" id="clearFiltersBtn" style="flex: 1">
-                                    リセット
-                                </button>
+                                <button class="btn btn-primary" id="applyFiltersBtn">フィルターを適用</button>
+                                <button class="btn btn-secondary" id="clearFiltersBtn">リセット</button>
+                            </div>
+                        </div>
+
+                        <!-- 試合数フィルタリングセクション（非表示） -->
+                        <div id="gameCountFilterSection" style="display: none" class="row g-3">
+                            <div class="col-md-12">
+                                <label class="form-label">直近試合数</label>
+                                <div style="display: flex; align-items: center; gap: 10px">
+                                    <button
+                                        class="btn btn-sm btn-outline-secondary"
+                                        id="decGameCountBtn"
+                                        style="padding: 0.25rem 0.5rem; font-size: 0.85rem"
+                                    >
+                                        -1
+                                    </button>
+                                    <input
+                                        type="number"
+                                        id="gameCountInput"
+                                        class="form-control"
+                                        min="1"
+                                        style="width: 80px; padding: 0.5rem; text-align: center"
+                                    />
+                                    <button
+                                        class="btn btn-sm btn-outline-secondary"
+                                        id="incGameCountBtn"
+                                        style="padding: 0.25rem 0.5rem; font-size: 0.85rem"
+                                    >
+                                        +1
+                                    </button>
+                                    <button class="btn btn-primary" id="applyGameCountFiltersBtn">
+                                        フィルターを適用
+                                    </button>
+                                    <button class="btn btn-secondary" id="clearGameCountFiltersBtn">リセット</button>
+                                </div>
                             </div>
                         </div>
                     </div>
