@@ -4,11 +4,13 @@
     --dark-bg: #0a0e27;
     --card-bg: #1a1f3a;
     --text-primary: #ffffff;
-    --text-secondary: #b0b8c1;
+    --text-secondary: #9e9e9e;
     --success: #00d084;
     --danger: #ff2e63;
     --warning: #ffa502;
-    --info: #08fdd8;
+    --info: #00ab6d;
+    --bs-body-bg: #d1d1d1;
+    --bs-body-color: #000000;
 }
 
 * {
