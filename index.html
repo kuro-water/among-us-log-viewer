@@ -52,20 +52,47 @@
                     </div>
                     <div class="col-md-6 col-lg-3">
                         <div class="stat-box">
-                            <div class="stat-label">総勝利数</div>
-                            <div class="stat-value" id="totalWins">0</div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-lg-3">
-                        <div class="stat-box">
-                            <div class="stat-label">全体勝率</div>
-                            <div class="stat-value" id="overallWinRate">0%</div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-lg-3">
-                        <div class="stat-box">
                             <div class="stat-label">プレイヤー数</div>
                             <div class="stat-value" id="totalPlayers">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- フィルタリング -->
+                <div class="card mb-4">
+                    <div class="card-header">🔍 フィルタリング</div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">開始日時</label>
+                                <input type="datetime-local" id="filterStartDate" class="form-control" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">終了日時</label>
+                                <input type="datetime-local" id="filterEndDate" class="form-control" />
+                            </div>
+                            <div class="col-md-12" style="display: flex; align-items: flex-end; gap: 10px">
+                                <select id="quickFilterSelect" class="form-select" style="flex: 1">
+                                    <option value="">直近時間を選択...</option>
+                                    <option value="3">直近3時間</option>
+                                    <option value="6">直近6時間</option>
+                                    <option value="12">直近12時間</option>
+                                    <option value="24">直近24時間</option>
+                                    <option value="48">直近2日</option>
+                                    <option value="72">直近3日</option>
+                                    <option value="96">直近4日</option>
+                                    <option value="120">直近5日</option>
+                                    <option value="144">直近6日</option>
+                                    <option value="168">直近7日</option>
+                                    <option value="720">直近30日</option>
+                                </select>
+                                <button class="btn btn-primary" onclick="applyFilters()" style="flex: 1">
+                                    フィルターを適用
+                                </button>
+                                <button class="btn btn-secondary" onclick="clearFilters()" style="flex: 1">
+                                    リセット
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

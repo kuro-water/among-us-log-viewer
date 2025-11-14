@@ -92,6 +92,50 @@ header h1 {
     border-color: #ff1749;
 }
 
+.btn-secondary {
+    background-color: var(--text-secondary);
+    border-color: var(--text-secondary);
+    color: var(--dark-bg);
+    font-weight: 600;
+}
+
+.btn-secondary:hover {
+    background-color: #9fa5b0;
+    border-color: #9fa5b0;
+}
+
+.btn-info {
+    background-color: var(--info);
+    border-color: var(--info);
+    color: var(--dark-bg);
+    font-weight: 600;
+}
+
+.btn-info:hover {
+    background-color: #06d4b8;
+    border-color: #06d4b8;
+}
+
+.form-control,
+.form-select {
+    background-color: rgba(26, 31, 58, 0.8) !important;
+    border-color: rgba(8, 253, 216, 0.3) !important;
+    color: var(--text-primary) !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background-color: rgba(26, 31, 58, 1) !important;
+    border-color: var(--secondary-color) !important;
+    box-shadow: 0 0 0 0.2rem rgba(8, 253, 216, 0.25) !important;
+    color: var(--text-primary) !important;
+}
+
+.form-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
 .badge {
     font-size: 0.85rem;
     padding: 0.5rem 0.75rem;

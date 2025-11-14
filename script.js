@@ -3,6 +3,9 @@ let gameData = [];
 let playerStats = {};
 let charts = {};
 let allRoles = []; // すべてのロール一覧
+let filteredGameData = []; // フィルタリング済みゲームデータ
+let filterStartDate = null;
+let filterEndDate = null;
 
 // ================== ユーティリティ関数 ==================
 function showSpinner() {
@@ -48,6 +51,87 @@ function percentageString(value, total) {
     return ((value / total) * 100).toFixed(1) + '%';
 }
 
+// ================== 起動時の自動読み込み ==================
+window.addEventListener('DOMContentLoaded', () => {
+    console.log('DOMContentLoaded イベント発火');
+    console.log('ページのプロトコル:', window.location.protocol);
+
+    // file:// プロトコルの場合はfetchが使えないため、代替手段を使用
+    if (window.location.protocol === 'file:') {
+        console.log('file:// プロトコルで実行されています。自動読み込みはスキップします。');
+        console.log('HTTPサーバーで実行してください (例: python -m http.server 8000)');
+    } else {
+        tryAutoLoadGameHistory();
+    }
+});
+
+async function tryAutoLoadGameHistory() {
+    console.log('tryAutoLoadGameHistory() 実行開始');
+    try {
+        console.log('game_history.jsonl をフェッチ中...');
+        const response = await fetch('game_history.jsonl');
+        console.log('レスポンスステータス:', response.status, response.statusText);
+
+        if (response.ok) {
+            console.log('ファイルが見つかりました。テキスト読み込み中...');
+            const text = await response.text();
+            console.log('ファイルサイズ:', text.length, '文字');
+            loadGameHistoryFromText(text);
+        } else {
+            console.log('ファイルが見つかりません。ステータス:', response.status);
+        }
+    } catch (error) {
+        // ファイルが見つからない場合はファイル選択画面のままにする
+        console.log('game_history.jsonlが見つかりません。エラー:', error.message);
+    }
+} function loadGameHistoryFromText(text) {
+    console.log('loadGameHistoryFromText() 実行開始');
+    showSpinner();
+    try {
+        const lines = text.trim().split('\n').filter(line => line.length > 0);
+        console.log('パースされた行数:', lines.length);
+
+        gameData = [];
+        let parseErrorCount = 0;
+        for (const line of lines) {
+            try {
+                gameData.push(JSON.parse(line));
+            } catch (e) {
+                parseErrorCount++;
+                console.error('行のパースエラー:', e);
+            }
+        }
+
+        console.log('正常にパースされたゲーム数:', gameData.length);
+        if (parseErrorCount > 0) {
+            console.log('パースエラー数:', parseErrorCount);
+        }
+
+        if (gameData.length === 0) {
+            console.log('有効なゲームデータがありません');
+            showToast('有効なゲームデータが見つかりません', 'danger');
+            hideSpinner();
+            return;
+        }
+
+        console.log('データ分析開始');
+        // データ分析
+        analyzeData();
+
+        console.log('UIを更新中');
+        // UIを更新
+        document.getElementById('uploadCard').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+
+        console.log('読み込み完了');
+        showToast(`${gameData.length}件のゲームデータを自動読み込みしました`, 'success');
+    } catch (error) {
+        console.error('ファイル読み込みエラー:', error);
+        showToast('ファイル読み込みエラー: ' + error.message, 'danger');
+    }
+    hideSpinner();
+}
+
 // ================== ファイルアップロード ==================
 const uploadZone = document.getElementById('uploadZone');
 const fileInput = document.getElementById('fileInput');
@@ -87,35 +171,10 @@ async function handleFileSelect(file) {
     showSpinner();
     try {
         const text = await file.text();
-        const lines = text.trim().split('\n').filter(line => line.length > 0);
-
-        gameData = [];
-        for (const line of lines) {
-            try {
-                gameData.push(JSON.parse(line));
-            } catch (e) {
-                console.error('行のパースエラー:', e);
-            }
-        }
-
-        if (gameData.length === 0) {
-            showToast('有効なゲームデータが見つかりません', 'danger');
-            hideSpinner();
-            return;
-        }
-
-        // データ分析
-        analyzeData();
-
-        // UIを更新
-        document.getElementById('uploadCard').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
-
-        showToast(`${gameData.length}件のゲームデータを読み込みました`, 'success');
+        loadGameHistoryFromText(text);
     } catch (error) {
         console.error('ファイル読み込みエラー:', error);
         showToast('ファイル読み込みエラー: ' + error.message, 'danger');
-    } finally {
         hideSpinner();
     }
 }
@@ -176,6 +235,10 @@ function analyzeData() {
     });
     allRoles.sort(); // アルファベット順にソート
 
+    // フィルタリングを初期化
+    filteredGameData = gameData;
+    initializeFilters();
+
     // サマリー更新
     updateSummary();
 
@@ -196,22 +259,10 @@ function analyzeData() {
 }
 
 function updateSummary() {
-    const totalGames = gameData.length;
-    let totalWins = 0;
+    const totalGames = filteredGameData.length;
     let playerCount = Object.keys(playerStats).length;
 
-    Object.values(playerStats).forEach(player => {
-        totalWins += player.wins;
-    });
-
-    // 注意: 複数チームの勝利があるため、全体勝率は個別プレイヤーの勝率平均
-    const avgWinRate = playerCount > 0
-        ? (Object.values(playerStats).reduce((sum, p) => sum + (p.wins / p.games), 0) / playerCount) * 100
-        : 0;
-
     document.getElementById('totalGames').textContent = totalGames;
-    document.getElementById('totalWins').textContent = totalWins;
-    document.getElementById('overallWinRate').textContent = avgWinRate.toFixed(1) + '%';
     document.getElementById('totalPlayers').textContent = playerCount;
 }
 
@@ -636,3 +687,149 @@ function updateGamesList() {
         tbody.appendChild(row);
     });
 }
+
+// ================== フィルタリング関数 ==================
+function initializeFilters() {
+    // ローカルタイムゾーンの日時文字列を生成
+    const formatDateTime = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+
+    // 日付入力のデフォルト値を設定（全データを表示）
+    if (gameData.length > 0) {
+        const minDate = new Date(gameData[0].start_time);
+        const maxDate = new Date(gameData[gameData.length - 1].start_time);
+
+        document.getElementById('filterStartDate').value = formatDateTime(minDate);
+        document.getElementById('filterEndDate').value = formatDateTime(maxDate);
+    }
+
+    // クイックフィルタードロップダウンのデフォルト値を「直近24時間」に設定
+    document.getElementById('quickFilterSelect').value = '24';
+
+    // クイックフィルタードロップダウンのchange イベントリスナーを追加
+    document.getElementById('quickFilterSelect').addEventListener('change', function () {
+        const hours = this.value;
+        if (hours) {
+            filterByHours(parseInt(hours));
+        }
+    });
+}
+
+function filterByHours(hours) {
+    // 現在時刻
+    const now = new Date();
+    // 指定時間前
+    const past = new Date(now - hours * 60 * 60 * 1000);
+
+    // ローカルタイムゾーンの日時文字列を生成
+    const formatDateTime = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+
+    // フィルター入力欄に値を設定
+    document.getElementById('filterStartDate').value = formatDateTime(past);
+    document.getElementById('filterEndDate').value = formatDateTime(now);
+
+    // フィルターを即座に適用
+    applyFilters();
+}
+
+function applyFilters() {
+    const startDateInput = document.getElementById('filterStartDate').value;
+    const endDateInput = document.getElementById('filterEndDate').value;
+
+    // フィルタ条件を設定
+    filterStartDate = startDateInput ? new Date(startDateInput) : null;
+    filterEndDate = endDateInput ? new Date(endDateInput) : null;
+
+    // ゲームデータをフィルタリング
+    filteredGameData = gameData.filter(game => {
+        const gameDate = new Date(game.start_time);
+
+        // 日付フィルタ
+        if (filterStartDate && gameDate < filterStartDate) return false;
+        if (filterEndDate && gameDate > filterEndDate) return false;
+
+        return true;
+    });
+
+    // フィルタ適用後、統計を再計算
+    recalculateStats();
+    showToast(`${filteredGameData.length}件のゲームでフィルタリングしました`, 'success');
+}
+
+function clearFilters() {
+    // フィルター条件をリセット
+    document.getElementById('filterStartDate').value = '';
+    document.getElementById('filterEndDate').value = '';
+    document.getElementById('quickFilterSelect').value = '';
+
+    filterStartDate = null;
+    filterEndDate = null;
+    filteredGameData = gameData;
+
+    // 統計を再計算
+    recalculateStats();
+    showToast('フィルターをリセットしました', 'success');
+}
+
+function recalculateStats() {
+    // フィルター済みデータで統計を再計算
+    playerStats = {};
+
+    filteredGameData.forEach(game => {
+        game.players.forEach(player => {
+            const playerName = player.player_name;
+            if (!playerStats[playerName]) {
+                playerStats[playerName] = {
+                    name: playerName,
+                    uuid: player.player_uuid,
+                    games: 0,
+                    wins: 0,
+                    deaths: 0,
+                    roleStats: {}
+                };
+            }
+
+            const stats = playerStats[playerName];
+            stats.games++;
+
+            if (player.is_winner) {
+                stats.wins++;
+            }
+
+            if (player.is_dead) {
+                stats.deaths++;
+            }
+
+            const role = player.main_role;
+            if (!stats.roleStats[role]) {
+                stats.roleStats[role] = { games: 0, wins: 0 };
+            }
+            stats.roleStats[role].games++;
+            if (player.is_winner) {
+                stats.roleStats[role].wins++;
+            }
+        });
+    });
+
+    // サマリー・チャート・テーブルを更新
+    updateSummary();
+    renderCharts();
+    updatePlayerStatsTable();
+    updateRankings();
+    updateRoleAnalysis();
+    updateGamesList();
+}
+
