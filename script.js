@@ -282,191 +282,7 @@ function renderCharts() {
     });
     charts = {};
 
-    renderWinRateChart();
-    renderMapStatsChart();
-    renderTimelineChart();
     renderRoleAnalysisChart();
-}
-
-function renderWinRateChart() {
-    const ctx = document.getElementById('winRateChart').getContext('2d');
-
-    // プレイヤー別勝率を集計
-    const playerData = Object.values(playerStats)
-        .sort((a, b) => b.games - a.games || b.wins - a.wins)
-        .slice(0, 15); // TOP 15プレイヤー
-
-    const playerNames = playerData.map(p => p.name);
-    const winRates = playerData.map(p => ((p.wins / p.games) * 100).toFixed(1));
-
-    if (charts.winRate) {
-        charts.winRate.destroy();
-    }
-
-    charts.winRate = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: playerNames,
-            datasets: [{
-                label: '勝率 (%)',
-                data: winRates,
-                backgroundColor: 'rgba(8, 253, 216, 0.6)',
-                borderColor: '#08fdd8',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            indexAxis: 'x',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    labels: { color: '#ffffff' }
-                }
-            },
-            scales: {
-                y: {
-                    ticks: { color: '#e0e0e0' },
-                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                    max: 100
-                },
-                x: {
-                    ticks: { color: '#e0e0e0' },
-                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                }
-            }
-        }
-    });
-}
-
-function renderMapStatsChart() {
-    const ctx = document.getElementById('mapStatsChart').getContext('2d');
-
-    const mapStats = {};
-    gameData.forEach(game => {
-        if (!mapStats[game.map_name]) {
-            mapStats[game.map_name] = 0;
-        }
-        mapStats[game.map_name]++;
-    });
-
-    const labels = Object.keys(mapStats);
-    const data = Object.values(mapStats);
-
-    if (charts.mapStats) {
-        charts.mapStats.destroy();
-    }
-
-    charts.mapStats = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'ゲーム数',
-                data: data,
-                backgroundColor: 'rgba(8, 253, 216, 0.6)',
-                borderColor: '#08fdd8',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    labels: { color: '#ffffff' }
-                }
-            },
-            scales: {
-                x: {
-                    ticks: { color: '#e0e0e0' },
-                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                },
-                y: {
-                    ticks: { color: '#e0e0e0' },
-                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                }
-            }
-        }
-    });
-}
-
-function renderTimelineChart() {
-    const ctx = document.getElementById('timelineChart').getContext('2d');
-
-    // 時系列でゲーム結果を集計（チーム別勝者追跡）
-    const timeSeries = [];
-    const cumulativeWins = {};
-
-    gameData.forEach(game => {
-        const timestamp = new Date(game.start_time);
-        game.players.forEach(player => {
-            const playerName = player.player_name;
-            if (!cumulativeWins[playerName]) {
-                cumulativeWins[playerName] = 0;
-            }
-            if (player.is_winner) {
-                cumulativeWins[playerName]++;
-            }
-        });
-
-        // 最初の3プレイヤーで表示（オーバーヘッド回避）
-        const topPlayers = Object.entries(cumulativeWins)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 3);
-
-        timeSeries.push({
-            timestamp,
-            data: Object.fromEntries(topPlayers)
-        });
-    });
-
-    const topPlayerNames = Object.keys(cumulativeWins)
-        .sort((a, b) => cumulativeWins[b] - cumulativeWins[a])
-        .slice(0, 3);
-
-    const labels = timeSeries.map((_, i) => `Game ${i + 1}`);
-    const datasets = topPlayerNames.map((playerName, idx) => {
-        const colors = ['#00d084', '#08fdd8', '#ff2e63'];
-        return {
-            label: playerName,
-            data: timeSeries.map(ts => ts.data[playerName] || 0),
-            borderColor: colors[idx % colors.length],
-            backgroundColor: colors[idx % colors.length] + '20',
-            tension: 0.4,
-            fill: false,
-            borderWidth: 2
-        };
-    });
-
-    if (charts.timeline) {
-        charts.timeline.destroy();
-    }
-
-    charts.timeline = new Chart(ctx, {
-        type: 'line',
-        data: { labels, datasets },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    labels: { color: '#ffffff' }
-                }
-            },
-            scales: {
-                x: {
-                    ticks: { color: '#e0e0e0' },
-                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                },
-                y: {
-                    ticks: { color: '#e0e0e0' },
-                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                }
-            }
-        }
-    });
 }
 
 function renderRoleAnalysisChart() {
@@ -497,18 +313,17 @@ function renderRoleAnalysisChart() {
     }
 
     charts.roleAnalysis = new Chart(ctx, {
-        type: 'bar',
+        type: 'doughnut',
         data: {
-            labels: roles,
+            labels: roles.map(role => `${role} (${roleStats[role].wins}/${roleStats[role].games})`),
             datasets: [{
-                label: '勝率 (%)',
                 data: winRates,
-                backgroundColor: roles.map((role, idx) => {
+                backgroundColor: roles.map((role) => {
                     if (role === 'Impostor') return 'rgba(255, 46, 99, 0.7)';
                     if (role === 'Crewmate') return 'rgba(0, 208, 132, 0.7)';
                     return 'rgba(8, 253, 216, 0.7)';
                 }),
-                borderColor: roles.map((role, idx) => {
+                borderColor: roles.map((role) => {
                     if (role === 'Impostor') return '#ff2e63';
                     if (role === 'Crewmate') return '#00d084';
                     return '#08fdd8';
@@ -517,23 +332,20 @@ function renderRoleAnalysisChart() {
             }]
         },
         options: {
-            indexAxis: 'x',
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
                 legend: {
+                    position: 'bottom',
                     labels: { color: '#ffffff' }
-                }
-            },
-            scales: {
-                y: {
-                    ticks: { color: '#e0e0e0' },
-                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                    max: 100
                 },
-                x: {
-                    ticks: { color: '#e0e0e0' },
-                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            const winRate = context.parsed;
+                            return context.label + ': 勝率 ' + winRate + '%';
+                        }
+                    }
                 }
             }
         }

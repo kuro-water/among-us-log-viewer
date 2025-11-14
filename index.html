@@ -122,28 +122,6 @@
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button
-                            class="nav-link"
-                            id="timeline-tab"
-                            data-bs-toggle="tab"
-                            data-bs-target="#timeline"
-                            role="tab"
-                        >
-                            📈 時系列
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button
-                            class="nav-link"
-                            id="ranking-tab"
-                            data-bs-toggle="tab"
-                            data-bs-target="#ranking"
-                            role="tab"
-                        >
-                            🏆 ランキング
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
                         <button class="nav-link" id="roles-tab" data-bs-toggle="tab" data-bs-target="#roles" role="tab">
                             🎯 ロール分析
                         </button>
@@ -158,62 +136,6 @@
                 <div class="tab-content mt-4">
                     <!-- 概要タブ -->
                     <div class="tab-pane fade show active" id="overview" role="tabpanel">
-                        <div class="row">
-                            <div class="col-lg-6">
-                                <div class="card">
-                                    <div class="card-header">プレイヤー別勝率</div>
-                                    <div class="card-body">
-                                        <div class="chart-container">
-                                            <canvas id="winRateChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-lg-6">
-                                <div class="card">
-                                    <div class="card-header">マップ別統計</div>
-                                    <div class="card-body">
-                                        <div class="chart-container">
-                                            <canvas id="mapStatsChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- プレイヤー統計タブ -->
-                    <div class="tab-pane fade" id="players" role="tabpanel">
-                        <div class="card">
-                            <div class="card-header">プレイヤー別統計</div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-hover" id="playerStatsTable">
-                                        <thead>
-                                            <!-- ヘッダーはscript.jsで動的生成 -->
-                                        </thead>
-                                        <tbody id="playerStatsBody"></tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 時系列タブ -->
-                    <div class="tab-pane fade" id="timeline" role="tabpanel">
-                        <div class="card">
-                            <div class="card-header">時系列ゲーム結果</div>
-                            <div class="card-body">
-                                <div class="chart-container">
-                                    <canvas id="timelineChart"></canvas>
-                                </div>
-                                <div id="timelineInfo" class="mt-3"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- ランキングタブ -->
-                    <div class="tab-pane fade" id="ranking" role="tabpanel">
                         <div class="row">
                             <div class="col-lg-6">
                                 <div class="card">
@@ -235,6 +157,23 @@
                                             <canvas id="winRateRankingChart"></canvas>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- プレイヤー統計タブ -->
+                    <div class="tab-pane fade" id="players" role="tabpanel">
+                        <div class="card">
+                            <div class="card-header">プレイヤー別統計</div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover" id="playerStatsTable">
+                                        <thead>
+                                            <!-- ヘッダーはscript.jsで動的生成 -->
+                                        </thead>
+                                        <tbody id="playerStatsBody"></tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -278,7 +217,7 @@
                                                 <th>ゲーム時間</th>
                                                 <th>参加プレイヤー</th>
                                                 <th>役職情報</th>
-                                                <th>時刻</th>
+                                                <th>開始時刻</th>
                                             </tr>
                                         </thead>
                                         <tbody id="gamesBody"></tbody>
