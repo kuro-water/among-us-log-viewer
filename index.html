@@ -1,325 +1,192 @@
 <!DOCTYPE html>
 <html lang="ja">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Among Us ゲーム履歴ビューワー</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-        <link rel="stylesheet" href="style.css" />
-        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
-    </head>
-    <body>
-        <header>
-            <div class="container-fluid">
-                <div class="row align-items-center">
-                    <div class="col">
-                        <h1>🎮 Among Us ゲーム履歴ビューワー</h1>
-                        <p class="mb-0" style="color: rgba(255, 255, 255, 0.9); font-size: 0.95rem">
-                            ゲーム統計分析 & ビジュアルダッシュボード
-                        </p>
-                    </div>
-                </div>
-            </div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AMONG US ゲーム統計分析</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-8">
+            <h1 class="text-4xl font-bold mb-2">AMONG US ゲーム統計分析</h1>
+            <p class="text-gray-600">プレイヤーとロールの詳細な統計情報</p>
         </header>
-
-        <div class="container-fluid">
-            <!-- アップロードセクション -->
-            <div class="card" id="uploadCard">
-                <div class="card-header"><span class="icon">📁</span> ゲーム履歴ファイルの読み込み</div>
-                <div class="card-body">
-                    <div class="upload-zone" id="uploadZone">
-                        <div class="icon-size">📤</div>
-                        <p class="mb-2"><strong>game_history.jsonlをここにドラッグ&ドロップ</strong></p>
-                        <p class="text-muted">または下のボタンをクリックして選択</p>
-                        <input type="file" id="fileInput" accept=".jsonl" style="display: none" />
-                        <button class="btn btn-primary mt-3" id="selectFileBtn">ファイルを選択</button>
-                    </div>
-                    <div id="uploadStatus" class="mt-3"></div>
+        
+        <!-- フィルターセクション -->
+        <div class="card mb-6">
+            <h2 class="section-title">フィルター</h2>
+            <div class="filter-section">
+                <div class="filter-group">
+                    <label>開始日時</label>
+                    <input type="datetime-local" id="startDate">
                 </div>
-            </div>
-
-            <!-- ダッシュボード（デフォルトは非表示） -->
-            <div id="dashboard" style="display: none">
-                <!-- サマリーカード -->
-                <div class="row mb-4">
-                    <div class="col-md-6 col-lg-3">
-                        <div class="stat-box">
-                            <div class="stat-label">総ゲーム数</div>
-                            <div class="stat-value" id="totalGames">0</div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-lg-3">
-                        <div class="stat-box">
-                            <div class="stat-label">プレイヤー数</div>
-                            <div class="stat-value" id="totalPlayers">0</div>
-                        </div>
+                <div class="filter-group">
+                    <label>終了日時</label>
+                    <input type="datetime-local" id="endDate">
+                </div>
+                <div class="filter-group">
+                    <label>最近のゲーム数</label>
+                    <div class="preset-buttons">
+                        <button class="btn-secondary" onclick="setRecentGames(10)">最新10</button>
+                        <button class="btn-secondary" onclick="setRecentGames(20)">最新20</button>
+                        <button class="btn-secondary" onclick="setRecentGames(50)">最新50</button>
+                        <button class="btn-secondary" onclick="setRecentGames(100)">最新100</button>
                     </div>
                 </div>
-
-                <!-- フィルタリング -->
-                <div class="card mb-4">
-                    <div class="card-header">🔍 フィルタリング</div>
-                    <div class="card-body">
-                        <!-- フィルタリング方式の選択 -->
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-12">
-                                <label class="form-label fw-bold">フィルタリング方式を選択:</label>
-                                <div class="btn-group w-100" role="group">
-                                    <input
-                                        type="radio"
-                                        class="btn-check"
-                                        name="filterMode"
-                                        id="filterModeDateTime"
-                                        value="datetime"
-                                        checked
-                                    />
-                                    <label class="btn btn-outline-primary" for="filterModeDateTime"
-                                        >📅 日時でフィルタリング</label
-                                    >
-
-                                    <input
-                                        type="radio"
-                                        class="btn-check"
-                                        name="filterMode"
-                                        id="filterModeGameCount"
-                                        value="gamecount"
-                                    />
-                                    <label class="btn btn-outline-primary" for="filterModeGameCount"
-                                        >🎮 直近試合でフィルタリング</label
-                                    >
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 日時フィルタリングセクション（デフォルト表示） -->
-                        <div id="dateTimeFilterSection" class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">開始日時</label>
-                                <input type="datetime-local" id="filterStartDate" class="form-control" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">終了日時</label>
-                                <input type="datetime-local" id="filterEndDate" class="form-control" />
-                            </div>
-                            <div class="col-md-12" style="display: flex; align-items: flex-end; gap: 10px">
-                                <select id="quickFilterSelect" class="form-select" style="flex: 1">
-                                    <option value="">フィルターを選択...</option>
-                                    <option value="">--- 直近時間 ---</option>
-                                    <option value="3">直近3時間</option>
-                                    <option value="6">直近6時間</option>
-                                    <option value="12">直近12時間</option>
-                                    <option value="24">直近24時間</option>
-                                    <option value="48">直近2日</option>
-                                    <option value="72">直近3日</option>
-                                    <option value="96">直近4日</option>
-                                    <option value="120">直近5日</option>
-                                    <option value="144">直近6日</option>
-                                    <option value="168">直近7日</option>
-                                    <option value="720">直近30日</option>
-                                </select>
-                                <button class="btn btn-primary" id="applyFiltersBtn">フィルターを適用</button>
-                                <button class="btn btn-secondary" id="clearFiltersBtn">リセット</button>
-                            </div>
-                        </div>
-
-                        <!-- 試合数フィルタリングセクション（非表示） -->
-                        <div id="gameCountFilterSection" style="display: none" class="row g-3">
-                            <div class="col-md-12">
-                                <label class="form-label">直近試合数</label>
-                                <div style="display: flex; align-items: center; gap: 10px">
-                                    <button
-                                        class="btn btn-sm btn-outline-secondary"
-                                        id="decGameCountBtn"
-                                        style="padding: 0.25rem 0.5rem; font-size: 0.85rem"
-                                    >
-                                        -1
-                                    </button>
-                                    <input
-                                        type="number"
-                                        id="gameCountInput"
-                                        class="form-control"
-                                        min="1"
-                                        style="width: 80px; padding: 0.5rem; text-align: center"
-                                    />
-                                    <button
-                                        class="btn btn-sm btn-outline-secondary"
-                                        id="incGameCountBtn"
-                                        style="padding: 0.25rem 0.5rem; font-size: 0.85rem"
-                                    >
-                                        +1
-                                    </button>
-                                    <button class="btn btn-primary" id="applyGameCountFiltersBtn">
-                                        フィルターを適用
-                                    </button>
-                                    <button class="btn btn-secondary" id="clearGameCountFiltersBtn">リセット</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="filter-group">
+                    <label>カスタム数</label>
+                    <input type="number" id="customGameCount" placeholder="ゲーム数を入力" min="1">
                 </div>
-
-                <!-- タブナビゲーション -->
-                <ul class="nav nav-tabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button
-                            class="nav-link active"
-                            id="overview-tab"
-                            data-bs-toggle="tab"
-                            data-bs-target="#overview"
-                            role="tab"
-                        >
-                            📊 概要
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button
-                            class="nav-link"
-                            id="players-tab"
-                            data-bs-toggle="tab"
-                            data-bs-target="#players"
-                            role="tab"
-                        >
-                            🎮 プレイヤー統計
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="roles-tab" data-bs-toggle="tab" data-bs-target="#roles" role="tab">
-                            🎯 ロール分析
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="games-tab" data-bs-toggle="tab" data-bs-target="#games" role="tab">
-                            📋 ゲーム一覧
-                        </button>
-                    </li>
-                </ul>
-
-                <div class="tab-content mt-4">
-                    <!-- 概要タブ -->
-                    <div class="tab-pane fade show active" id="overview" role="tabpanel">
-                        <div class="row">
-                            <div class="col-lg-6">
-                                <div class="card">
-                                    <div class="card-header">🏆 勝利数ランキング</div>
-                                    <div class="card-body">
-                                        <ol id="winsRanking" style="list-style: none; padding: 0"></ol>
-                                        <div class="chart-container" style="max-width: 300px; margin: 2rem auto">
-                                            <canvas id="winsRankingChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-lg-6">
-                                <div class="card">
-                                    <div class="card-header">⭐ 勝率ランキング（3ゲーム以上）</div>
-                                    <div class="card-body">
-                                        <ol id="winRateRanking" style="list-style: none; padding: 0"></ol>
-                                        <div class="chart-container" style="max-width: 300px; margin: 2rem auto">
-                                            <canvas id="winRateRankingChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- プレイヤー統計タブ -->
-                    <div class="tab-pane fade" id="players" role="tabpanel">
-                        <div class="card">
-                            <div class="card-header">プレイヤー別統計</div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-hover" id="playerStatsTable">
-                                        <thead>
-                                            <!-- ヘッダーはscript.jsで動的生成 -->
-                                        </thead>
-                                        <tbody id="playerStatsBody"></tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card mt-4">
-                            <div class="card-header">ロール別プレイ回数</div>
-                            <div class="card-body">
-                                <p class="text-muted" style="font-size: 0.9rem">
-                                    各プレイヤーがロールごとに参加したゲーム数を一覧表示します。フィルター適用後の結果に連動します。
-                                </p>
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-striped" id="playerRoleCountsTable">
-                                        <thead></thead>
-                                        <tbody id="playerRoleCountsBody"></tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- ロール分析タブ -->
-                    <div class="tab-pane fade" id="roles" role="tabpanel">
-                        <div class="row">
-                            <div class="col-lg-8">
-                                <div class="card">
-                                    <div class="card-header">ロール別勝率分析</div>
-                                    <div class="card-body">
-                                        <div class="chart-container">
-                                            <canvas id="roleAnalysisChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-lg-4">
-                                <div class="card">
-                                    <div class="card-header">ロール統計</div>
-                                    <div class="card-body" id="roleStatsDetails"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- ゲーム一覧タブ -->
-                    <div class="tab-pane fade" id="games" role="tabpanel">
-                        <div class="card">
-                            <div class="card-header">ゲーム一覧</div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-hover table-sm" id="gamesTable">
-                                        <thead>
-                                            <tr>
-                                                <th>マップ</th>
-                                                <th>プレイヤー数</th>
-                                                <th>勝者チーム</th>
-                                                <th>勝利メンバー</th>
-                                                <th>ゲーム時間</th>
-                                                <th>参加プレイヤー</th>
-                                                <th>役職情報</th>
-                                                <th>開始時刻</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="gamesBody"></tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="filter-group">
+                    <button class="btn-primary w-full" onclick="applyFilters()">フィルター適用</button>
+                </div>
+                <div class="filter-group">
+                    <button class="btn-secondary w-full" onclick="resetFilters()">リセット</button>
                 </div>
             </div>
         </div>
-
-        <div class="footer">
-            <p>Among Us ゲーム履歴ビューワー v1.0 | オフラインで完全に動作します</p>
-        </div>
-
-        <!-- ローディングスピナー -->
-        <div class="spinner-overlay" id="spinner">
-            <div class="spinner-border text-info" role="status">
-                <span class="visually-hidden">読み込み中...</span>
+        
+        <!-- 統計概要 -->
+        <div class="card mb-6">
+            <h2 class="section-title">統計概要</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-blue-600" id="totalGames">0</div>
+                    <div class="text-sm text-gray-600">総ゲーム数</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-green-600" id="totalPlayers">0</div>
+                    <div class="text-sm text-gray-600">総プレイヤー数</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-purple-600" id="totalRoles">0</div>
+                    <div class="text-sm text-gray-600">総ロール数</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-orange-600" id="avgGameLength">0</div>
+                    <div class="text-sm text-gray-600">平均ゲーム時間(分)</div>
+                </div>
             </div>
         </div>
-
-        <!-- トースト通知 -->
-        <div class="toast-container" id="toastContainer"></div>
-
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="script.js"></script>
-    </body>
+        
+        <!-- チャートセクション -->
+        <div class="stats-grid">
+            <!-- プレイヤー勝率ランキング -->
+            <div class="card">
+                <h2 class="section-title">プレイヤー勝率ランキング</h2>
+                <div class="chart-container">
+                    <canvas id="playerWinRateChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- ロール勝率ランキング -->
+            <div class="card">
+                <h2 class="section-title">ロール勝率ランキング</h2>
+                <div class="chart-container">
+                    <canvas id="roleWinRateChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 勝利チーム分布 -->
+        <div class="card mb-6">
+            <h2 class="section-title">勝利チーム分布</h2>
+            <div class="chart-container" style="height: 350px;">
+                <canvas id="winnerTeamChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- プレイヤー×役職 ヒートマップ -->
+        <div class="card mb-6">
+            <h2 class="section-title">プレイヤー×役職 プレイ回数&勝率</h2>
+            <div class="mb-4 text-sm text-gray-600">
+                <span class="font-semibold">表示:</span> 上段: プレイ回数 / 下段: 勝率(%)
+            </div>
+            
+            <!-- 凡例 -->
+            <div class="heatmap-legend mb-4">
+                <div class="font-semibold text-gray-700">色の意味（勝率）:</div>
+                <div class="legend-item">
+                    <div class="legend-color-box" style="background: hsl(135, 58%, 63%);"></div>
+                    <span class="text-sm font-medium">70%以上（優秀）</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color-box" style="background: hsl(100, 55%, 65%);"></div>
+                    <span class="text-sm font-medium">55-70%（良好）</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color-box" style="background: hsl(200, 62%, 65%);"></div>
+                    <span class="text-sm font-medium">45-55%（平均）</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color-box" style="background: hsl(38, 78%, 63%);"></div>
+                    <span class="text-sm font-medium">30-45%（課題あり）</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color-box" style="background: hsl(25, 82%, 62%);"></div>
+                    <span class="text-sm font-medium">1-30%（要改善）</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color-box" style="background: hsl(0, 72%, 64%);"></div>
+                    <span class="text-sm font-medium">0%（未勝利）</span>
+                </div>
+                <div class="font-semibold text-gray-700 ml-4">※色が濃いほどプレイ回数多</div>
+            </div>
+            
+            <div class="text-sm text-gray-500 mb-2 italic">
+                💡 ヒント: 横にスクロールして全ての役職を表示できます
+            </div>
+            
+            <div class="heatmap-scroll-container">
+                <div id="heatmapContainer"></div>
+            </div>
+        </div>
+        
+        <!-- プレイヤー統計テーブルと役職統計テーブル -->
+        <div class="stats-grid mb-6">
+            <div class="card">
+                <h2 class="section-title">プレイヤー統計</h2>
+                <div class="overflow-x-auto">
+                    <table id="playerStatsTable">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable('playerStatsTable', 0)">プレイヤー名</th>
+                                <th onclick="sortTable('playerStatsTable', 1)">勝率 (%)</th>
+                                <th onclick="sortTable('playerStatsTable', 2)">タスク完了率 (%)</th>
+                                <th onclick="sortTable('playerStatsTable', 3)">勝利数</th>
+                                <th onclick="sortTable('playerStatsTable', 4)">総ゲーム数</th>
+                            </tr>
+                        </thead>
+                        <tbody id="playerStatsBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2 class="section-title">役職統計</h2>
+                <div class="overflow-x-auto">
+                    <table id="roleStatsTable">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable('roleStatsTable', 0)">役職名</th>
+                                <th onclick="sortTable('roleStatsTable', 1)">勝率 (%)</th>
+                                <th onclick="sortTable('roleStatsTable', 2)">勝利数</th>
+                                <th onclick="sortTable('roleStatsTable', 3)">総ゲーム数</th>
+                            </tr>
+                        </thead>
+                        <tbody id="roleStatsBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
 </html>
