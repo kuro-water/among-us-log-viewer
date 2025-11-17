@@ -90,7 +90,13 @@
 }
 ```
 
-公式サンプル: `game_history_sample.json`
+公式サンプル: `game_history_sample.jsonl`
+
+**ファイル形式の詳細：**
+- サンプルファイルはJSONL形式（JSON Lines）で保存されています
+- 各行が1ゲームの完全なJSONデータを含んでいます
+- 可読性のため、実際のログファイルよりも整形されていません（1行に圧縮）
+- ファイルを開く際は、行ごとにJSONとしてパースする必要があります
 
 ### プレイヤーデータ
 `players.data` の各要素は以下のブロックで構成されています：
@@ -119,11 +125,64 @@
 - `analytics.per_player_*`: プレイヤー別の距離/生存時間/タスク/サボタージュ/ボタン回数
 - 今後の拡張として、勝率トレンドや役職ごとの行動特徴などを追加しやすい構造
 
-## ログファイルの場所
+## ログファイルの場所と形式
 
 すべてのゲームデータは以下の場所に保存されます：
 - **ファイル**: `{ModDirectory}/GameLogs/game_history.jsonl`
-- **形式**: JSONL（1行につき1ゲームのJSON）
+- **形式**: JSONL（JSON Lines形式）
+
+### JSONL形式について
+
+JSONL（JSON Lines）は、1行につき1つの完全なJSONオブジェクトを記録する形式です。
+
+**特徴：**
+- 各行が独立したJSONオブジェクトで、1ゲームのデータを表す
+- ストリーム処理に適しており、巨大なログファイルでも効率的に処理可能
+- 行単位で追記できるため、ファイルロックの問題が少ない
+- データ破損が発生しても、他の行には影響しない
+
+**例：**
+```jsonl
+{"schema":{"version":"2.0.0","generated_at":"2025-11-10T05:15:31Z","game_id":"20251110050000_00001"},"match":{...},"players":{...}}
+{"schema":{"version":"2.0.0","generated_at":"2025-11-10T06:20:45Z","game_id":"20251110060000_00002"},"match":{...},"players":{...}}
+{"schema":{"version":"2.0.0","generated_at":"2025-11-10T07:08:30Z","game_id":"20251110070000_00003"},"match":{...},"players":{...}}
+```
+
+各行は完全に独立しているため、以下のような処理が簡単に行えます：
+
+**読み込み例（Python）：**
+```python
+import json
+
+with open('game_history.jsonl', 'r', encoding='utf-8') as f:
+    for line in f:
+        game_data = json.loads(line)
+        # 1ゲームずつ処理
+        print(f"Game ID: {game_data['schema']['game_id']}")
+```
+
+**フィルタリング例（Python）：**
+```python
+# インポスター勝利のゲームのみ抽出
+impostor_wins = []
+with open('game_history.jsonl', 'r', encoding='utf-8') as f:
+    for line in f:
+        game_data = json.loads(line)
+        if game_data['outcome']['winner_team'] == 'Impostor':
+            impostor_wins.append(game_data)
+```
+
+**ストリーム処理の利点：**
+- メモリに全データを読み込む必要がない
+- 大量のゲームログでもメモリ効率が良い
+- リアルタイム分析に適している
+- データベースへのインポートが容易
+
+**注意事項：**
+- 各行は改行文字（`\n`）で区切られている
+- JSON内に改行を含めることはできない（すべて1行に圧縮）
+- ファイル全体は有効なJSON配列ではない（各行が独立したJSON）
+- 読み込む際は行ごとに`json.loads()`を実行する必要がある
 
 ## パフォーマンスへの配慮
 
