@@ -37,7 +37,20 @@ JSONLファイルから複数試合のAmong Usデータを読み込み、Highcha
   
 - [ ] `lib/jsonl-parser.ts` — クライアント側データ取得
   - `fetch('/game_history_sample.jsonl')` によるデータ取得
-  - 行単位パース関数の実装
+  - **JSONL形式の行単位パース**（重要）
+    - JSONL (JSON Lines) は1行につき1つの完全なJSONオブジェクトを含む形式
+    - 各行が独立した1ゲームのデータを表す
+    - ファイル全体は有効なJSON配列ではない
+    - 実装例:
+      ```typescript
+      const response = await fetch('/game_history_sample.jsonl');
+      const text = await response.text();
+      const games = text.split('\n')
+        .filter(line => line.trim())
+        .map(line => JSON.parse(line));
+      ```
+  - エラーハンドリング（不正な行をスキップ）
+  - 大きなファイル対応（ストリーム処理または分割読み込み）
 
 注: リポジトリ内に `game_history_sample.jsonl` は存在しますが `public/` 配下ではないため、クライアントから直接 fetch する用途にする場合は `public/` へ移動するか、ビルド時にコピーする必要があります。
 
@@ -299,12 +312,50 @@ https://kuro-water.github.io/among-us-log-viewer/
 2. `public/game_history_sample.jsonl` にファイルを置く（または fetch ルートを調整）
 3. 依存を整理：`npm install highcharts lucide-react` を実行して `package.json` を更新
 4. `types/game-data.types.ts` の雛形作成（schema v2.0.0 に沿う）
-5. `lib/jsonl-parser.ts`（fetch + 行パース + 簡易バリデーション）を実装
+5. `lib/jsonl-parser.ts`（fetch + **行単位パース** + 簡易バリデーション）を実装
+   - **重要**: JSONL形式は1行=1ゲーム。`text.split('\n')` で分割後に各行を `JSON.parse()` する
+   - 不正な行（空行、パースエラー）をスキップする実装が必須
 6. `lib/role-mapping.ts` を `ROLE_NAMES_IN_LOGS.md` をベースに実装
 7. `lib/data-transformers/player-faction-heatmap.ts` と `components/charts/PlayerFactionHeatmap.tsx` をまず作成して動作確認
 8. `config/highcharts-theme.ts` を作成して色や共通設定を適用
 9. `app/page.tsx` をダッシュボード化（チャートを配置）
 10. `.github/workflows/deploy.yml` を作成して GitHub Pages デプロイを自動化
+
+## JSONL 形式の理解（重要）
+
+`game_history_sample.jsonl` は **JSONL (JSON Lines)** 形式で保存されています。
+
+### 特徴
+- **1行 = 1ゲームの完全なJSONオブジェクト**
+- ファイル全体は有効なJSON配列ではない（各行が独立）
+- 改行文字（`\n`）で区切られている
+- ストリーム処理に適しており、大量データでもメモリ効率が良い
+
+### パース方法
+```typescript
+// ❌ 間違い: JSON.parse(entireFile) は失敗する
+// ✅ 正しい: 行ごとにパース
+const lines = fileContent.split('\n');
+const games = lines
+  .filter(line => line.trim())  // 空行を除外
+  .map(line => {
+    try {
+      return JSON.parse(line);
+    } catch (e) {
+      console.warn('Failed to parse line:', e);
+      return null;
+    }
+  })
+  .filter(game => game !== null);
+```
+
+### 利点
+- 行単位で追記可能（ファイルロック問題が少ない）
+- データ破損が発生しても他の行には影響しない
+- メモリに全データを読み込まなくてもストリーム処理可能
+- リアルタイム分析やデータベースインポートが容易
+
+詳細は `DETAILED_LOGGING_IMPLEMENTATION.md` の「JSONL形式について」セクションを参照してください。
 
 ## Heatmap 実装メモ（PLAN に追記）
 
