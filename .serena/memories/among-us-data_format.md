@@ -1,0 +1,1 @@
+JSONL: Each line is a JSON object representing a game. Contains schema, match, players, events, timeseries, analytics, outcome. Important: parse line-by-line, not entire file. Example usage and streaming strategies.
