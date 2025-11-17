@@ -4,6 +4,42 @@
 
 JSONLファイルから複数試合のAmong Usデータを読み込み、Highchartsで10種類のチャートを表示する静的ダッシュボードを構築します。陣営別/役職別のプレイヤー勝率Heat mapを追加し、セルに勝率％とプレイ回数を表示します。
 
+## 主要機能
+
+### データ可視化（10種類のチャート）
+
+1. **陣営別勝率円グラフ** - クルーメイト/インポスター/マッドメイト/第三陣営の勝利分布
+2. **プレイヤー別勝率グラフ** - プレイヤーごとの勝敗統計（フィルタリング対応）
+3. **移動距離+イベントタイムライン** - プレイヤーの移動量とイベント発生を時系列表示
+4. **試合時間分布** - ゲーム時間のヒストグラム
+5. **プレイヤーレーダーチャート** - 個人統計（キル/デス/タスク/移動距離）
+6. **タスク進捗タイムライン** - ゲーム全体のタスク完了推移
+7. **イベント密度** - 時間帯別のアクション頻度
+8. **役職別パフォーマンス** - 役職ごとの平均タスク数/生存時間
+9. **プレイヤー×陣営Heat map** ⭐ - プレイヤーごとの陣営別勝率とプレイ回数をマトリクス表示
+10. **プレイヤー×役職Heat map** ⭐ - プレイヤーごとの役職別勝率とプレイ回数をマトリクス表示
+
+### データ解析機能
+
+- **複数試合の統合分析** - JSONLファイルから0～N試合を一括処理
+- **陣営別集計** - クルーメイト/インポスター/マッドメイト/第三陣営/その他の分類
+- **役職マッピング** - 150+のカスタム役職を陣営に自動分類
+- **イベントアイコンマッピング** - サボタージ、キル、会議などをアイコンで表示
+- **タイムシリーズ分析** - 5秒間隔の移動スナップショットデータを活用
+
+### UI/UX機能
+
+- **試合選択ドロップダウン** - 複数試合から選択して表示
+- **プレイヤーフィルタリング** - 特定プレイヤーのみ表示/非表示
+- **レスポンシブデザイン** - Tailwind CSS v4でモバイル/デスクトップ対応
+- **ダークモード対応** - 自動/手動切り替え
+
+### デプロイ機能
+
+- **静的サイト生成** - Next.jsの静的エクスポート機能を利用
+- **GitHub Pages対応** - 自動デプロイパイプライン
+- **サーバー不要** - 完全静的なサイトとして動作
+
 ## 技術スタック
 
 - **Framework**: Next.js 16 (App Router, TypeScript)
@@ -17,9 +53,9 @@ JSONLファイルから複数試合のAmong Usデータを読み込み、Highcha
 
 ### 1. プロジェクト基盤とパッケージ追加
 
-- [x] `npm install @highcharts/react` 実行済み（注: `highcharts` と `lucide-react` のインストールは未確認/未追加）
-- [ ] `public/game_history_sample.jsonl` に配置（現在はリポジトリルートに存在）
-- [ ] `next.config.ts` を静的エクスポート向けに更新
+- [x] `npm install @highcharts/react highcharts lucide-react` 実行完了
+- [x] `public/game_history_sample.jsonl` に配置完了
+- [x] `next.config.ts` を静的エクスポート向けに更新完了
   ```typescript
   const nextConfig: NextConfig = {
     output: 'export',
@@ -29,7 +65,7 @@ JSONLファイルから複数試合のAmong Usデータを読み込み、Highcha
   export default nextConfig
   ```
 
-### 2. 型定義とJSONLパーサー
+### 2. 型定義とJSONLパーサー（次の優先タスク）
 
 - [ ] `types/game-data.types.ts` — 完全なデータスキーマ定義
   - `main_role`、`sub_roles` を含むプレイヤー役職型
@@ -54,7 +90,7 @@ JSONLファイルから複数試合のAmong Usデータを読み込み、Highcha
 
 注: リポジトリ内に `game_history_sample.jsonl` は存在しますが `public/` 配下ではないため、クライアントから直接 fetch する用途にする場合は `public/` へ移動するか、ビルド時にコピーする必要があります。
 
-### 3. 拡張可能な役職マッピング設計
+### 3. 拡張可能な役職マッピング設計（未実装）
 
 - [ ] `lib/role-mapping.ts` — ROLE_NAMES_IN_LOGS.md を基に実装
   - **定数配列定義**：
@@ -74,7 +110,7 @@ JSONLファイルから複数試合のAmong Usデータを読み込み、Highcha
     - 新役職追加時は該当する定数配列に追加するだけで対応可能
     - 未定義の役職は自動的に 'Other' に分類
 
-### 4. イベントアイコンマッピング
+### 4. イベントアイコンマッピング（未実装）
 
 - [ ] `lib/event-icons.ts` — Lucide React アイコンマッピング
   - `Radiation` → Reactor Meltdown（原子炉メルトダウン）
@@ -89,7 +125,7 @@ JSONLファイルから複数試合のAmong Usデータを読み込み、Highcha
   - `MessageCircle` → Meeting（会議）
   - `Bell` → Emergency Button（緊急ボタン）
 
-### 5. データ変換関数（10種類）
+### 5. データ変換関数（10種類）（未実装）
 
 `lib/data-transformers/` ディレクトリに以下を実装：
 
@@ -130,7 +166,7 @@ JSONLファイルから複数試合のAmong Usデータを読み込み、Highcha
     - `timeseries.movement_snapshots` と `events.timeline` を結合
     - イベント発生時にアイコンマーカーを配置
 
-### 6. Highchartsコンポーネント（10種類）
+### 6. Highchartsコンポーネント（10種類）（未実装）
 
 `components/charts/` ディレクトリに 'use client' コンポーネントを作成：
 
@@ -181,7 +217,7 @@ JSONLファイルから複数試合のAmong Usデータを読み込み、Highcha
     - **セル表示**: PlayerFactionHeatmap と同様
     - **背景色グラデーション**: PlayerFactionHeatmap と同様
 
-### 7. ダッシュボードページとGitHub Actions
+### 7. ダッシュボードページとGitHub Actions（未実装）
 
 #### ダッシュボード実装
 
@@ -277,7 +313,7 @@ https://kuro-water.github.io/among-us-log-viewer/
 ## 実装優先順位
 
 1. ✅ パッケージインストール（完了）
-2. プロジェクト設定（next.config.ts、ファイル移動）
+2. ✅ プロジェクト設定（next.config.ts、ファイル移動）完了
 3. 型定義とパーサー
 4. 役職マッピング（最重要：全チャートで使用）
 5. データ変換関数（特にHeat map関連）
@@ -286,40 +322,6 @@ https://kuro-water.github.io/among-us-log-viewer/
 8. GitHub Actions設定
 
 ---
-
-最終更新日: 2025年11月17日
-
-## 現状レビュー（2025-11-17 反映）
-
-以下はリポジトリを確認した結果と、PLAN に反映しておくべき追加事項です。
-
-- next.config.ts はプレースホルダのまま（`output: 'export'` 等の設定が未反映）
-- `game_history_sample.jsonl` はルートに存在（`public/` 配下にはない）
-- `package.json`:
-  - `@highcharts/react` が追加されている（確認済み）
-  - `highcharts` と `lucide-react` は現時点で依存に含まれていない
-- `app/page.tsx` はテンプレートのまま（ダッシュボード未実装）
-- `types/game-data.types.ts` は未作成
-- `lib/` 以下（jsonl-parser, role-mapping, event-icons, data-transformers 等）は未作成
-- `components/charts/` は未作成（Highcharts コンポーネントが未実装）
-- `.github/workflows/deploy.yml` は未作成
-
-これらは PLAN の実装ステップに戻して優先度順に実装してください。
-
-## 短期優先タスク（PLAN に追記しておく）
-
-1. next.config.ts を静的エクスポート対応に更新（必須）
-2. `public/game_history_sample.jsonl` にファイルを置く（または fetch ルートを調整）
-3. 依存を整理：`npm install highcharts lucide-react` を実行して `package.json` を更新
-4. `types/game-data.types.ts` の雛形作成（schema v2.0.0 に沿う）
-5. `lib/jsonl-parser.ts`（fetch + **行単位パース** + 簡易バリデーション）を実装
-   - **重要**: JSONL形式は1行=1ゲーム。`text.split('\n')` で分割後に各行を `JSON.parse()` する
-   - 不正な行（空行、パースエラー）をスキップする実装が必須
-6. `lib/role-mapping.ts` を `ROLE_NAMES_IN_LOGS.md` をベースに実装
-7. `lib/data-transformers/player-faction-heatmap.ts` と `components/charts/PlayerFactionHeatmap.tsx` をまず作成して動作確認
-8. `config/highcharts-theme.ts` を作成して色や共通設定を適用
-9. `app/page.tsx` をダッシュボード化（チャートを配置）
-10. `.github/workflows/deploy.yml` を作成して GitHub Pages デプロイを自動化
 
 ## JSONL 形式の理解（重要）
 
@@ -366,4 +368,15 @@ const games = lines
 
 ---
 
-このファイルはリポジトリの現状に合わせて更新しました。必要であれば、上記短期優先タスクのうち 1 つ目から実装をこちらで進めます（例：`next.config.ts` の更新と `public/` へのファイル移動）。
+## 次のステップ
+
+以下の順で実装を進めます：
+
+1. **型定義とパーサー** - `types/game-data.types.ts` と `lib/jsonl-parser.ts` を作成
+2. **役職マッピング** - `lib/role-mapping.ts` を実装（全チャートで使用）
+3. **Heat mapの実装** - `lib/data-transformers/player-faction-heatmap.ts` と `components/charts/PlayerFactionHeatmap.tsx` で動作検証
+4. **残りのチャート** - 9種類のチャートとデータ変換関数を順次実装
+5. **ダッシュボード統合** - `app/page.tsx` で全チャートを配置
+6. **デプロイ設定** - `.github/workflows/deploy.yml` で自動デプロイ
+
+最終更新日: 2025年11月17日
