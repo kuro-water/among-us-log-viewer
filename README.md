@@ -1,62 +1,36 @@
-# AMONG US ゲーム統計分析
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-AMONG USのゲーム履歴を可視化・分析するWebアプリケーションです。
+## Getting Started
 
-## 機能
+First, run the development server:
 
-- **統計概要**: ゲーム数、プレイヤー数、役職数、平均ゲーム時間の表示
-- **プレイヤー勝率ランキング**: プレイヤーごとの勝率をチャートで表示
-- **ロール勝率ランキング**: 役職ごとの勝率をチャートで表示
-- **勝利チーム分布**: チームごとの勝利数を円グラフで表示
-- **プレイヤー×役職ヒートマップ**: プレイヤーと役職の組み合わせによるプレイ回数と勝率を色分けで表示
-- **フィルター機能**: 日時範囲やゲーム数でデータを絞り込み
-- **ソート機能**: テーブルの各列をクリックしてソート
-
-## 使い方
-
-1. `game_history.jsonl` にゲーム履歴データを配置
-2. `index.html` をブラウザで開く
-3. フィルターを使ってデータを絞り込み可能
-
-## データ形式
-
-`game_history.jsonl` は1行につき1ゲームのJSON形式です：
-
-```json
-{
-  "start_time": "2025-01-15T20:30:00",
-  "end_time": "2025-01-15T20:45:00",
-  "winner_team": "Crewmate",
-  "players": [
-    {
-      "player_name": "Player1",
-      "main_role": "Crewmate",
-      "is_winner": true,
-      "tasks_completed": 10,
-      "tasks_total": 10
-    }
-  ]
-}
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-## 技術スタック
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-- HTML/CSS/JavaScript
-- [Tailwind CSS](https://tailwindcss.com/) - スタイリング
-- [Chart.js](https://www.chartjs.org/) - グラフ描画
-- [anime.js](https://animejs.com/) - アニメーション
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-## ファイル構成
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-```
-among-us-log-viewer/
-├── index.html          # メインHTML
-├── styles.css          # カスタムスタイル
-├── app.js              # アプリケーションロジック
-├── game_history.jsonl  # ゲーム履歴データ
-└── README.md           # このファイル
-```
+## Learn More
 
-## ライセンス
+To learn more about Next.js, take a look at the following resources:
 
-MIT
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
