@@ -1,36 +1,120 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Among Us Log Viewer
 
-## Getting Started
+A comprehensive analytics dashboard for Among Us game logs, featuring 10 interactive charts built with Next.js and Highcharts.
 
-First, run the development server:
+## 🎯 Features
+
+### 10 Interactive Charts
+
+1. **Faction Win Rate** - Pie chart showing win distribution across factions
+2. **Player×Faction Heatmap** ⭐ - Win rates & play counts by player and faction
+3. **Player×Role Heatmap** ⭐ - Win rates & play counts for top 15 roles
+4. **Player Win Rate** - Stacked percentage column chart
+5. **Role Performance** - Bar chart of average tasks completed
+6. **Game Duration** - Histogram of game lengths
+7. **Player Radar** - Polar chart of individual performance metrics
+8. **Task Timeline** - Area chart of task completion progress
+9. **Event Density** - Line chart of event frequency over time
+10. **Movement with Events** - Spline chart with event markers
+
+### Data Processing
+
+- **JSONL Parser** - Proper line-by-line parsing with error handling
+- **Role Mapping** - 150+ custom roles across 5 factions
+- **Event Icons** - Visual representation using Lucide React icons
+- **Multi-Game Analysis** - Aggregate statistics across multiple games
+
+### UI/UX
+
+- **Game Selector** - Switch between different games
+- **Responsive Design** - Mobile and desktop friendly
+- **Dark Mode** - Automatic dark mode support
+- **Static Export** - No server required
+
+## 🚀 Quick Start
+
+### Development
 
 ```bash
+# Install dependencies
+npm install
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Open http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Production Build
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Build for production
+npm run build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Output will be in ./out directory
+```
 
-## Learn More
+## 📊 Data Format
 
-To learn more about Next.js, take a look at the following resources:
+The application reads JSONL (JSON Lines) format where each line is a complete JSON object representing one game.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Schema Version:** 2.0.0
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Place your `game_history_sample.jsonl` file in the `public/` directory.
 
-## Deploy on Vercel
+## 🎨 Faction Colors
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Crewmate**: `#00e272` (Green)
+- **Impostor**: `#fe6a35` (Orange)
+- **Madmate**: `#9d4edd` (Purple)
+- **Neutral**: `#ffd60a` (Yellow)
+- **Other**: `#6c757d` (Gray)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🛠 Tech Stack
+
+- **Framework**: Next.js 16.0.3 with App Router
+- **Language**: TypeScript 5
+- **Charts**: Highcharts 12.4.0
+- **Styling**: Tailwind CSS v4
+- **Icons**: Lucide React 0.554.0
+
+## 📁 Project Structure
+
+```
+among-us-log-viewer/
+├── app/
+│   ├── layout.tsx          # Root layout
+│   └── page.tsx            # Dashboard page
+├── components/
+│   ├── GameSelector.tsx    # Game selection
+│   └── charts/             # 10 chart components
+├── lib/
+│   ├── jsonl-parser.ts     # JSONL parser
+│   ├── role-mapping.ts     # Role classification
+│   ├── event-icons.ts      # Icon mapping
+│   └── data-transformers/  # 10 data transformers
+├── types/
+│   └── game-data.types.ts  # Type definitions
+└── public/
+    └── game_history_sample.jsonl  # Sample data
+```
+
+## 🌐 Deployment
+
+This project is configured for static export and can be deployed to GitHub Pages or any static hosting service.
+
+### GitHub Pages
+
+The included GitHub Actions workflow automatically deploys to GitHub Pages on push to `main` or `feature/ui-update` branches.
+
+**Live Demo**: https://kuro-water.github.io/among-us-log-viewer/
+
+## 📝 License
+
+This project follows the same license as the Among Us mod it analyzes.
+
+## 🙏 Acknowledgments
+
+- Built for Town of Host Enhanced (TOHE) mod
+- Uses Highcharts for data visualization
+- Inspired by the Among Us community
