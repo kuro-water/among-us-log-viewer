@@ -12,9 +12,8 @@ JSONLファイルから複数試合のAmong Usデータを読み込み、Highcha
 2. **プレイヤー別勝率グラフ** - プレイヤーごとの勝敗統計（フィルタリング対応）
 3. **移動距離+イベントタイムライン** - プレイヤーの移動量とイベント発生を時系列表示
 4. **試合時間分布** - ゲーム時間のヒストグラム
-5. **プレイヤーレーダーチャート** - 個人統計（キル/デス/タスク/移動距離）
+5. 個人統計（キル/デス/タスク/移動距離）
 6. **タスク進捗タイムライン** - ゲーム全体のタスク完了推移
-7. **イベント密度** - 時間帯別のアクション頻度
 8. **役職別パフォーマンス** - 役職ごとの平均タスク数/生存時間
 9. **プレイヤー×陣営Heat map** ⭐ - プレイヤーごとの陣営別勝率とプレイ回数をマトリクス表示
 10. **プレイヤー×役職Heat map** ⭐ - プレイヤーごとの役職別勝率とプレイ回数をマトリクス表示
@@ -32,7 +31,7 @@ JSONLファイルから複数試合のAmong Usデータを読み込み、Highcha
 - **試合選択ドロップダウン** - 複数試合から選択して表示
 - **プレイヤーフィルタリング** - 特定プレイヤーのみ表示/非表示
 - **レスポンシブデザイン** - Tailwind CSS v4でモバイル/デスクトップ対応
-- **ダークモード対応** - 自動/手動切り替え
+- **ライトテーマ固定** - ダークモードは提供せず、明示的にライトテーマ用スタイルを最適化
 
 ### デプロイ機能
 
@@ -48,6 +47,64 @@ JSONLファイルから複数試合のAmong Usデータを読み込み、Highcha
 - **Icons**: Lucide React
 - **Deployment**: GitHub Pages (静的エクスポート)
 - **Data Format**: JSONL (スキーマバージョン 2.0.0)
+
+## デザイン指針（ライトテーマ専用）
+
+### ビジュアルトーン
+
+- **テーマ方針**: ライトテーマのみを提供し、暗い背景は使用しない。視認性とカード型レイアウトの明度コントラストを重視し、熱量の高い色（勝率ヒートマップなど）はチャート領域に集約する。
+- **デザインキーワード**: 「モニタリングダッシュボード」「クリーン」「ゲーム要素のアクセント」。
+
+### カラーパレット（Hex）
+
+| カテゴリ | 色 / 用途 |
+| --- | --- |
+| **背景** | `#f4f5f7`（ページ全体）、`#ffffff`（カード/モーダル）|
+| **ボーダー/枠線** | `#e2e8f0`、`#d4dae4` |
+| **本文テキスト** | `#0f172a`（メイン）、`#475569`（サブ）|
+| **アクション/リンク** | `#2563eb`（プライマリ）、`#0ea5e9`（ホバーハイライト）|
+| **警告/強調** | `#f97316`（注意）、`#dc2626`（エラー）|
+| **チャート背景** | `#f9fafb`（プロット背景）、`#ffffff`（カード内）|
+
+陣営・ヒートマップ専用カラーは既存の `FACTION_COLORS` と、`#ff0000 → #ffff00 → #00ff00` グラデーションをそのまま利用し、データ可視化のアクセントとして扱う。
+
+### タイポグラフィ & スペーシング
+
+- フォント: `"Inter", "Noto Sans JP", system` を優先し、日本語/英語混在でもウエイト差を吸収。`font-weight` は 500/600 を見出し、400 を本文に使用。
+- ベースライン: `4px` グリッド。カード間隔は `24px`、カード内パディング `20px`（モバイル時 `16px`）。
+- コンポーネント共通角丸: `16px`（カード）、`9999px`（スイッチ/ピル型トグル）。
+
+### レイアウト構成
+
+1. **固定ヘッダー**
+  - 左: ロゴ/タイトル（例: "Among Us Analytics"）。
+  - 右: データソース表示 / Githubリンク / ライトテーマトグル（Disabled表示でライト固定を明示）。
+2. **フィルターパネル**
+  - カード化し、試合選択ドロップダウン、プレイヤーマルチセレクト、期間フィルタなどを 2 列レイアウトで配置。
+3. **チャートグリッド**
+  - Desktop: 12 カラム（`grid-cols-12`）ベース。大型チャート（タイムライン系）は 12 カラム、ヒートマップ/円グラフは 6 カラムなどブロックごとに比重を調整。
+  - Tablet: 2 カラム、Mobile: 1 カラム。
+4. **カード仕様**
+  - タイトル + サブタイトル（試合数や期間）をヘッダーに配置。右上に情報アイコンまたはフィルタショートカットを並べる。
+  - 下部余白を確保し、ツールバー（凡例トグル、CSV出力）が必要なチャートはカードフッターを追加。
+
+### チャート共通スタイリング
+
+- `config/highcharts-theme.ts` にて以下を徹底：
+  - `chart.backgroundColor = "transparent"`、カード背景とのレイヤー差を最小限に。
+  - `legend` は pill 型の `backgroundColor: "rgba(15,23,42,0.05)"`, `borderRadius: 9999`。
+  - `tooltip` はライトテーマ向けに `backgroundColor: "#0f172a"`, `color: "white"`, `borderWidth: 0`, `borderRadius: 12px`。
+  - `dataLabels` は `fontSize 12px`, `fontWeight 600`, `color #0f172a`（ヒートマップは `useHTML` で段組み）。
+- Heatmap のセルは `borderWidth: 1`, `borderColor: #f8fafc`、`nullColor: #dfe3eb` を統一。
+- Timeline/Movement 系は `xAxis.labels.formatter` で `mm:ss` 表記へ、`plotBands` で会議やインターバルを薄グレー帯表示。
+
+### 追加 UI コンポーネント
+
+- **KPI チップ**: カードタイトル直下に勝率や平均時間などを pill 表示（背景 `#eef2ff`、テキスト `#1d4ed8`）。
+- **ステータスバッジ**: データ取得中/エラー時に使用。背景 `#fff7ed`（警告）、`#fee2e2`（エラー）。
+- **空状態テンプレート**: データが無い場合、イラスト付きの `card` で "データがありません" を示し、フィルタ解除ボタンを提供。
+
+このデザイン指針を `globals.css` とチャートコンポーネントで具体化し、ライトテーマのみで完結する UI を構築する。
 
 ## 実装ステップ
 
@@ -65,181 +122,54 @@ JSONLファイルから複数試合のAmong Usデータを読み込み、Highcha
   export default nextConfig
   ```
 
-### 2. 型定義とJSONLパーサー（次の優先タスク）
+### 2. 型定義とJSONLパーサー（完了）
 
-- [ ] `types/game-data.types.ts` — 完全なデータスキーマ定義
-  - `main_role`、`sub_roles` を含むプレイヤー役職型
-  - イベント、タイムシリーズ、アナリティクス、結果データの型定義
-  
-- [ ] `lib/jsonl-parser.ts` — クライアント側データ取得
-  - `fetch('/game_history_sample.jsonl')` によるデータ取得
-  - **JSONL形式の行単位パース**（重要）
-    - JSONL (JSON Lines) は1行につき1つの完全なJSONオブジェクトを含む形式
-    - 各行が独立した1ゲームのデータを表す
-    - ファイル全体は有効なJSON配列ではない
-    - 実装例:
-      ```typescript
-      const response = await fetch('/game_history_sample.jsonl');
-      const text = await response.text();
-      const games = text.split('\n')
-        .filter(line => line.trim())
-        .map(line => JSON.parse(line));
-      ```
-  - エラーハンドリング（不正な行をスキップ）
-  - 大きなファイル対応（ストリーム処理または分割読み込み）
+- [x] `types/game-data.types.ts` — JSONLスキーマ2.0.0ベースで試合情報、イベント、タイムシリーズ、プレイヤー役職、リザルトまで型付け済み。
+- [x] `lib/jsonl-parser.ts` — fetch + ストリーム読み込みに対応した行単位パーサーを実装。`JsonLineError` で不正行を収集しつつ `public/game_history_sample.jsonl` をクライアントのみで処理可能にした。
 
-注: リポジトリ内に `game_history_sample.jsonl` は存在しますが `public/` 配下ではないため、クライアントから直接 fetch する用途にする場合は `public/` へ移動するか、ビルド時にコピーする必要があります。
+### 3. 拡張可能な役職マッピング設計（完了）
 
-### 3. 拡張可能な役職マッピング設計（未実装）
+- [x] `lib/role-mapping.ts` — ROLE_NAMES_IN_LOGS.md に基づき陣営ごとの役職配列と `getRoleFaction`、`getFactionFromWinnerTeam` などのユーティリティを実装。新役職の追加も定数追記のみで対応可能。
 
-- [ ] `lib/role-mapping.ts` — ROLE_NAMES_IN_LOGS.md を基に実装
-  - **定数配列定義**：
-    - `CREWMATE_ROLES`: クルーメイト陣営の全役職（約50種類）
-    - `IMPOSTOR_ROLES`: インポスター陣営の全役職（約50種類）
-    - `MADMATE_ROLES`: マッドメイト陣営の全役職（約15種類）
-    - `NEUTRAL_ROLES`: 第三陣営の全役職（約35種類）
-    - `HIDE_AND_SEEK_ROLES`: かくれんぼモードの役職（2種類）
-    - `OTHER_ROLES`: その他の役職（GM、Driver等）
-  
-  - **関数実装**：
-    - `getRoleFaction(mainRole: string): 'Crewmate' | 'Impostor' | 'Madmate' | 'Neutral' | 'Other'`
-    - 役職ごとのカラーマップ生成関数
-  
-  - **設計方針**：
-    - 陣営判定は `main_role` のみを使用（`sub_roles` は無視）
-    - 新役職追加時は該当する定数配列に追加するだけで対応可能
-    - 未定義の役職は自動的に 'Other' に分類
+### 4. イベントアイコンマッピング（完了）
 
-### 4. イベントアイコンマッピング（未実装）
+- [x] `lib/event-icons.ts` — Lucide React を用いた各種サボタージ/イベントのアイコン割り当てを実装。移動タイムラインやイベントチャートで共通利用できる。
 
-- [ ] `lib/event-icons.ts` — Lucide React アイコンマッピング
-  - `Radiation` → Reactor Meltdown（原子炉メルトダウン）
-  - `Droplets` → O2 Depletion（酸素枯渇）
-  - `Zap` → Lights Sabotage（ライト妨害）
-  - `Radio` → Communications Sabotage（通信妨害）
-  - `Plane` → Crash Course（クラッシュコース）
-  - `Mushroom` → Mushroom Mixup（マッシュルームミックスアップ）
-  - `Lock` → Door Close（ドア閉鎖）
-  - `Knife` → Kill（キル）
-  - `CheckCircle` → Task Completed（タスク完了）
-  - `MessageCircle` → Meeting（会議）
-  - `Bell` → Emergency Button（緊急ボタン）
+### 5. データ変換関数（10種類）（完了）
 
-### 5. データ変換関数（10種類）（未実装）
+`lib/data-transformers/` に以下を実装済み：
 
-`lib/data-transformers/` ディレクトリに以下を実装：
+1. **`faction-win-rate.ts`** — 陣営別勝率集計
+2. **`player-faction-heatmap.ts`** — プレイヤー×陣営マトリクス
+3. **`player-role-heatmap.ts`** — プレイヤー×役職マトリクス
+4. **`player-win-rate.ts`** — スタックドカラム向け勝率データ
+5. **`role-performance.ts`** — 役職別タスク/生存時間
+6. **`game-duration.ts`** — 試合時間ヒストグラムデータ
+7. **`player-radar.ts`** — 個人レーダー指標
+8. **`task-timeline.ts`** — タスク進捗ポイント
+9. **`event-density.ts`** — イベント密度ライン
+10. **`movement-with-events.ts`** — 移動軸 + イベントマーカー
 
-1. **`faction-win-rate.ts`** — 陣営別勝利数集計（Pie chart用）
-   - 全試合から陣営ごとの勝利/敗北を集計
-   - 出力: `[{faction: 'Crewmate', wins: N, losses: M, ...}]`
+共通フィルタ適用ロジックは `lib/data-transformers/utils.ts` に集約し、`hooks/useGameAnalytics.ts` から一括呼び出し済み。
 
-2. **`player-faction-heatmap.ts`** ⭐ NEW
-   - プレイヤー × 陣営のマトリクスデータ生成
-   - **横軸**: プレイヤー名（重複なし）
-   - **縦軸**: 陣営（Crewmate, Impostor, Madmate, Neutral, Other）
-   - **セル値**: `{win_rate_percent: number, play_count: number}`
-   - プレイ回数0の場合: `{win_rate_percent: null, play_count: 0}`
+### 6. Highchartsコンポーネント（10種類）（完了）
 
-3. **`player-role-heatmap.ts`** ⭐ NEW
-   - プレイヤー × 役職のマトリクスデータ生成
-   - **横軸**: プレイヤー名
-   - **縦軸**: 頻出役職Top 10-15（例: Crewmate, Sheriff, Engineer, Impostor等）
-   - **セル値**: `{win_rate_percent: number, play_count: number}`
-   - プレイ回数0の場合: `{win_rate_percent: null, play_count: 0}`
+`components/charts/` 配下に 'use client' コンポーネントを全て実装済み。`BaseChart` でテーマと共通オプションを注入し、`ChartEmptyState` でデータ欠損時のUIも統一。
 
-4. **`player-win-rate.ts`** — プレイヤー別勝率（Stacked percentage column用）
-   - `main_role` を使用してプレイヤーごとの勝率を集計
+- 円/カラム/ライン系: `FactionWinRateChart.tsx`、`PlayerWinRateChart.tsx`、`MovementWithEventsChart.tsx`、`GameDurationChart.tsx`、`TaskTimelineChart.tsx`、`EventDensityChart.tsx`、`RolePerformanceChart.tsx`
+- Heatmap系: `PlayerFactionHeatmap.tsx`、`PlayerRoleHeatmap.tsx`
+- その他: `PlayerRadarChart.tsx`
 
-5. **`role-performance.ts`** — 役職別パフォーマンス
-   - 平均タスク完了数、平均生存時間等
-
-6. **`game-duration.ts`** — 試合時間分布（Histogram用）
-
-7. **`player-radar.ts`** — 個別プレイヤー統計（Radar chart用）
-   - キル数、デス数、タスク数、移動距離等
-
-8. **`task-timeline.ts`** — タスク進捗（Area chart用）
-
-9. **`event-density.ts`** — イベント密度（Line chart用）
-
-10. **`movement-with-events.ts`** — 移動距離+イベントマーカー（Spline with symbols用）
-    - `timeseries.movement_snapshots` と `events.timeline` を結合
-    - イベント発生時にアイコンマーカーを配置
-
-### 6. Highchartsコンポーネント（10種類）（未実装）
-
-`components/charts/` ディレクトリに 'use client' コンポーネントを作成：
-
-#### 基本チャート（8種類）
-
-1. **`FactionWinRateChart.tsx`** — 陣営別勝率円グラフ
-   - Type: `pie`
-   - 固定カラー: Crewmate #00e272, Impostor #fe6a35, Madmate #9d4edd, Neutral #ffd60a, Other #6c757d
-
-2. **`PlayerWinRateChart.tsx`** — プレイヤー別勝率
-   - Type: `column`, stacking: `percent`
-   - プレイヤーフィルタリング機能（チェックボックス）
-
-3. **`MovementWithEventsChart.tsx`** — 移動距離+イベント
-   - Type: `spline` with symbols
-   - プレイヤーフィルタリング機能
-   - イベント時にLucideアイコンをマーカーとして表示
-
-4. **`GameDurationChart.tsx`** — 試合時間分布（Column histogram）
-
-5. **`PlayerRadarChart.tsx`** — プレイヤーレーダー（Polar chart）
-
-6. **`TaskTimelineChart.tsx`** — タスク進捗（Area stacked）
-
-7. **`EventDensityChart.tsx`** — イベント密度（Line chart）
-
-8. **`RolePerformanceChart.tsx`** — 役職別パフォーマンス（Bar chart）
-
-#### Heat map（2種類）⭐ NEW
-
-9. **`PlayerFactionHeatmap.tsx`** — プレイヤー×陣営Heat map
-   - Type: `heatmap`
-   - **横軸**: プレイヤー名（フィルタリング対応）
-   - **縦軸**: 陣営（Crewmate, Impostor, Madmate, Neutral, Other）
-   - **セル表示**: dataLabels で以下を表示
-     - プレイ回数 > 0: `"XX%\nYY回"` （例: `"75%\n8回"`）
-     - プレイ回数 = 0: `"-"`
-   - **背景色グラデーション**:
-     - 0% = 赤 (#ff0000)
-     - 50% = 黄 (#ffff00)
-     - 100% = 緑 (#00ff00)
-     - プレイ回数0 = グレー (#cccccc)
-
-10. **`PlayerRoleHeatmap.tsx`** — プレイヤー×役職Heat map
-    - Type: `heatmap`
-    - **横軸**: プレイヤー名
-    - **縦軸**: 頻出役職Top 10-15（動的に決定）
-    - **セル表示**: PlayerFactionHeatmap と同様
-    - **背景色グラデーション**: PlayerFactionHeatmap と同様
-
-### 7. ダッシュボードページとGitHub Actions（未実装）
+### 7. ダッシュボードページとGitHub Actions（一部完了）
 
 #### ダッシュボード実装
 
-- [ ] `app/page.tsx` — メインダッシュボード
-  - クライアント側で `useEffect` によるデータ取得
-  - 試合選択ドロップダウン（`components/GameSelector.tsx`）
-  - Tailwind CSS グリッドレイアウト（4x3 または 3x4）
-  - 全10チャートを配置
-
-- [ ] `config/highcharts-theme.ts` — カラースキーム適用
-  - Beyond Us カラーパレット設定
-  - グローバルテーマ設定
+- [x] `app/page.tsx` — `useGameAnalytics` と KPIカード/フィルタ/10チャートのレイアウトを実装。ライトテーマ専用デザインで、エラー/警告表示や再取得ボタンを備える。
+- [x] `config/highcharts-theme.ts` — Beyond Us パレットを Highcharts グローバルテーマに適用済み。
 
 #### デプロイ設定
 
-- [ ] `.github/workflows/deploy.yml` — GitHub Actions
-  - トリガー: `feature/ui-update` または `main` へのプッシュ
-  - ステップ:
-    1. Node.js 20 セットアップ
-    2. `npm ci && npm run build`
-    3. `out/` ディレクトリをアップロード
-    4. `gh-pages` ブランチへデプロイ
+- [ ] `.github/workflows/deploy.yml` — GitHub Pages 用の自動デプロイパイプラインは未作成。Node 20 セットアップ→`npm ci && npm run build`→`out/` デプロイのジョブを追加予定。
 
 ## カラースキーム
 
@@ -256,7 +186,17 @@ JSONLファイルから複数試合のAmong Usデータを読み込み、Highcha
 - **0%**: `#ff0000` （赤）
 - **50%**: `#ffff00` （黄）
 - **100%**: `#00ff00` （緑）
-- **データなし**: `#cccccc` （グレー）
+- **データなし**: `#cccccc` （グレー／`nullColor` として適用）
+
+### ライトテーマ ネイトルプリセット
+
+- **Surface**: `#ffffff`
+- **Alt Surface**: `#f9fafb`
+- **Muted Text**: `#64748b`
+- **Divider**: `#e2e8f0`
+- **Tooltip BG**: `#0f172a`
+
+ダークテーマは提供せず、すべての UI パーツは上記ライトパレット内で完結させる。
 
 ## 追加要件（Heat map仕様）
 
