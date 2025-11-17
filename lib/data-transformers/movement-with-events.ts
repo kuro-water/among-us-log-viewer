@@ -21,15 +21,23 @@ const INTERESTING_EVENTS = new Set([
 function eventMatchesPlayers(
   lookup: Map<number, string>,
   filter: Set<string> | undefined,
-  event: { player_id?: number; killer_id?: number; victim_id?: number; reporter_id?: number }
+  event: {
+    player_id?: number;
+    killer_id?: number;
+    victim_id?: number;
+    reporter_id?: number;
+  }
 ) {
   if (!filter || filter.size === 0) {
     return true;
   }
 
-  const related = [event.player_id, event.killer_id, event.victim_id, event.reporter_id].filter(
-    (value): value is number => typeof value === "number"
-  );
+  const related = [
+    event.player_id,
+    event.killer_id,
+    event.victim_id,
+    event.reporter_id,
+  ].filter((value): value is number => typeof value === "number");
 
   if (related.length === 0) {
     return true;
@@ -52,7 +60,9 @@ export function buildMovementWithEventsData(
   }
 
   const filter = options.selectedPlayerIds;
-  const playerRecords = Object.values(targetGame.players.data) as PlayerRecord[];
+  const playerRecords = Object.values(
+    targetGame.players.data
+  ) as PlayerRecord[];
   const players = playerRecords.filter((record) => {
     if (!filter || filter.size === 0) {
       return true;

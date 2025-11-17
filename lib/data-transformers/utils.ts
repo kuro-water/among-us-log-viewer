@@ -35,10 +35,15 @@ export function getPlayerKey(record: PlayerRecord): PlayerId {
 }
 
 export function getPlayerLabel(record: PlayerRecord): string {
-  return record.identity.player_name || record.identity.player_uuid || "Unknown";
+  return (
+    record.identity.player_name || record.identity.player_uuid || "Unknown"
+  );
 }
 
-export function filterGamesByIds(games: GameLog[], ids?: Set<string>): GameLog[] {
+export function filterGamesByIds(
+  games: GameLog[],
+  ids?: Set<string>
+): GameLog[] {
   if (!ids || ids.size === 0) {
     return games;
   }
@@ -46,7 +51,9 @@ export function filterGamesByIds(games: GameLog[], ids?: Set<string>): GameLog[]
   return games.filter((game) => ids.has(game.schema.game_id));
 }
 
-export function buildPlayerDirectory(games: GameLog[]): Map<PlayerId, PlayerIdentitySummary> {
+export function buildPlayerDirectory(
+  games: GameLog[]
+): Map<PlayerId, PlayerIdentitySummary> {
   const directory = new Map<PlayerId, PlayerIdentitySummary>();
 
   games.forEach((game) => {
@@ -207,9 +214,14 @@ export function extractMoverSeries(
 }
 
 export function collectTaskEvents(game: GameLog): EventTimelineEntry[] {
-  return game.events.timeline.filter((event) => event.event_type === "TaskCompleted");
+  return game.events.timeline.filter(
+    (event) => event.event_type === "TaskCompleted"
+  );
 }
 
-export function applyCommonFilters({ games, selectedGameIds }: TransformerOptions): GameLog[] {
+export function applyCommonFilters({
+  games,
+  selectedGameIds,
+}: TransformerOptions): GameLog[] {
   return filterGamesByIds(games, selectedGameIds);
 }

@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useMemo } from 'react';
-import type { Options } from 'highcharts';
-import type { TaskTimelineData } from '../../lib/data-transformers/types';
-import { BaseChart } from './BaseChart';
-import { ChartEmptyState } from './ChartEmptyState';
-import { formatDuration } from '../../lib/formatters';
+import { useMemo } from "react";
+import type { Options } from "highcharts";
+import type { TaskTimelineData } from "../../lib/data-transformers/types";
+import { BaseChart } from "./BaseChart";
+import { ChartEmptyState } from "./ChartEmptyState";
+import { formatDuration } from "../../lib/formatters";
 
 interface TaskTimelineChartProps {
   data: TaskTimelineData | null;
@@ -29,33 +29,33 @@ export function TaskTimelineChart({ data, className }: TaskTimelineChartProps) {
 
   const options = useMemo<Options>(
     () => ({
-      chart: { type: 'area' },
+      chart: { type: "area" },
       title: { text: undefined },
       xAxis: {
-        title: { text: '経過時間 (分)' },
-        labels: { format: '{value}分' },
+        title: { text: "経過時間 (分)" },
+        labels: { format: "{value}分" },
       },
       yAxis: {
-        title: { text: '累計タスク完了数' },
+        title: { text: "累計タスク完了数" },
         max: data?.taskTotal,
       },
       tooltip: {
         shared: false,
         pointFormat:
-          '時刻: {point.custom.timeLabel}<br/>タスク完了: <b>{point.y}</b><br/>プレイヤー: {point.custom.player}',
+          "時刻: {point.custom.timeLabel}<br/>タスク完了: <b>{point.y}</b><br/>プレイヤー: {point.custom.player}",
       },
       plotOptions: {
         area: {
-          step: 'left',
+          step: "left",
           fillOpacity: 0.25,
         },
       },
       series: [
         {
-          name: 'タスク完了',
-          type: 'area',
+          name: "タスク完了",
+          type: "area",
           data: seriesData,
-          color: '#2563eb',
+          color: "#2563eb",
         },
       ],
     }),
@@ -63,7 +63,12 @@ export function TaskTimelineChart({ data, className }: TaskTimelineChartProps) {
   );
 
   if (!data || seriesData.length === 0) {
-    return <ChartEmptyState className={className} message="タスクタイムラインのデータがありません" />;
+    return (
+      <ChartEmptyState
+        className={className}
+        message="タスクタイムラインのデータがありません"
+      />
+    );
   }
 
   return <BaseChart options={options} className={className} />;

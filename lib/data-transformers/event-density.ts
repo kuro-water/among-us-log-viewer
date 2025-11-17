@@ -1,5 +1,9 @@
 import type { GameLog } from "../../types/game-data.types";
-import type { EventDensityData, EventDensityBucket, TransformerOptions } from "./types";
+import type {
+  EventDensityData,
+  EventDensityBucket,
+  TransformerOptions,
+} from "./types";
 import { applyCommonFilters, getPlayerKey } from "./utils";
 
 const DEFAULT_CATEGORY = "Other";
@@ -17,15 +21,23 @@ function buildLookup(game: GameLog): EventLookup {
 function eventMatchesFilter(
   playerFilter: Set<string> | undefined,
   lookup: EventLookup,
-  event: { player_id?: number; killer_id?: number; victim_id?: number; reporter_id?: number }
+  event: {
+    player_id?: number;
+    killer_id?: number;
+    victim_id?: number;
+    reporter_id?: number;
+  }
 ) {
   if (!playerFilter || playerFilter.size === 0) {
     return true;
   }
 
-  const relatedIds = [event.player_id, event.killer_id, event.victim_id, event.reporter_id].filter(
-    (value): value is number => typeof value === "number"
-  );
+  const relatedIds = [
+    event.player_id,
+    event.killer_id,
+    event.victim_id,
+    event.reporter_id,
+  ].filter((value): value is number => typeof value === "number");
 
   if (relatedIds.length === 0) {
     return true;
@@ -48,7 +60,9 @@ function resolveCategory(eventCategory?: string, eventType?: string): string {
   return eventCategory ?? eventType ?? DEFAULT_CATEGORY;
 }
 
-export function buildEventDensityData(options: TransformerOptions): EventDensityData {
+export function buildEventDensityData(
+  options: TransformerOptions
+): EventDensityData {
   const games = applyCommonFilters(options);
   const buckets = new Map<number, EventDensityBucket>();
 
@@ -67,7 +81,9 @@ export function buildEventDensityData(options: TransformerOptions): EventDensity
     });
   });
 
-  const ordered = Array.from(buckets.values()).sort((a, b) => a.minute - b.minute);
+  const ordered = Array.from(buckets.values()).sort(
+    (a, b) => a.minute - b.minute
+  );
 
   return { buckets: ordered };
 }

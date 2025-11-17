@@ -8,7 +8,13 @@ import {
 import type { FactionWinRateData, TransformerOptions } from "./types";
 import { applyCommonFilters } from "./utils";
 
-const FACTIONS: Faction[] = ["Crewmate", "Impostor", "Madmate", "Neutral", "Other"];
+const FACTIONS: Faction[] = [
+  "Crewmate",
+  "Impostor",
+  "Madmate",
+  "Neutral",
+  "Other",
+];
 
 interface FactionCounter {
   wins: number;
@@ -33,7 +39,9 @@ function collectFactionsInGame(game: GameLog): Set<Faction> {
   return factions;
 }
 
-export function buildFactionWinRateData(options: TransformerOptions): FactionWinRateData {
+export function buildFactionWinRateData(
+  options: TransformerOptions
+): FactionWinRateData {
   const games = applyCommonFilters(options);
   const totals = initCounters();
 

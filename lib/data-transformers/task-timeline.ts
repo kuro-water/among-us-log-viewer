@@ -1,7 +1,9 @@
 import type { TaskTimelineData, TransformerOptions } from "./types";
 import { applyCommonFilters, getPlayerKey } from "./utils";
 
-export function buildTaskTimelineData(options: TransformerOptions): TaskTimelineData | null {
+export function buildTaskTimelineData(
+  options: TransformerOptions
+): TaskTimelineData | null {
   const games = applyCommonFilters(options);
   const targetGame = games[0];
 
@@ -18,7 +20,11 @@ export function buildTaskTimelineData(options: TransformerOptions): TaskTimeline
   const points = targetGame.events.timeline
     .filter((event) => event.event_type === "TaskCompleted")
     .filter((event) => {
-      if (!playerFilter || playerFilter.size === 0 || event.player_id === undefined) {
+      if (
+        !playerFilter ||
+        playerFilter.size === 0 ||
+        event.player_id === undefined
+      ) {
         return true;
       }
       const uuid = playerLookup.get(event.player_id);

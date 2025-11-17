@@ -88,7 +88,9 @@ function resolveSabotageKey(sabotageType?: string): EventVisualKey | null {
     return null;
   }
 
-  const match = SABOTAGE_PATTERNS.find(({ pattern }) => pattern.test(sabotageType));
+  const match = SABOTAGE_PATTERNS.find(({ pattern }) =>
+    pattern.test(sabotageType)
+  );
   return match?.key ?? null;
 }
 
@@ -107,7 +109,9 @@ function normalizeLabel(key: EventVisualKey): string {
   }
 }
 
-export function resolveEventVisual(entry: EventTimelineEntry): EventVisualDescriptor {
+export function resolveEventVisual(
+  entry: EventTimelineEntry
+): EventVisualDescriptor {
   const sabotageKey = resolveSabotageKey(entry.sabotage_type);
   const categoryKey = entry.category && CATEGORY_DEFAULTS[entry.category];
   let key: EventVisualKey = "Default";

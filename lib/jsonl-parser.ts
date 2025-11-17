@@ -24,7 +24,11 @@ const DEFAULT_SOURCE = "/game_history_sample.jsonl";
 
 const NEWLINE_PATTERN = /\r?\n/;
 
-function parseLine(line: string, lineNumber: number, errors: JsonLineError[]): GameLog | null {
+function parseLine(
+  line: string,
+  lineNumber: number,
+  errors: JsonLineError[]
+): GameLog | null {
   const trimmed = line.trim();
   if (!trimmed) {
     return null;
@@ -33,7 +37,8 @@ function parseLine(line: string, lineNumber: number, errors: JsonLineError[]): G
   try {
     return JSON.parse(trimmed) as GameLog;
   } catch (error) {
-    const parseError = error instanceof Error ? error : new Error(String(error));
+    const parseError =
+      error instanceof Error ? error : new Error(String(error));
     errors.push({ lineNumber, line: trimmed, error: parseError });
     return null;
   }
@@ -99,12 +104,16 @@ async function parseStream(
   return { games, errors };
 }
 
-export async function loadGameHistory(options: FetchJsonlOptions = {}): Promise<JsonlParseResult> {
+export async function loadGameHistory(
+  options: FetchJsonlOptions = {}
+): Promise<JsonlParseResult> {
   const { path = DEFAULT_SOURCE, signal, onProgress } = options;
   const response = await fetch(path, { cache: "no-store", signal });
 
   if (!response.ok) {
-    throw new Error(`Failed to load game history (${response.status} ${response.statusText})`);
+    throw new Error(
+      `Failed to load game history (${response.status} ${response.statusText})`
+    );
   }
 
   if (response.body) {

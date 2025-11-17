@@ -94,7 +94,9 @@ function formatGameLabel(game: GameLog): string {
   return `#${game.schema.game_count} ${game.match.map_name} · ${dateLabel}`;
 }
 
-function mapPlayerSummaryToOption(summary: PlayerIdentitySummary): PlayerOption {
+function mapPlayerSummaryToOption(
+  summary: PlayerIdentitySummary
+): PlayerOption {
   return {
     value: summary.uuid,
     label: summary.name,
@@ -118,7 +120,10 @@ export function useGameAnalytics(): UseGameAnalyticsResult {
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
 
   const gameIdSet = useMemo(() => new Set(selectedGameIds), [selectedGameIds]);
-  const playerIdSet = useMemo(() => new Set(selectedPlayerIds), [selectedPlayerIds]);
+  const playerIdSet = useMemo(
+    () => new Set(selectedPlayerIds),
+    [selectedPlayerIds]
+  );
 
   const transformerOptions = useMemo<TransformerOptions>(
     () => ({
@@ -173,27 +178,24 @@ export function useGameAnalytics(): UseGameAnalyticsResult {
     setSelectedPlayerIds([]);
   }, []);
 
-  const executeLoad = useCallback(
-    async (signal?: AbortSignal) => {
-      setLoading(true);
-      setError(null);
-      try {
-        const result = await loadGameHistory({ signal });
-        setGames(result.games);
-        setParserErrors(result.errors);
-      } catch (err) {
-        if (isAbortError(err)) {
-          return;
-        }
-        setError(err as Error);
-      } finally {
-        if (!signal?.aborted) {
-          setLoading(false);
-        }
+  const executeLoad = useCallback(async (signal?: AbortSignal) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await loadGameHistory({ signal });
+      setGames(result.games);
+      setParserErrors(result.errors);
+    } catch (err) {
+      if (isAbortError(err)) {
+        return;
       }
-    },
-    []
-  );
+      setError(err as Error);
+    } finally {
+      if (!signal?.aborted) {
+        setLoading(false);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();

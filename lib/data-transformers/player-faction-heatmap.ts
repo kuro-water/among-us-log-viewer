@@ -2,9 +2,17 @@ import type { HeatmapData, TransformerOptions } from "./types";
 import { applyCommonFilters, buildPlayerAggregates } from "./utils";
 import type { Faction } from "../role-mapping";
 
-const FACTIONS: Faction[] = ["Crewmate", "Impostor", "Madmate", "Neutral", "Other"];
+const FACTIONS: Faction[] = [
+  "Crewmate",
+  "Impostor",
+  "Madmate",
+  "Neutral",
+  "Other",
+];
 
-export function buildPlayerFactionHeatmap(options: TransformerOptions): HeatmapData {
+export function buildPlayerFactionHeatmap(
+  options: TransformerOptions
+): HeatmapData {
   const games = applyCommonFilters(options);
   const aggregates = buildPlayerAggregates(games, options.selectedPlayerIds);
   const players = Array.from(aggregates.values()).sort((a, b) =>
@@ -15,7 +23,10 @@ export function buildPlayerFactionHeatmap(options: TransformerOptions): HeatmapD
     FACTIONS.map((faction, factionIndex) => {
       const stats = player.factions[faction] ?? { wins: 0, games: 0 };
       const playCount = stats.games;
-      const value = playCount > 0 ? Number(((stats.wins / playCount) * 100).toFixed(1)) : null;
+      const value =
+        playCount > 0
+          ? Number(((stats.wins / playCount) * 100).toFixed(1))
+          : null;
       return {
         x: playerIndex,
         y: factionIndex,

@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useMemo } from 'react';
-import type Highcharts from 'highcharts';
-import type { Options } from 'highcharts';
-import type { EventDensityData } from '../../lib/data-transformers/types';
-import { BaseChart } from './BaseChart';
-import { ChartEmptyState } from './ChartEmptyState';
+import { useMemo } from "react";
+import type Highcharts from "highcharts";
+import type { Options } from "highcharts";
+import type { EventDensityData } from "../../lib/data-transformers/types";
+import { BaseChart } from "./BaseChart";
+import { ChartEmptyState } from "./ChartEmptyState";
 
 interface EventDensityChartProps {
   data: EventDensityData;
@@ -20,11 +20,13 @@ export function EventDensityChart({ data, className }: EventDensityChartProps) {
       Object.keys(bucket.categories).forEach((name) => categorySet.add(name));
     });
     const categoryNames = Array.from(categorySet.values());
-    const chartSeries: Highcharts.SeriesColumnOptions[] = categoryNames.map((name) => ({
-      type: 'column',
-      name,
-      data: buckets.map((bucket) => bucket.categories[name] ?? 0),
-    }));
+    const chartSeries: Highcharts.SeriesColumnOptions[] = categoryNames.map(
+      (name) => ({
+        type: "column",
+        name,
+        data: buckets.map((bucket) => bucket.categories[name] ?? 0),
+      })
+    );
     return {
       xLabels: buckets.map((bucket) => `${bucket.minute}分`),
       series: chartSeries,
@@ -33,20 +35,20 @@ export function EventDensityChart({ data, className }: EventDensityChartProps) {
 
   const options = useMemo<Options>(
     () => ({
-      chart: { type: 'column' },
+      chart: { type: "column" },
       title: { text: undefined },
       xAxis: {
         categories: xLabels,
-        labels: { style: { color: '#475569' } },
-        title: { text: '経過時間 (分)' },
+        labels: { style: { color: "#475569" } },
+        title: { text: "経過時間 (分)" },
       },
       yAxis: {
-        title: { text: 'イベント数' },
+        title: { text: "イベント数" },
         allowDecimals: false,
       },
       plotOptions: {
         column: {
-          stacking: 'normal',
+          stacking: "normal",
           borderRadius: 2,
         },
       },
@@ -62,7 +64,12 @@ export function EventDensityChart({ data, className }: EventDensityChartProps) {
   );
 
   if (data.buckets.length === 0) {
-    return <ChartEmptyState className={className} message="イベント密度のデータがありません" />;
+    return (
+      <ChartEmptyState
+        className={className}
+        message="イベント密度のデータがありません"
+      />
+    );
   }
 
   return <BaseChart options={options} className={className} />;

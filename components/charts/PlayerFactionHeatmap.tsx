@@ -1,21 +1,21 @@
-'use client';
+"use client";
 
-import { useMemo } from 'react';
-import type Highcharts from 'highcharts';
-import type { Options } from 'highcharts';
-import type { HeatmapData } from '../../lib/data-transformers/types';
-import { BaseChart } from './BaseChart';
-import { ChartEmptyState } from './ChartEmptyState';
+import { useMemo } from "react";
+import type Highcharts from "highcharts";
+import type { Options } from "highcharts";
+import type { HeatmapData } from "../../lib/data-transformers/types";
+import { BaseChart } from "./BaseChart";
+import { ChartEmptyState } from "./ChartEmptyState";
 
 const HEATMAP_COLOR_STOPS: Highcharts.ColorAxisOptions = {
   min: 0,
   max: 100,
   stops: [
-    [0, '#ff0000'],
-    [0.5, '#ffff00'],
-    [1, '#00ff00'],
+    [0, "#ff0000"],
+    [0.5, "#ffff00"],
+    [1, "#00ff00"],
   ],
-  labels: { format: '{value}%' },
+  labels: { format: "{value}%" },
 };
 
 type HeatmapPoint = Highcharts.PointOptionsObject & {
@@ -33,12 +33,16 @@ interface PlayerFactionHeatmapProps {
   className?: string;
 }
 
-export function PlayerFactionHeatmap({ data, className }: PlayerFactionHeatmapProps) {
+export function PlayerFactionHeatmap({
+  data,
+  className,
+}: PlayerFactionHeatmapProps) {
   const { xAxisCategories, yAxisCategories, seriesData } = useMemo(() => {
     const mapped: HeatmapPoint[] = data.cells.map((cell) => {
-      const displayLabel = cell.playCount > 0 && cell.value !== null
-        ? `${cell.value.toFixed(0)}%<br/>${cell.playCount}回`
-        : '-';
+      const displayLabel =
+        cell.playCount > 0 && cell.value !== null
+          ? `${cell.value.toFixed(0)}%<br/>${cell.playCount}回`
+          : "-";
       return {
         x: cell.x,
         y: cell.y,
@@ -61,39 +65,39 @@ export function PlayerFactionHeatmap({ data, className }: PlayerFactionHeatmapPr
 
   const options = useMemo<Options>(
     () => ({
-      chart: { type: 'heatmap' },
+      chart: { type: "heatmap" },
       title: { text: undefined },
       xAxis: {
         categories: xAxisCategories,
-        labels: { style: { color: '#475569', fontSize: '12px' } },
+        labels: { style: { color: "#475569", fontSize: "12px" } },
       },
       yAxis: {
         categories: yAxisCategories,
         title: { text: undefined },
-        labels: { style: { color: '#475569', fontSize: '12px' } },
+        labels: { style: { color: "#475569", fontSize: "12px" } },
       },
       colorAxis: HEATMAP_COLOR_STOPS,
-      legend: { align: 'right', verticalAlign: 'top', layout: 'vertical' },
+      legend: { align: "right", verticalAlign: "top", layout: "vertical" },
       plotOptions: {
         heatmap: {
-          nullColor: '#dfe3eb',
+          nullColor: "#dfe3eb",
         },
       },
       tooltip: {
         pointFormat:
-          '<b>{point.custom.player}</b><br/>陣営: {point.custom.target}<br/>' +
-          '勝率: {point.value:.1f}%<br/>プレイ回数: {point.custom.playCount}<br/>勝利数: {point.custom.wins}',
+          "<b>{point.custom.player}</b><br/>陣営: {point.custom.target}<br/>" +
+          "勝率: {point.value:.1f}%<br/>プレイ回数: {point.custom.playCount}<br/>勝利数: {point.custom.wins}",
       },
       series: [
         {
-          type: 'heatmap',
-          borderColor: '#f8fafc',
+          type: "heatmap",
+          borderColor: "#f8fafc",
           data: seriesData,
           dataLabels: {
             enabled: true,
             useHTML: true,
-            format: '{point.custom.displayLabel}',
-            style: { fontWeight: '600', color: '#0f172a' },
+            format: "{point.custom.displayLabel}",
+            style: { fontWeight: "600", color: "#0f172a" },
           },
         },
       ],
@@ -102,7 +106,12 @@ export function PlayerFactionHeatmap({ data, className }: PlayerFactionHeatmapPr
   );
 
   if (xAxisCategories.length === 0 || yAxisCategories.length === 0) {
-    return <ChartEmptyState className={className} message="ヒートマップを表示するデータがありません" />;
+    return (
+      <ChartEmptyState
+        className={className}
+        message="ヒートマップを表示するデータがありません"
+      />
+    );
   }
 
   return <BaseChart options={options} className={className} />;

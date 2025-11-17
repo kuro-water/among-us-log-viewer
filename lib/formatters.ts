@@ -48,7 +48,11 @@ export function metersToKilometers(distance: number, digits = 1): string {
 }
 
 export function safeDivide(numerator: number, denominator: number): number {
-  if (!Number.isFinite(numerator) || !Number.isFinite(denominator) || denominator === 0) {
+  if (
+    !Number.isFinite(numerator) ||
+    !Number.isFinite(denominator) ||
+    denominator === 0
+  ) {
     return 0;
   }
   return numerator / denominator;

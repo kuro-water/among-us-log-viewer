@@ -3,7 +3,9 @@ import { applyCommonFilters, buildPlayerAggregates } from "./utils";
 
 const MAX_ROLES = 12;
 
-export function buildPlayerRoleHeatmap(options: TransformerOptions): HeatmapData {
+export function buildPlayerRoleHeatmap(
+  options: TransformerOptions
+): HeatmapData {
   const games = applyCommonFilters(options);
   const aggregates = buildPlayerAggregates(games, options.selectedPlayerIds);
   const players = Array.from(aggregates.values()).sort((a, b) =>
@@ -26,7 +28,10 @@ export function buildPlayerRoleHeatmap(options: TransformerOptions): HeatmapData
     roleAxis.map((role, roleIndex) => {
       const stats = player.roles[role] ?? { wins: 0, games: 0 };
       const playCount = stats.games;
-      const value = playCount > 0 ? Number(((stats.wins / playCount) * 100).toFixed(1)) : null;
+      const value =
+        playCount > 0
+          ? Number(((stats.wins / playCount) * 100).toFixed(1))
+          : null;
       return {
         x: playerIndex,
         y: roleIndex,

@@ -41,7 +41,11 @@ export function BaseChart({ options, className }: BaseChartProps) {
 
   return (
     <div className={className}>
-      <HighchartsReact highcharts={Highcharts} options={chartOptions} immutable />
+      <HighchartsReact
+        highcharts={Highcharts}
+        options={chartOptions}
+        immutable
+      />
     </div>
   );
 }

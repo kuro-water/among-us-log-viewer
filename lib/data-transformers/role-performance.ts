@@ -11,7 +11,11 @@ interface RoleStats {
   totalTimeAlive: number;
 }
 
-function updateRoleStats(map: Map<string, RoleStats>, game: GameLog, playerFilter?: Set<string>) {
+function updateRoleStats(
+  map: Map<string, RoleStats>,
+  game: GameLog,
+  playerFilter?: Set<string>
+) {
   Object.values(game.players.data).forEach((record) => {
     const playerKey = getPlayerKey(record);
     if (playerFilter && playerFilter.size > 0 && !playerFilter.has(playerKey)) {
@@ -38,10 +42,14 @@ function updateRoleStats(map: Map<string, RoleStats>, game: GameLog, playerFilte
   });
 }
 
-export function buildRolePerformanceData(options: TransformerOptions): RolePerformanceData {
+export function buildRolePerformanceData(
+  options: TransformerOptions
+): RolePerformanceData {
   const games = applyCommonFilters(options);
   const roleStats = new Map<string, RoleStats>();
-  games.forEach((game) => updateRoleStats(roleStats, game, options.selectedPlayerIds));
+  games.forEach((game) =>
+    updateRoleStats(roleStats, game, options.selectedPlayerIds)
+  );
 
   const rows = Array.from(roleStats.values())
     .filter((stats) => stats.games > 0)

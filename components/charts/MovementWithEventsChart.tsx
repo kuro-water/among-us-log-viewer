@@ -1,18 +1,21 @@
-'use client';
+"use client";
 
-import { useMemo } from 'react';
-import type { Options } from 'highcharts';
-import type { MovementWithEventsData } from '../../lib/data-transformers/types';
-import { BaseChart } from './BaseChart';
-import { ChartEmptyState } from './ChartEmptyState';
-import { formatDuration } from '../../lib/formatters';
+import { useMemo } from "react";
+import type { Options } from "highcharts";
+import type { MovementWithEventsData } from "../../lib/data-transformers/types";
+import { BaseChart } from "./BaseChart";
+import { ChartEmptyState } from "./ChartEmptyState";
+import { formatDuration } from "../../lib/formatters";
 
 interface MovementWithEventsChartProps {
   data: MovementWithEventsData | null;
   className?: string;
 }
 
-export function MovementWithEventsChart({ data, className }: MovementWithEventsChartProps) {
+export function MovementWithEventsChart({
+  data,
+  className,
+}: MovementWithEventsChartProps) {
   const { movementSeries, eventSeries, maxMinutes } = useMemo(() => {
     if (!data) {
       return {
@@ -23,7 +26,7 @@ export function MovementWithEventsChart({ data, className }: MovementWithEventsC
     }
 
     const series = data.series.map((entry) => ({
-      type: 'spline' as const,
+      type: "spline" as const,
       name: entry.playerName,
       data: entry.data.map((point) => ({
         x: Number((point.x / 60).toFixed(2)),
@@ -54,37 +57,38 @@ export function MovementWithEventsChart({ data, className }: MovementWithEventsC
     () => ({
       title: { text: undefined },
       xAxis: {
-        title: { text: '経過時間 (分)' },
-        labels: { format: '{value}分' },
+        title: { text: "経過時間 (分)" },
+        labels: { format: "{value}分" },
         max: maxMinutes,
       },
       yAxis: [
         {
-          title: { text: '移動距離 (m)' },
+          title: { text: "移動距離 (m)" },
         },
         {
-          title: { text: '' },
+          title: { text: "" },
           max: 1,
           min: 0,
           visible: false,
           opposite: true,
         },
       ],
-      legend: { align: 'right', verticalAlign: 'top' },
+      legend: { align: "right", verticalAlign: "top" },
       tooltip: { shared: false },
       series: [
         ...movementSeries.map((series) => ({
           ...series,
           tooltip: {
-            pointFormat: '{series.name}<br/>時刻: {point.custom.timeLabel}<br/>距離: <b>{point.y:.0f} m</b>',
+            pointFormat:
+              "{series.name}<br/>時刻: {point.custom.timeLabel}<br/>距離: <b>{point.y:.0f} m</b>",
           },
         })),
         {
-          type: 'scatter',
-          name: 'イベント',
+          type: "scatter",
+          name: "イベント",
           data: eventSeries,
           yAxis: 1,
-          marker: { symbol: 'circle', radius: 6 },
+          marker: { symbol: "circle", radius: 6 },
           tooltip: {
             pointFormat:
               '<span style="color:{point.color}">{point.custom.label}</span><br/>時刻: {point.custom.timeLabel}',
@@ -96,7 +100,9 @@ export function MovementWithEventsChart({ data, className }: MovementWithEventsC
   );
 
   if (!data || movementSeries.length === 0) {
-    return <ChartEmptyState className={className} message="移動データがありません" />;
+    return (
+      <ChartEmptyState className={className} message="移動データがありません" />
+    );
   }
 
   return <BaseChart options={options} className={className} />;

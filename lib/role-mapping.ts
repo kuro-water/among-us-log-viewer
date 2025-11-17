@@ -212,8 +212,9 @@ export function getRoleFaction(mainRole?: string | null): Faction {
     return "Other";
   }
 
-  const matchedEntry = (Object.entries(ROLE_SETS) as [Faction, Set<string>][])
-    .find(([, roleSet]) => roleSet.has(roleName));
+  const matchedEntry = (
+    Object.entries(ROLE_SETS) as [Faction, Set<string>][]
+  ).find(([, roleSet]) => roleSet.has(roleName));
 
   return matchedEntry ? matchedEntry[0] : "Other";
 }

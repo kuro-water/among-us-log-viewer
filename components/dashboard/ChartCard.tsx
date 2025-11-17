@@ -9,7 +9,14 @@ interface ChartCardProps {
   className?: string;
 }
 
-export function ChartCard({ title, description, actions, footer, children, className }: ChartCardProps) {
+export function ChartCard({
+  title,
+  description,
+  actions,
+  footer,
+  children,
+  className,
+}: ChartCardProps) {
   return (
     <section
       className={[
@@ -23,12 +30,20 @@ export function ChartCard({ title, description, actions, footer, children, class
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h3 className="text-base font-semibold text-slate-900">{title}</h3>
-          {description ? <p className="mt-1 text-sm text-slate-500">{description}</p> : null}
+          {description ? (
+            <p className="mt-1 text-sm text-slate-500">{description}</p>
+          ) : null}
         </div>
-        {actions ? <div className="text-sm text-slate-500">{actions}</div> : null}
+        {actions ? (
+          <div className="text-sm text-slate-500">{actions}</div>
+        ) : null}
       </header>
       <div className="min-h-[280px] flex-1">{children}</div>
-      {footer ? <footer className="border-t border-slate-100 pt-3 text-xs text-slate-500">{footer}</footer> : null}
+      {footer ? (
+        <footer className="border-t border-slate-100 pt-3 text-xs text-slate-500">
+          {footer}
+        </footer>
+      ) : null}
     </section>
   );
 }

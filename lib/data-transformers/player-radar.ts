@@ -1,7 +1,17 @@
-import type { PlayerRadarData, PlayerRadarMetric, TransformerOptions } from "./types";
-import { applyCommonFilters, buildPlayerAggregates, pickPrimaryPlayer } from "./utils";
+import type {
+  PlayerRadarData,
+  PlayerRadarMetric,
+  TransformerOptions,
+} from "./types";
+import {
+  applyCommonFilters,
+  buildPlayerAggregates,
+  pickPrimaryPlayer,
+} from "./utils";
 
-export function buildPlayerRadarData(options: TransformerOptions): PlayerRadarData | null {
+export function buildPlayerRadarData(
+  options: TransformerOptions
+): PlayerRadarData | null {
   const games = applyCommonFilters(options);
   const aggregates = buildPlayerAggregates(games, options.selectedPlayerIds);
   const player = pickPrimaryPlayer(aggregates, options.selectedPlayerIds);
@@ -11,7 +21,8 @@ export function buildPlayerRadarData(options: TransformerOptions): PlayerRadarDa
   }
 
   const totals = Array.from(aggregates.values());
-  const playerPerGame = (value: number) => (player.appearances > 0 ? value / player.appearances : 0);
+  const playerPerGame = (value: number) =>
+    player.appearances > 0 ? value / player.appearances : 0;
   const otherPerGame = (aggValue: number, appearances: number) =>
     appearances > 0 ? aggValue / appearances : 0;
 
@@ -39,7 +50,8 @@ export function buildPlayerRadarData(options: TransformerOptions): PlayerRadarDa
   const metrics: PlayerRadarMetric[] = [
     {
       label: "Win Rate",
-      value: player.appearances > 0 ? (player.wins / player.appearances) * 100 : 0,
+      value:
+        player.appearances > 0 ? (player.wins / player.appearances) * 100 : 0,
       max: 100,
     },
     {
