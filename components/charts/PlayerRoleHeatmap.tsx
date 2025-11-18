@@ -6,6 +6,7 @@ import type { Options } from "highcharts";
 import type { HeatmapData } from "../../lib/data-transformers/types";
 import { BaseChart } from "./BaseChart";
 import { ChartEmptyState } from "./ChartEmptyState";
+import { getRoleDisplayName } from "../../lib/role-localization";
 
 const COLOR_AXIS: Highcharts.ColorAxisOptions = {
   min: 0,
@@ -49,13 +50,13 @@ export function PlayerRoleHeatmap({ data, className }: PlayerRoleHeatmapProps) {
           playCount: cell.playCount,
           wins: cell.wins,
           player: cell.meta.label,
-          target: cell.meta.target,
+          target: getRoleDisplayName(cell.meta.target),
         },
       } satisfies HeatmapPoint;
     });
     return {
       xAxisCategories: data.xAxis,
-      yAxisCategories: data.yAxis,
+      yAxisCategories: data.yAxis.map((r) => getRoleDisplayName(r)),
       seriesData: mapped,
     };
   }, [data]);

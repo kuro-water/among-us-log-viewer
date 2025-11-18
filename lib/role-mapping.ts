@@ -187,10 +187,10 @@ const ROLE_SETS: Record<Faction, Set<string>> = {
 };
 
 export const FACTION_COLORS: Record<Faction, string> = {
-  Crewmate: "#00e272",
-  Impostor: "#fe6a35",
-  Madmate: "#9d4edd",
-  Neutral: "#ffd60a",
+  Crewmate: "#00bcd4",
+  Impostor: "#e74c3c",
+  Madmate: "#c0392b",
+  Neutral: "#27ae60",
   Other: "#6c757d",
 };
 

@@ -36,6 +36,12 @@ export interface PlayerWinRateBreakdown {
   games: number;
 }
 
+export interface PlayerWinRateRoleBreakdown {
+  role: string;
+  wins: number;
+  games: number;
+}
+
 export interface PlayerWinRateRow {
   uuid: PlayerId;
   name: string;
@@ -44,6 +50,7 @@ export interface PlayerWinRateRow {
   games: number;
   winRate: number;
   factions: PlayerWinRateBreakdown[];
+  roles: PlayerWinRateRoleBreakdown[];
 }
 
 export interface PlayerWinRateData {

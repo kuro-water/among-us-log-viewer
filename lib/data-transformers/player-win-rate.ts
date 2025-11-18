@@ -29,6 +29,11 @@ export function buildPlayerWinRateData(
             games: stats.games,
           })
         ),
+        roles: Object.entries(aggregate.roles).map(([role, stats]) => ({
+          role,
+          wins: stats.wins,
+          games: stats.games,
+        })),
       };
     }
   );

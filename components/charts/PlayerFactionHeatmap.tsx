@@ -6,6 +6,7 @@ import type { Options } from "highcharts";
 import type { HeatmapData } from "../../lib/data-transformers/types";
 import { BaseChart } from "./BaseChart";
 import { ChartEmptyState } from "./ChartEmptyState";
+import { getFactionDisplayName } from "../../lib/role-localization";
 
 const HEATMAP_COLOR_STOPS: Highcharts.ColorAxisOptions = {
   min: 0,
@@ -52,13 +53,13 @@ export function PlayerFactionHeatmap({
           playCount: cell.playCount,
           wins: cell.wins,
           player: cell.meta.label,
-          target: cell.meta.target,
+          target: getFactionDisplayName(cell.meta.target as any),
         },
       } satisfies HeatmapPoint;
     });
     return {
       xAxisCategories: data.xAxis,
-      yAxisCategories: data.yAxis,
+      yAxisCategories: data.yAxis.map((f) => getFactionDisplayName(f as any)),
       seriesData: mapped,
     };
   }, [data]);

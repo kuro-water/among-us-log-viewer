@@ -6,6 +6,7 @@ import type { RolePerformanceData } from "../../lib/data-transformers/types";
 import { BaseChart } from "./BaseChart";
 import { ChartEmptyState } from "./ChartEmptyState";
 import { FACTION_COLORS } from "../../lib/role-mapping";
+import { getRoleDisplayName } from "../../lib/role-localization";
 import { formatRatio } from "../../lib/formatters";
 
 interface RolePerformanceChartProps {
@@ -20,7 +21,7 @@ export function RolePerformanceChart({
   const { categories, tasks, aliveMinutes } = useMemo(() => {
     const winRateText = data.rows.map((row) => formatRatio(row.winRate));
     return {
-      categories: data.rows.map((row) => row.role),
+      categories: data.rows.map((row) => getRoleDisplayName(row.role)),
       tasks: data.rows.map((row, index) => ({
         y: Number(row.avgTasks.toFixed(1)),
         color: FACTION_COLORS[row.faction],

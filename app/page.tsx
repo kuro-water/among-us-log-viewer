@@ -1,31 +1,76 @@
 "use client";
 
 import {
-  EventDensityChart,
-  FactionWinRateChart,
-  GameDurationChart,
-  MovementWithEventsChart,
-  PlayerFactionHeatmap,
-  PlayerRadarChart,
-  PlayerRoleHeatmap,
-  PlayerWinRateChart,
-  RolePerformanceChart,
-  TaskTimelineChart,
-} from "@/components/charts";
-import { ChartCard } from "@/components/dashboard/ChartCard";
-import { KpiCard } from "@/components/dashboard/KpiCard";
-import { useGameAnalytics } from "@/hooks/useGameAnalytics";
-import { formatMinutes, formatNumber, formatRatio } from "@/lib/formatters";
-import type { ChangeEvent } from "react";
+  Accordion,
+  AccordionItem,
+  Alert,
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  Chip,
+  Select,
+  SelectItem,
+  Spinner,
+} from "@heroui/react";
+import type { Selection } from "@react-types/shared";
+import dynamic from "next/dynamic";
 
-function SelectLabel({ label, helper }: { label: string; helper?: string }) {
-  return (
-    <div className="flex items-center justify-between text-sm text-slate-600">
-      <span className="font-semibold text-slate-800">{label}</span>
-      {helper ? <span>{helper}</span> : null}
-    </div>
-  );
-}
+const PlayerRoleWinLossChart = dynamic(
+  () => import("@/components/charts").then((m) => m.PlayerRoleWinLossChart),
+  { ssr: false }
+);
+const PlayerRolePlayRateChart = dynamic(
+  () => import("@/components/charts").then((m) => m.PlayerRolePlayRateChart),
+  { ssr: false }
+);
+const PlayerFactionPlayRateChart = dynamic(
+  () => import("@/components/charts").then((m) => m.PlayerFactionPlayRateChart),
+  { ssr: false }
+);
+const FactionWinRateChart = dynamic(
+  () => import("@/components/charts").then((m) => m.FactionWinRateChart),
+  { ssr: false }
+);
+const PlayerWinRateTable = dynamic(
+  () => import("@/components/charts").then((m) => m.PlayerWinRateTable),
+  { ssr: false }
+);
+const PlayerFactionHeatmap = dynamic(
+  () => import("@/components/charts").then((m) => m.PlayerFactionHeatmap),
+  { ssr: false }
+);
+const PlayerRoleHeatmap = dynamic(
+  () => import("@/components/charts").then((m) => m.PlayerRoleHeatmap),
+  { ssr: false }
+);
+const TaskTimelineChart = dynamic(
+  () => import("@/components/charts").then((m) => m.TaskTimelineChart),
+  { ssr: false }
+);
+const EventDensityChart = dynamic(
+  () => import("@/components/charts").then((m) => m.EventDensityChart),
+  { ssr: false }
+);
+const MovementWithEventsChart = dynamic(
+  () => import("@/components/charts").then((m) => m.MovementWithEventsChart),
+  { ssr: false }
+);
+const PlayerRadarChart = dynamic(
+  () => import("@/components/charts").then((m) => m.PlayerRadarChart),
+  { ssr: false }
+);
+const RolePerformanceChart = dynamic(
+  () => import("@/components/charts").then((m) => m.RolePerformanceChart),
+  { ssr: false }
+);
+const GameDurationChart = dynamic(
+  () => import("@/components/charts").then((m) => m.GameDurationChart),
+  { ssr: false }
+);
+import { ChartCard } from "@/components/dashboard/ChartCard";
+import { useGameAnalytics } from "@/hooks/useGameAnalytics";
+import { useMemo } from "react";
 
 export default function DashboardPage() {
   const {
@@ -38,202 +83,311 @@ export default function DashboardPage() {
     analytics,
     refresh,
     hasData,
+    games,
   } = useGameAnalytics();
 
-  const gameSelectSize = Math.min(Math.max(gameOptions.length, 3), 8);
-  const playerSelectSize = Math.min(Math.max(playerOptions.length, 6), 10);
+  const selectedGameKeys = useMemo<Selection>(() => {
+    return filters.selectedGameIds.length
+      ? (new Set(filters.selectedGameIds) as Selection)
+      : (new Set<string>() as Selection);
+  }, [filters.selectedGameIds]);
 
-  const totalGames = analytics.factionWinRate.totalGames;
-  const averageDurationMinutes = analytics.gameDuration.durations.length
-    ? analytics.gameDuration.durations.reduce(
-        (sum, duration) => sum + duration,
-        0
-      ) /
-      analytics.gameDuration.durations.length /
-      60
-    : 0;
-  const topPlayer = analytics.playerWinRate.rows[0];
-  const kpiCards = [
-    {
-      label: "総試合数",
-      value: formatNumber(totalGames),
-      helper:
-        filters.selectedGameIds.length > 0 ? "フィルタ適用中" : "全データ対象",
-    },
-    {
-      label: "平均試合時間",
-      value: formatMinutes(averageDurationMinutes),
-      helper: "JSONLの平均値",
-    },
-    {
-      label: "ユニークプレイヤー",
-      value: formatNumber(playerOptions.length),
-      helper: `${filters.selectedPlayerIds.length || 0} 名選択中`,
-    },
-    {
-      label: "最高勝率",
-      value: topPlayer ? formatRatio(topPlayer.winRate) : "0%",
-      helper: topPlayer ? topPlayer.name : "データ不足",
-    },
-  ];
+  const selectedPlayerKeys = useMemo<Selection>(() => {
+    return filters.selectedPlayerIds.length
+      ? (new Set(filters.selectedPlayerIds) as Selection)
+      : (new Set<string>() as Selection);
+  }, [filters.selectedPlayerIds]);
 
-  const handleGameChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    const values = Array.from(event.target.selectedOptions).map(
-      (option) => option.value
-    );
-    filters.setSelectedGameIds(values);
+  const gameSelectionSummary =
+    filters.selectedGameIds.length > 0
+      ? `${filters.selectedGameIds.length} 件選択`
+      : "全試合";
+
+  const playerSelectionSummary =
+    filters.selectedPlayerIds.length > 0
+      ? `${filters.selectedPlayerIds.length} 名選択`
+      : "全プレイヤー";
+
+  const handleGameSelectionChange = (keys: Selection) => {
+    const normalized =
+      keys === "all"
+        ? gameOptions.map((option) => option.value)
+        : Array.from(keys).map(String);
+    filters.setSelectedGameIds(normalized);
   };
 
-  const handlePlayerChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    const values = Array.from(event.target.selectedOptions).map(
-      (option) => option.value
-    );
-    filters.setSelectedPlayerIds(values);
+  const handlePlayerSelectionChange = (keys: Selection) => {
+    const normalized =
+      keys === "all"
+        ? playerOptions.map((option) => option.value)
+        : Array.from(keys).map(String);
+    filters.setSelectedPlayerIds(normalized);
   };
 
   return (
-    <main className="min-h-screen bg-[var(--background)] pb-12">
+    <main className="min-h-screen bg-background pb-12">
       <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 pt-10 lg:px-8">
-        <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
-              Among Us Analytics
-            </p>
-            <h1 className="mt-1 text-3xl font-semibold text-slate-900">
-              Beyond Us ライトテーマダッシュボード
-            </h1>
-            <p className="mt-2 max-w-3xl text-sm text-slate-500">
-              JSONL
-              ログをブラウザだけで読み込み、役職別パフォーマンスやヒートマップ、移動タイムラインなど
-              10 種類の Highcharts を一括で確認できます。
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3 text-sm">
-            {loading ? (
-              <span className="rounded-full bg-slate-200 px-4 py-2 font-medium text-slate-600">
-                読み込み中...
-              </span>
-            ) : null}
-            <button
-              type="button"
-              onClick={refresh}
-              className="rounded-full border border-slate-300 bg-white px-4 py-2 font-medium text-slate-700 shadow-sm transition hover:border-slate-400"
-            >
-              データ再取得
-            </button>
-            <button
-              type="button"
-              onClick={filters.resetFilters}
-              className="rounded-full border border-transparent bg-slate-900 px-4 py-2 font-medium text-white shadow-sm transition hover:bg-slate-800"
-            >
-              フィルタをクリア
-            </button>
-          </div>
-        </header>
+        <Card
+          radius="lg"
+          shadow="sm"
+          className="border border-default-200 bg-white/95 backdrop-blur"
+        >
+          <CardBody className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-3">
+              <Chip
+                color="secondary"
+                variant="flat"
+                className="w-fit uppercase tracking-[0.25em]"
+              >
+                Among Us Analytics
+              </Chip>
+              <div>
+                <h1 className="text-3xl font-semibold text-foreground">
+                  Beyond Us ライトテーマダッシュボード
+                </h1>
+                <p className="mt-2 max-w-3xl text-sm text-foreground-500">
+                  JSONL
+                  ログをブラウザだけで読み込み、役職別パフォーマンスやヒートマップ、移動タイムラインなど
+                  10 種類の Highcharts を一括で確認できます。
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3 text-sm">
+              {loading ? (
+                <Chip
+                  color="primary"
+                  variant="flat"
+                  startContent={<Spinner size="sm" color="primary" />}
+                  className="bg-primary-50 text-primary-700"
+                >
+                  読み込み中...
+                </Chip>
+              ) : null}
+              <Button
+                color="primary"
+                variant="flat"
+                radius="full"
+                onPress={refresh}
+              >
+                データ再取得
+              </Button>
+              <Button
+                color="secondary"
+                variant="solid"
+                radius="full"
+                onPress={filters.resetFilters}
+              >
+                フィルタをクリア
+              </Button>
+            </div>
+          </CardBody>
+        </Card>
 
         {error ? (
-          <div className="rounded-3xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-900">
-            <p className="font-semibold">データ取得に失敗しました</p>
-            <p className="mt-1">{error.message}</p>
-            <button
-              type="button"
-              onClick={refresh}
-              className="mt-3 rounded-full border border-rose-200 bg-white/80 px-4 py-2 text-rose-700 hover:bg-white"
-            >
-              もう一度試す
-            </button>
-          </div>
+          <Alert
+            color="danger"
+            variant="flat"
+            title="データ取得に失敗しました"
+            description={error.message}
+            className="rounded-3xl border border-danger-100 bg-danger-50/80"
+            endContent={
+              <Button
+                size="sm"
+                color="danger"
+                variant="flat"
+                radius="full"
+                onPress={refresh}
+              >
+                もう一度試す
+              </Button>
+            }
+          />
         ) : null}
 
         {parserErrors.length > 0 ? (
-          <details className="rounded-3xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-900">
-            <summary className="cursor-pointer font-semibold">
-              JSONL 解析時に {parserErrors.length} 件の警告が発生しました
-            </summary>
-            <ul className="mt-3 space-y-1">
-              {parserErrors.slice(0, 3).map((item, index) => (
-                <li key={`${item.lineNumber}-${index}`}>
-                  行 {item.lineNumber}: {item.error.message}
-                </li>
-              ))}
-            </ul>
-            {parserErrors.length > 3 ? (
-              <p className="mt-2 text-xs">
-                他 {parserErrors.length - 3} 件の警告があります。
-              </p>
-            ) : null}
-          </details>
+          <Accordion
+            variant="splitted"
+            defaultExpandedKeys={["parser-warnings"]}
+            className="rounded-3xl border border-warning-100 bg-warning-50/80"
+          >
+            <AccordionItem
+              key="parser-warnings"
+              aria-label="JSONL parser warnings"
+              title={`JSONL 解析時に ${parserErrors.length} 件の警告が発生しました`}
+              subtitle="最新 3 件を表示しています"
+            >
+              <ul className="space-y-1 text-sm text-warning-900">
+                {parserErrors.slice(0, 3).map((item, index) => (
+                  <li key={`${item.lineNumber}-${index}`}>
+                    行 {item.lineNumber}: {item.error.message}
+                  </li>
+                ))}
+              </ul>
+              {parserErrors.length > 3 ? (
+                <p className="mt-2 text-xs text-warning-900">
+                  他 {parserErrors.length - 3} 件の警告があります。
+                </p>
+              ) : null}
+            </AccordionItem>
+          </Accordion>
         ) : null}
 
-        <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {kpiCards.map((kpi) => (
-            <KpiCard
-              key={kpi.label}
-              label={kpi.label}
-              value={kpi.value}
-              helper={kpi.helper}
-            />
-          ))}
-        </section>
+        {/* KPI cards removed as requested */}
 
-        <section className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div>
-              <SelectLabel
-                label="試合選択"
-                helper={`${filters.selectedGameIds.length || "すべて"} 件`}
-              />
-              <select
-                multiple
-                value={filters.selectedGameIds}
-                onChange={handleGameChange}
-                size={gameSelectSize}
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-inner"
+        <Card
+          radius="lg"
+          shadow="sm"
+          className="border border-default-200 bg-white/95 backdrop-blur"
+        >
+          <CardHeader className="flex flex-col gap-1">
+            <p className="text-sm font-semibold text-foreground">フィルタ</p>
+            <p className="text-xs text-foreground-500">
+              ユーザーや試合単位でチャートを柔軟に絞り込みます。
+            </p>
+          </CardHeader>
+          <CardBody className="grid gap-6 lg:grid-cols-2">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-sm text-foreground-500">
+                <span className="font-semibold text-foreground">試合選択</span>
+                <Chip color="primary" variant="flat" size="sm">
+                  {gameSelectionSummary}
+                </Chip>
+              </div>
+              <Select
+                aria-label="試合選択"
+                labelPlacement="outside"
+                placeholder="試合を選択"
+                selectionMode="multiple"
+                selectedKeys={selectedGameKeys}
+                onSelectionChange={handleGameSelectionChange}
+                variant="flat"
+                radius="lg"
+                isMultiline
+                className="w-full"
+                listboxProps={{ className: "max-h-72" }}
               >
                 {gameOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
+                  <SelectItem key={option.value}>{option.label}</SelectItem>
                 ))}
-              </select>
-              <p className="mt-2 text-xs text-slate-500">
-                複数選択で試合を絞り込みます（Ctrl / Command + クリック）。
+              </Select>
+              <p className="text-xs text-foreground-500">
+                複数選択で試合を絞り込みます（⌘ / Ctrl + クリック）。
               </p>
             </div>
-            <div>
-              <SelectLabel
-                label="プレイヤー選択"
-                helper={`${filters.selectedPlayerIds.length || "すべて"} 名`}
-              />
-              <select
-                multiple
-                value={filters.selectedPlayerIds}
-                onChange={handlePlayerChange}
-                size={playerSelectSize}
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-inner"
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-sm text-foreground-500">
+                <span className="font-semibold text-foreground">
+                  プレイヤー選択
+                </span>
+                <Chip color="secondary" variant="flat" size="sm">
+                  {playerSelectionSummary}
+                </Chip>
+              </div>
+              <Select
+                aria-label="プレイヤー選択"
+                labelPlacement="outside"
+                placeholder="プレイヤーを選択"
+                selectionMode="multiple"
+                selectedKeys={selectedPlayerKeys}
+                onSelectionChange={handlePlayerSelectionChange}
+                variant="flat"
+                radius="lg"
+                isMultiline
+                className="w-full"
+                listboxProps={{ className: "max-h-72" }}
               >
                 {playerOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
+                  <SelectItem key={option.value}>{option.label}</SelectItem>
                 ))}
-              </select>
-              <p className="mt-2 text-xs text-slate-500">
+              </Select>
+              <p className="text-xs text-foreground-500">
                 プレイヤー軸のチャート（ヒートマップ/レーダーなど）に適用されます。
               </p>
             </div>
-          </div>
-        </section>
+          </CardBody>
+        </Card>
 
         {!hasData && !loading ? (
-          <div className="rounded-3xl border border-slate-200 bg-white/90 p-6 text-center text-slate-500">
-            まだ JSONL
-            データが読み込まれていません。`public/game_history_sample.jsonl`
-            を配置してください。
-          </div>
+          <Card
+            radius="lg"
+            className="border border-default-200 bg-white/95 text-center text-foreground-500"
+          >
+            <CardBody>
+              まだ JSONL
+              データが読み込まれていません。`public/game_history_sample.jsonl`
+              を配置してください。
+            </CardBody>
+          </Card>
         ) : null}
 
+        {/* 独立セクション: プレイヤー勝率 */}
+        <ChartCard
+          title="プレイヤー勝率"
+          description="プレイヤーごとの勝率と役職別寄与（独立セクション）"
+          className="lg:col-span-12"
+        >
+          <PlayerWinRateTable data={analytics.playerWinRate} className="p-4" />
+        </ChartCard>
+
         <section className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+          <ChartCard
+            title="プレイヤー勝率 × 役職影響"
+            description="勝利/敗北に貢献した役職を1つのグラフで比較"
+            className="lg:col-span-12"
+          >
+            <PlayerRoleWinLossChart
+              options={{
+                games,
+                selectedGameIds:
+                  filters.selectedGameIds.length > 0
+                    ? new Set(filters.selectedGameIds)
+                    : undefined,
+                selectedPlayerIds:
+                  filters.selectedPlayerIds.length > 0
+                    ? new Set(filters.selectedPlayerIds)
+                    : undefined,
+              }}
+            />
+          </ChartCard>
+          <ChartCard
+            title="プレイヤーの陣営プレイ率"
+            description="全プレイヤーの陣営プレイ割合（グリッド表示）"
+            className="lg:col-span-12"
+          >
+            <PlayerFactionPlayRateChart
+              options={{
+                games,
+                selectedGameIds:
+                  filters.selectedGameIds.length > 0
+                    ? new Set(filters.selectedGameIds)
+                    : undefined,
+                selectedPlayerIds:
+                  filters.selectedPlayerIds.length > 0
+                    ? new Set(filters.selectedPlayerIds)
+                    : undefined,
+              }}
+            />
+          </ChartCard>
+
+          <ChartCard
+            title="プレイヤーの役職ごとのプレイ率"
+            description="全プレイヤーの役職プレイ割合（グリッド表示）"
+            className="lg:col-span-12"
+          >
+            <PlayerRolePlayRateChart
+              options={{
+                games,
+                selectedGameIds:
+                  filters.selectedGameIds.length > 0
+                    ? new Set(filters.selectedGameIds)
+                    : undefined,
+                selectedPlayerIds:
+                  filters.selectedPlayerIds.length > 0
+                    ? new Set(filters.selectedPlayerIds)
+                    : undefined,
+              }}
+            />
+          </ChartCard>
           <ChartCard
             title="陣営別勝率"
             description="勝利数・試合数を割合で把握"
@@ -241,20 +395,11 @@ export default function DashboardPage() {
           >
             <FactionWinRateChart
               data={analytics.factionWinRate}
-              className="h-[320px]"
+              className="h-80"
             />
           </ChartCard>
 
-          <ChartCard
-            title="プレイヤー勝率比較"
-            description="陣営別の勝ち/負け内訳"
-            className="lg:col-span-8"
-          >
-            <PlayerWinRateChart
-              data={analytics.playerWinRate}
-              className="h-[360px]"
-            />
-          </ChartCard>
+          {/* プレイヤー勝率は独立セクションに移動しました */}
 
           <ChartCard
             title="プレイヤー × 陣営ヒートマップ"
@@ -263,7 +408,7 @@ export default function DashboardPage() {
           >
             <PlayerFactionHeatmap
               data={analytics.playerFactionHeatmap}
-              className="h-[420px]"
+              className="h-105"
             />
           </ChartCard>
 
@@ -274,7 +419,7 @@ export default function DashboardPage() {
           >
             <PlayerRoleHeatmap
               data={analytics.playerRoleHeatmap}
-              className="h-[420px]"
+              className="h-105"
             />
           </ChartCard>
 
@@ -283,10 +428,7 @@ export default function DashboardPage() {
             description="累計タスク数の推移"
             className="lg:col-span-7"
           >
-            <TaskTimelineChart
-              data={analytics.taskTimeline}
-              className="h-[360px]"
-            />
+            <TaskTimelineChart data={analytics.taskTimeline} className="h-90" />
           </ChartCard>
 
           <ChartCard
@@ -294,10 +436,7 @@ export default function DashboardPage() {
             description="分単位のイベント発生数"
             className="lg:col-span-5"
           >
-            <EventDensityChart
-              data={analytics.eventDensity}
-              className="h-[360px]"
-            />
+            <EventDensityChart data={analytics.eventDensity} className="h-90" />
           </ChartCard>
 
           <ChartCard
@@ -307,7 +446,7 @@ export default function DashboardPage() {
           >
             <MovementWithEventsChart
               data={analytics.movementWithEvents}
-              className="h-[380px]"
+              className="h-95"
             />
           </ChartCard>
 
@@ -316,10 +455,7 @@ export default function DashboardPage() {
             description="勝率/キル/移動など 6 指標"
             className="lg:col-span-4"
           >
-            <PlayerRadarChart
-              data={analytics.playerRadar}
-              className="h-[380px]"
-            />
+            <PlayerRadarChart data={analytics.playerRadar} className="h-95" />
           </ChartCard>
 
           <ChartCard
@@ -329,7 +465,7 @@ export default function DashboardPage() {
           >
             <RolePerformanceChart
               data={analytics.rolePerformance}
-              className="h-[420px]"
+              className="h-105"
             />
           </ChartCard>
 
@@ -340,7 +476,7 @@ export default function DashboardPage() {
           >
             <GameDurationChart
               data={analytics.gameDuration}
-              className="h-[420px]"
+              className="h-105"
             />
           </ChartCard>
         </section>

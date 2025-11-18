@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import type { Options } from "highcharts";
 import type { FactionWinRateData } from "../../lib/data-transformers/types";
 import { BaseChart } from "./BaseChart";
+import { getFactionDisplayName } from "../../lib/role-localization";
 import { ChartEmptyState } from "./ChartEmptyState";
 
 interface FactionWinRateChartProps {
@@ -18,7 +19,7 @@ export function FactionWinRateChart({
   const pieData = useMemo(
     () =>
       data.breakdown.map((item) => ({
-        name: item.faction,
+        name: getFactionDisplayName(item.faction as any),
         y: item.wins,
         color: item.color,
         custom: {
@@ -30,8 +31,6 @@ export function FactionWinRateChart({
       })),
     [data]
   );
-
-  const totalGames = data.totalGames;
 
   const options = useMemo<Options>(
     () => ({
@@ -62,12 +61,9 @@ export function FactionWinRateChart({
           data: pieData,
         },
       ],
-      subtitle: {
-        text: totalGames > 0 ? `総試合数 ${totalGames}` : undefined,
-        style: { color: "#64748b", fontSize: "13px" },
-      },
+      // subtitle removed per UI simplification request
     }),
-    [pieData, totalGames]
+    [pieData]
   );
 
   if (pieData.length === 0) {

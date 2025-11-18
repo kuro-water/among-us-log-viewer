@@ -95,6 +95,7 @@ JSONLファイルから複数試合のAmong Usデータを読み込み、Highcha
   - `legend` は pill 型の `backgroundColor: "rgba(15,23,42,0.05)"`, `borderRadius: 9999`。
   - `tooltip` はライトテーマ向けに `backgroundColor: "#0f172a"`, `color: "white"`, `borderWidth: 0`, `borderRadius: 12px`。
   - `dataLabels` は `fontSize 12px`, `fontWeight 600`, `color #0f172a`（ヒートマップは `useHTML` で段組み）。
+  - 役職名・陣営名の表示は日本語を原則とする（`lib/role-localization.ts` を利用して一元管理）。未登録の役職は英語のまま表示し、順次翻訳を追加する。
 - Heatmap のセルは `borderWidth: 1`, `borderColor: #f8fafc`、`nullColor: #dfe3eb` を統一。
 - Timeline/Movement 系は `xAxis.labels.formatter` で `mm:ss` 表記へ、`plotBands` で会議やインターバルを薄グレー帯表示。
 
