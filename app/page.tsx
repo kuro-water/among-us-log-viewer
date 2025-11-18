@@ -1,19 +1,5 @@
 "use client";
 
-import {
-  Accordion,
-  AccordionItem,
-  Alert,
-  Button,
-  Card,
-  CardBody,
-  CardHeader,
-  Chip,
-  Select,
-  SelectItem,
-  Spinner,
-} from "@heroui/react";
-import type { Selection } from "@react-types/shared";
 import dynamic from "next/dynamic";
 
 const PlayerRoleWinLossChart = dynamic(
@@ -69,8 +55,19 @@ const GameDurationChart = dynamic(
   { ssr: false }
 );
 import { ChartCard } from "@/components/dashboard/ChartCard";
+import { KpiCard } from "@/components/dashboard/KpiCard";
 import { useGameAnalytics } from "@/hooks/useGameAnalytics";
-import { useMemo } from "react";
+import { formatMinutes, formatNumber, formatRatio } from "@/lib/formatters";
+import type { ChangeEvent } from "react";
+
+function SelectLabel({ label, helper }: { label: string; helper?: string }) {
+  return (
+    <div className="flex items-center justify-between text-sm text-slate-600">
+      <span className="font-semibold text-slate-800">{label}</span>
+      {helper ? <span>{helper}</span> : null}
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const {
@@ -86,238 +83,197 @@ export default function DashboardPage() {
     games,
   } = useGameAnalytics();
 
-  const selectedGameKeys = useMemo<Selection>(() => {
-    return filters.selectedGameIds.length
-      ? (new Set(filters.selectedGameIds) as Selection)
-      : (new Set<string>() as Selection);
-  }, [filters.selectedGameIds]);
+  const gameSelectSize = Math.min(Math.max(gameOptions.length, 3), 8);
+  const playerSelectSize = Math.min(Math.max(playerOptions.length, 6), 10);
 
-  const selectedPlayerKeys = useMemo<Selection>(() => {
-    return filters.selectedPlayerIds.length
-      ? (new Set(filters.selectedPlayerIds) as Selection)
-      : (new Set<string>() as Selection);
-  }, [filters.selectedPlayerIds]);
+  const totalGames = analytics.factionWinRate.totalGames;
+  const averageDurationMinutes = analytics.gameDuration.durations.length
+    ? analytics.gameDuration.durations.reduce(
+        (sum, duration) => sum + duration,
+        0
+      ) /
+      analytics.gameDuration.durations.length /
+      60
+    : 0;
+  const topPlayer = analytics.playerWinRate.rows[0];
+  const kpiCards = [
+    {
+      label: "総試合数",
+      value: formatNumber(totalGames),
+      helper:
+        filters.selectedGameIds.length > 0 ? "フィルタ適用中" : "全データ対象",
+    },
+    {
+      label: "平均試合時間",
+      value: formatMinutes(averageDurationMinutes),
+      helper: "JSONLの平均値",
+    },
+    {
+      label: "ユニークプレイヤー",
+      value: formatNumber(playerOptions.length),
+      helper: `${filters.selectedPlayerIds.length || 0} 名選択中`,
+    },
+    {
+      label: "最高勝率",
+      value: topPlayer ? formatRatio(topPlayer.winRate) : "0%",
+      helper: topPlayer ? topPlayer.name : "データ不足",
+    },
+  ];
 
-  const gameSelectionSummary =
-    filters.selectedGameIds.length > 0
-      ? `${filters.selectedGameIds.length} 件選択`
-      : "全試合";
-
-  const playerSelectionSummary =
-    filters.selectedPlayerIds.length > 0
-      ? `${filters.selectedPlayerIds.length} 名選択`
-      : "全プレイヤー";
-
-  const handleGameSelectionChange = (keys: Selection) => {
-    const normalized =
-      keys === "all"
-        ? gameOptions.map((option) => option.value)
-        : Array.from(keys).map(String);
-    filters.setSelectedGameIds(normalized);
+  const handleGameChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const values = Array.from(event.target.selectedOptions).map(
+      (option) => option.value
+    );
+    filters.setSelectedGameIds(values);
   };
 
-  const handlePlayerSelectionChange = (keys: Selection) => {
-    const normalized =
-      keys === "all"
-        ? playerOptions.map((option) => option.value)
-        : Array.from(keys).map(String);
-    filters.setSelectedPlayerIds(normalized);
+  const handlePlayerChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const values = Array.from(event.target.selectedOptions).map(
+      (option) => option.value
+    );
+    filters.setSelectedPlayerIds(values);
   };
 
   return (
     <main className="min-h-screen bg-background pb-12">
       <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 pt-10 lg:px-8">
-        <Card
-          radius="lg"
-          shadow="sm"
-          className="border border-default-200 bg-white/95 backdrop-blur"
-        >
-          <CardBody className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="space-y-3">
-              <Chip
-                color="secondary"
-                variant="flat"
-                className="w-fit uppercase tracking-[0.25em]"
-              >
-                Among Us Analytics
-              </Chip>
-              <div>
-                <h1 className="text-3xl font-semibold text-foreground">
-                  Beyond Us ライトテーマダッシュボード
-                </h1>
-                <p className="mt-2 max-w-3xl text-sm text-foreground-500">
-                  JSONL
-                  ログをブラウザだけで読み込み、役職別パフォーマンスやヒートマップ、移動タイムラインなど
-                  10 種類の Highcharts を一括で確認できます。
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-3 text-sm">
-              {loading ? (
-                <Chip
-                  color="primary"
-                  variant="flat"
-                  startContent={<Spinner size="sm" color="primary" />}
-                  className="bg-primary-50 text-primary-700"
-                >
-                  読み込み中...
-                </Chip>
-              ) : null}
-              <Button
-                color="primary"
-                variant="flat"
-                radius="full"
-                onPress={refresh}
-              >
-                データ再取得
-              </Button>
-              <Button
-                color="secondary"
-                variant="solid"
-                radius="full"
-                onPress={filters.resetFilters}
-              >
-                フィルタをクリア
-              </Button>
-            </div>
-          </CardBody>
-        </Card>
+        <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
+              Among Us Analytics
+            </p>
+            <h1 className="mt-1 text-3xl font-semibold text-slate-900">
+              Beyond Us ライトテーマダッシュボード
+            </h1>
+            <p className="mt-2 max-w-3xl text-sm text-slate-500">
+              JSONL
+              ログをブラウザだけで読み込み、役職別パフォーマンスやヒートマップ、移動タイムラインなど
+              10 種類の Highcharts を一括で確認できます。
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3 text-sm">
+            {loading ? (
+              <span className="rounded-full bg-slate-200 px-4 py-2 font-medium text-slate-600">
+                読み込み中...
+              </span>
+            ) : null}
+            <button
+              type="button"
+              onClick={refresh}
+              className="rounded-full border border-slate-300 bg-white px-4 py-2 font-medium text-slate-700 shadow-sm transition hover:border-slate-400"
+            >
+              データ再取得
+            </button>
+            <button
+              type="button"
+              onClick={filters.resetFilters}
+              className="rounded-full border border-transparent bg-slate-900 px-4 py-2 font-medium text-white shadow-sm transition hover:bg-slate-800"
+            >
+              フィルタをクリア
+            </button>
+          </div>
+        </header>
 
         {error ? (
-          <Alert
-            color="danger"
-            variant="flat"
-            title="データ取得に失敗しました"
-            description={error.message}
-            className="rounded-3xl border border-danger-100 bg-danger-50/80"
-            endContent={
-              <Button
-                size="sm"
-                color="danger"
-                variant="flat"
-                radius="full"
-                onPress={refresh}
-              >
-                もう一度試す
-              </Button>
-            }
-          />
+          <div className="rounded-3xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-900">
+            <p className="font-semibold">データ取得に失敗しました</p>
+            <p className="mt-1">{error.message}</p>
+            <button
+              type="button"
+              onClick={refresh}
+              className="mt-3 rounded-full border border-rose-200 bg-white/80 px-4 py-2 text-rose-700 hover:bg-white"
+            >
+              もう一度試す
+            </button>
+          </div>
         ) : null}
 
         {parserErrors.length > 0 ? (
-          <Accordion
-            variant="splitted"
-            defaultExpandedKeys={["parser-warnings"]}
-            className="rounded-3xl border border-warning-100 bg-warning-50/80"
-          >
-            <AccordionItem
-              key="parser-warnings"
-              aria-label="JSONL parser warnings"
-              title={`JSONL 解析時に ${parserErrors.length} 件の警告が発生しました`}
-              subtitle="最新 3 件を表示しています"
-            >
-              <ul className="space-y-1 text-sm text-warning-900">
-                {parserErrors.slice(0, 3).map((item, index) => (
-                  <li key={`${item.lineNumber}-${index}`}>
-                    行 {item.lineNumber}: {item.error.message}
-                  </li>
-                ))}
-              </ul>
-              {parserErrors.length > 3 ? (
-                <p className="mt-2 text-xs text-warning-900">
-                  他 {parserErrors.length - 3} 件の警告があります。
-                </p>
-              ) : null}
-            </AccordionItem>
-          </Accordion>
+          <details className="rounded-3xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-900">
+            <summary className="cursor-pointer font-semibold">
+              JSONL 解析時に {parserErrors.length} 件の警告が発生しました
+            </summary>
+            <ul className="mt-3 space-y-1">
+              {parserErrors.slice(0, 3).map((item, index) => (
+                <li key={`${item.lineNumber}-${index}`}>
+                  行 {item.lineNumber}: {item.error.message}
+                </li>
+              ))}
+            </ul>
+            {parserErrors.length > 3 ? (
+              <p className="mt-2 text-xs">
+                他 {parserErrors.length - 3} 件の警告があります。
+              </p>
+            ) : null}
+          </details>
         ) : null}
 
-        {/* KPI cards removed as requested */}
+        <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {kpiCards.map((kpi) => (
+            <KpiCard
+              key={kpi.label}
+              label={kpi.label}
+              value={kpi.value}
+              helper={kpi.helper}
+            />
+          ))}
+        </section>
 
-        <Card
-          radius="lg"
-          shadow="sm"
-          className="border border-default-200 bg-white/95 backdrop-blur"
-        >
-          <CardHeader className="flex flex-col gap-1">
-            <p className="text-sm font-semibold text-foreground">フィルタ</p>
-            <p className="text-xs text-foreground-500">
-              ユーザーや試合単位でチャートを柔軟に絞り込みます。
-            </p>
-          </CardHeader>
-          <CardBody className="grid gap-6 lg:grid-cols-2">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-sm text-foreground-500">
-                <span className="font-semibold text-foreground">試合選択</span>
-                <Chip color="primary" variant="flat" size="sm">
-                  {gameSelectionSummary}
-                </Chip>
-              </div>
-              <Select
-                aria-label="試合選択"
-                labelPlacement="outside"
-                placeholder="試合を選択"
-                selectionMode="multiple"
-                selectedKeys={selectedGameKeys}
-                onSelectionChange={handleGameSelectionChange}
-                variant="flat"
-                radius="lg"
-                isMultiline
-                className="w-full"
-                listboxProps={{ className: "max-h-72" }}
+        <section className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div>
+              <SelectLabel
+                label="試合選択"
+                helper={`${filters.selectedGameIds.length || "すべて"} 件`}
+              />
+              <select
+                multiple
+                value={filters.selectedGameIds}
+                onChange={handleGameChange}
+                size={gameSelectSize}
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-inner"
               >
                 {gameOptions.map((option) => (
-                  <SelectItem key={option.value}>{option.label}</SelectItem>
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
                 ))}
-              </Select>
-              <p className="text-xs text-foreground-500">
-                複数選択で試合を絞り込みます（⌘ / Ctrl + クリック）。
+              </select>
+              <p className="mt-2 text-xs text-slate-500">
+                複数選択で試合を絞り込みます（Ctrl / Command + クリック）。
               </p>
             </div>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-sm text-foreground-500">
-                <span className="font-semibold text-foreground">
-                  プレイヤー選択
-                </span>
-                <Chip color="secondary" variant="flat" size="sm">
-                  {playerSelectionSummary}
-                </Chip>
-              </div>
-              <Select
-                aria-label="プレイヤー選択"
-                labelPlacement="outside"
-                placeholder="プレイヤーを選択"
-                selectionMode="multiple"
-                selectedKeys={selectedPlayerKeys}
-                onSelectionChange={handlePlayerSelectionChange}
-                variant="flat"
-                radius="lg"
-                isMultiline
-                className="w-full"
-                listboxProps={{ className: "max-h-72" }}
+            <div>
+              <SelectLabel
+                label="プレイヤー選択"
+                helper={`${filters.selectedPlayerIds.length || "すべて"} 名`}
+              />
+              <select
+                multiple
+                value={filters.selectedPlayerIds}
+                onChange={handlePlayerChange}
+                size={playerSelectSize}
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-inner"
               >
                 {playerOptions.map((option) => (
-                  <SelectItem key={option.value}>{option.label}</SelectItem>
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
                 ))}
-              </Select>
-              <p className="text-xs text-foreground-500">
+              </select>
+              <p className="mt-2 text-xs text-slate-500">
                 プレイヤー軸のチャート（ヒートマップ/レーダーなど）に適用されます。
               </p>
             </div>
-          </CardBody>
-        </Card>
+          </div>
+        </section>
 
         {!hasData && !loading ? (
-          <Card
-            radius="lg"
-            className="border border-default-200 bg-white/95 text-center text-foreground-500"
-          >
-            <CardBody>
-              まだ JSONL
-              データが読み込まれていません。`public/game_history_sample.jsonl`
-              を配置してください。
-            </CardBody>
-          </Card>
+          <div className="rounded-3xl border border-slate-200 bg-white/90 p-6 text-center text-slate-500">
+            まだ JSONL
+            データが読み込まれていません。`public/game_history_sample.jsonl`
+            を配置してください。
+          </div>
         ) : null}
 
         {/* 独立セクション: プレイヤー勝率 */}

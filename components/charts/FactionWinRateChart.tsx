@@ -32,6 +32,8 @@ export function FactionWinRateChart({
     [data]
   );
 
+  const totalGames = data.totalGames;
+
   const options = useMemo<Options>(
     () => ({
       chart: { type: "pie" },
@@ -61,9 +63,12 @@ export function FactionWinRateChart({
           data: pieData,
         },
       ],
-      // subtitle removed per UI simplification request
+      subtitle: {
+        text: totalGames > 0 ? `総試合数 ${totalGames}` : undefined,
+        style: { color: "#64748b", fontSize: "13px" },
+      },
     }),
-    [pieData]
+    [pieData, totalGames]
   );
 
   if (pieData.length === 0) {
