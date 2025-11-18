@@ -5,6 +5,7 @@ import type {
   PlayerRecord,
 } from "../../types/game-data.types";
 import { getRoleFaction, type Faction } from "../role-mapping";
+import { FACTION_CONFIG } from "@/config/factions";
 import type {
   PlayerId,
   PlayerIdentitySummary,
@@ -86,6 +87,11 @@ function ensureRoleRecord(aggregate: PlayerAggregate, role: string) {
 }
 
 function createAggregate(record: PlayerRecord): PlayerAggregate {
+  const factions = Object.keys(FACTION_CONFIG).reduce((acc, key) => {
+    acc[key as Faction] = { games: 0, wins: 0 };
+    return acc;
+  }, {} as Record<Faction, { games: number; wins: number }>);
+
   return {
     uuid: getPlayerKey(record),
     name: getPlayerLabel(record),
@@ -96,13 +102,7 @@ function createAggregate(record: PlayerRecord): PlayerAggregate {
     appearances: 0,
     deaths: 0,
     kills: 0,
-    factions: {
-      Crewmate: { games: 0, wins: 0 },
-      Impostor: { games: 0, wins: 0 },
-      Madmate: { games: 0, wins: 0 },
-      Neutral: { games: 0, wins: 0 },
-      Other: { games: 0, wins: 0 },
-    },
+    factions,
     roles: {},
     tasksCompleted: 0,
     movementDistance: 0,

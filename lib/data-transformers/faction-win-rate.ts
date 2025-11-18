@@ -5,16 +5,11 @@ import {
   getRoleFaction,
   type Faction,
 } from "../role-mapping";
+import { FACTION_CONFIG } from "@/config/factions";
 import type { FactionWinRateData, TransformerOptions } from "./types";
 import { applyCommonFilters } from "./utils";
 
-const FACTIONS: Faction[] = [
-  "Crewmate",
-  "Impostor",
-  "Madmate",
-  "Neutral",
-  "Other",
-];
+const FACTIONS = Object.keys(FACTION_CONFIG) as Faction[];
 
 interface FactionCounter {
   wins: number;

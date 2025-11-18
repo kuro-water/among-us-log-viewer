@@ -1,14 +1,9 @@
 import type { HeatmapData, TransformerOptions } from "./types";
 import { applyCommonFilters, buildPlayerAggregates } from "./utils";
 import type { Faction } from "../role-mapping";
+import { FACTION_CONFIG } from "@/config/factions";
 
-const FACTIONS: Faction[] = [
-  "Crewmate",
-  "Impostor",
-  "Madmate",
-  "Neutral",
-  "Other",
-];
+const FACTIONS = Object.keys(FACTION_CONFIG) as Faction[];
 
 export function buildPlayerFactionHeatmap(
   options: TransformerOptions

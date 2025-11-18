@@ -1,11 +1,12 @@
 import Highcharts from "highcharts";
+import { FACTION_COLORS } from "./factions";
 
 // Primary palette: crewmate (cyan), impostor (red), neutral (green)
 // followed by a few accent colors for other series
 const CORE_COLORS = [
-  "#00bcd4", // Crewmate (cyan)
-  "#e74c3c", // Impostor (red)
-  "#27ae60", // Neutral / third faction (green)
+  FACTION_COLORS.Crewmate, // Crewmate (cyan)
+  FACTION_COLORS.Impostor, // Impostor (red)
+  FACTION_COLORS.Neutral, // Neutral / third faction (green)
   "#f97316", // orange accent
   "#6d28d9", // purple accent
   "#14b8a6", // teal accent
