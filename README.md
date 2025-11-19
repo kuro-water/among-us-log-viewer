@@ -59,6 +59,5 @@ bun dev
 - **Framework**: [Next.js](https://nextjs.org) (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
-- **UI Components**: HeroUI (NextUI)
 - **Visualization**: Highcharts, Highcharts React
 - **Icons**: Lucide React
