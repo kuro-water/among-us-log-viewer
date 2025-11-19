@@ -27,6 +27,12 @@ export function applyHighchartsTheme() {
   }
 
   Highcharts.setOptions({
+    // Disable the default Highcharts context menu for export/print so
+    // dashboard charts don't show an 'options' button.
+    exporting: {
+      enabled: false,
+      buttons: { contextButton: { enabled: false } },
+    },
     colors: CORE_COLORS,
     chart: {
       backgroundColor: "transparent",

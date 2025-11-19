@@ -7,6 +7,7 @@ export { PlayerWinRateTable } from "./PlayerWinRateTable";
 export { PlayerFactionHeatmap } from "./PlayerFactionHeatmap";
 export { PlayerRoleHeatmap } from "./PlayerRoleHeatmap";
 export { RolePerformanceChart } from "./RolePerformanceChart";
+export { RoleWinRateChart } from "./RoleWinRateChart";
 export { GameDurationChart } from "./GameDurationChart";
 export { TaskTimelineChart } from "./TaskTimelineChart";
 export { EventDensityChart } from "./EventDensityChart";

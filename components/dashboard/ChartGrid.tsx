@@ -17,6 +17,10 @@ const PlayerWinRateChart = dynamic(
   () => import("@/components/charts").then((m) => m.PlayerWinRateChart),
   { ssr: false }
 );
+const RoleWinRateChart = dynamic(
+  () => import("@/components/charts").then((m) => m.RoleWinRateChart),
+  { ssr: false }
+);
 const PlayerFactionPlayRateChart = dynamic(
   () => import("@/components/charts").then((m) => m.PlayerFactionPlayRateChart),
   { ssr: false }
@@ -107,10 +111,19 @@ export function ChartGrid({
         <PlayerWinRateChart data={analytics.playerWinRate} className="h-96" />
       </ChartCard>
 
+      {/* 役職別勝率（プレイヤー勝率の下） */}
+      <ChartCard
+        title="役職別勝率"
+        description="各役職の勝率"
+        className="lg:col-span-12"
+      >
+        <RoleWinRateChart data={analytics.rolePerformance} className="h-96" />
+      </ChartCard>
+
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <ChartCard
           title="プレイヤーの陣営プレイ率"
-          description="全プレイヤーの陣営プレイ割合（グリッド表示）"
+          description="全プレイヤーの陣営プレイ割合"
           className="lg:col-span-12"
         >
           <PlayerFactionPlayRateChart options={chartOptions} />
@@ -118,7 +131,7 @@ export function ChartGrid({
 
         <ChartCard
           title="プレイヤーの役職ごとのプレイ率"
-          description="全プレイヤーの役職プレイ割合（グリッド表示）"
+          description="全プレイヤーの役職プレイ割合"
           className="lg:col-span-12"
         >
           <PlayerRolePlayRateChart options={chartOptions} />
@@ -136,7 +149,7 @@ export function ChartGrid({
 
         <ChartCard
           title="プレイヤー × 陣営ヒートマップ"
-          description="勝率とプレイ回数をセル表示"
+          description="勝率とプレイ回数"
           className="lg:col-span-12"
         >
           <PlayerFactionHeatmap
