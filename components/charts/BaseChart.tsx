@@ -7,6 +7,7 @@ import histogramModule from "highcharts/modules/histogram-bellcurve";
 import exportingModule from "highcharts/modules/exporting";
 import accessibilityModule from "highcharts/modules/accessibility";
 import annotationsModule from "highcharts/modules/annotations";
+import highchartsMore from "highcharts/highcharts-more";
 import { applyHighchartsTheme } from "@/config/highcharts-theme";
 import type { Options } from "highcharts";
 import { useMemo } from "react";
@@ -62,6 +63,7 @@ function initHighcharts() {
     tryInvoke(exportingModule as any);
     tryInvoke(accessibilityModule as any);
     tryInvoke(annotationsModule as any);
+    tryInvoke(highchartsMore as any);
 
     modulesInitialized = true;
   }

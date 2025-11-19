@@ -73,11 +73,7 @@ export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-background pb-12">
       <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 pt-10 lg:px-8">
-        <Header
-          loading={loading}
-          refresh={refresh}
-          resetFilters={filters.resetFilters}
-        />
+        <Header loading={loading} />
 
         {error ? (
           <div className="rounded-3xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-900">
@@ -120,8 +116,11 @@ export default function DashboardPage() {
           selectedPlayerIds={filters.selectedPlayerIds}
           gameOptions={gameOptions}
           playerOptions={playerOptions}
+          recentGamesCount={filters.recentGamesCount}
           onGameChange={handleGameChange}
           onPlayerChange={handlePlayerChange}
+          onRecentGamesChange={filters.setRecentGamesCount}
+          resetFilters={filters.resetFilters}
         />
 
         {!hasData && !loading ? (

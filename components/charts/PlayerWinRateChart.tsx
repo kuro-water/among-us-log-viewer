@@ -28,40 +28,21 @@ export function PlayerWinRateChart({
     });
 
     // 各役職のシリーズデータを作成
-    const roleColors: Record<string, string> = {
-      Crewmate: "#4ade80",
-      Impostor: "#ef4444",
-      Engineer: "#3b82f6",
-      Scientist: "#8b5cf6",
-      Shapeshifter: "#ec4899",
-      Phantom: "#6366f1",
-      Noisemaker: "#14b8a6",
-      Tracker: "#f59e0b",
-      GuardianAngel: "#06b6d4",
-    };
-
-    const series = Array.from(allRoles).map((role) => {
-      const roleData = data.rows.map((row) => {
-        const roleInfo = row.roles.find((r) => r.role === role);
-        // 各プレイヤーの勝率の中での役職の寄与率を計算
-        if (roleInfo && row.wins > 0) {
-          return (roleInfo.wins / row.wins) * row.winRate * 100;
-        }
-        return 0;
-      });
-
-      return {
-        name: role,
-        data: roleData,
+    const series = [
+      {
+        name: "勝率",
+        data: data.rows.map((row) => ({
+          y: row.winRate * 100,
+        })),
         type: "column" as const,
-        color: roleColors[role] || "#94a3b8",
-      };
-    });
+        color: "#3b82f6",
+      },
+    ];
 
     return {
       categories: data.rows.map((row) => row.name),
       seriesData: series,
-      maxWinRate: max,
+      maxWinRate: 100,
     };
   }, [data]);
 
@@ -76,40 +57,31 @@ export function PlayerWinRateChart({
       },
       yAxis: {
         min: 0,
-        max: maxWinRate,
+        max: 100,
         title: { text: "勝率 (%)" },
-        labels: { format: "{value:.0f}%" },
+        labels: { format: "{value}%" },
       },
       plotOptions: {
         column: {
-          stacking: "normal",
           borderRadius: 6,
-          // 横方向の余白（列間）
-          groupPadding: 0.12,
-          // 各列の幅に対するポイントの余白（内側）
-          pointPadding: 0.02,
-          // セグメント間に白いラインを入れて円グラフっぽく見せる
-          borderWidth: 2,
-          borderColor: "#ffffff",
           dataLabels: {
             enabled: true,
-            format: "{point.percentage:.0f}%",
+            format: "{y:.1f}%",
             style: {
               textOutline: "none",
-              fontWeight: "500",
+              fontWeight: "bold",
+              color: "#333333",
             },
           },
         },
       },
-      legend: { align: "right", verticalAlign: "top" },
+      legend: { enabled: false },
       tooltip: {
-        shared: true,
-        pointFormat:
-          '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>',
+        pointFormat: "<b>{point.y:.1f}%</b><br/>",
       },
       series: seriesData,
     }),
-    [categories, seriesData, maxWinRate]
+    [categories, seriesData]
   );
 
   if (categories.length === 0) {

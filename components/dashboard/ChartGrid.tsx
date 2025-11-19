@@ -13,8 +13,8 @@ import type {
   PlayerWinRateData,
 } from "@/lib/data-transformers/types";
 
-const PlayerRoleWinLossChart = dynamic(
-  () => import("@/components/charts").then((m) => m.PlayerRoleWinLossChart),
+const PlayerWinRateChart = dynamic(
+  () => import("@/components/charts").then((m) => m.PlayerWinRateChart),
   { ssr: false }
 );
 const PlayerFactionPlayRateChart = dynamic(
@@ -27,10 +27,6 @@ const PlayerRolePlayRateChart = dynamic(
 );
 const FactionWinRateChart = dynamic(
   () => import("@/components/charts").then((m) => m.FactionWinRateChart),
-  { ssr: false }
-);
-const PlayerWinRateTable = dynamic(
-  () => import("@/components/charts").then((m) => m.PlayerWinRateTable),
   { ssr: false }
 );
 const PlayerFactionHeatmap = dynamic(
@@ -105,20 +101,13 @@ export function ChartGrid({
       {/* 独立セクション: プレイヤー勝率 */}
       <ChartCard
         title="プレイヤー勝率"
-        description="プレイヤーごとの勝率と役職別寄与（独立セクション）"
+        description="プレイヤーごとの勝率"
         className="lg:col-span-12"
       >
-        <PlayerWinRateTable data={analytics.playerWinRate} className="p-4" />
+        <PlayerWinRateChart data={analytics.playerWinRate} className="h-96" />
       </ChartCard>
 
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        <ChartCard
-          title="プレイヤー勝率 × 役職影響"
-          description="勝利/敗北に貢献した役職を1つのグラフで比較"
-          className="lg:col-span-12"
-        >
-          <PlayerRoleWinLossChart options={chartOptions} />
-        </ChartCard>
         <ChartCard
           title="プレイヤーの陣営プレイ率"
           description="全プレイヤーの陣営プレイ割合（グリッド表示）"

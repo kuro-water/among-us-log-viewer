@@ -22,57 +22,89 @@ export default function PlayerRoleWinLossChart({
 
   const chartOptions: any = {
     chart: {
-      type: "column",
-      height: 480,
+      type: "bubble",
+      height: Math.max(500, chartData.yCategories.length * 50 + 100), // 役職数に応じて高さを自動調整
+      zoomType: "xy",
     },
     title: {
-      text: "プレイヤーごとの役職別勝率",
+      text: "プレイヤー × 役職：勝率とプレイ頻度",
+    },
+    subtitle: {
+      text: "円の大きさ：プレイ回数 / 円の色：勝率（赤=低, 緑=高）",
     },
     xAxis: {
       categories: chartData.categories,
-      title: { text: "プレイヤー" },
+      title: { text: null },
+      gridLineWidth: 1,
+      lineWidth: 0,
     },
     yAxis: {
-      min: null,
-      title: { text: "勝率（%）（正：勝利 / 負：敗北）" },
-      allowDecimals: true,
-      plotLines: [{ value: 0, color: "#888", width: 1 }],
+      categories: chartData.yCategories,
+      title: { text: null },
+      reversed: true, // 上から順に表示
+      gridLineWidth: 1,
+      lineWidth: 0,
     },
-    tooltip: {
-      shared: true,
-      formatter: function (this: any) {
-        const points = this.points || [];
-        let s: any = `<b>${this.x}</b><br/>`;
-        points.forEach((p: any) => {
-          s += `<span style='color:${p.color}'>●</span> ${
-            p.series.name
-          }: <b>${Math.abs(p.y).toFixed(1)}%</b><br/>`;
-        });
-        return s;
+    colorAxis: {
+      min: 0,
+      max: 100,
+      stops: [
+        [0, "#ef4444"], // Red
+        [0.5, "#eab308"], // Yellow
+        [1, "#22c55e"], // Green
+      ],
+      labels: {
+        format: "{value}%",
       },
     },
+    tooltip: {
+      useHTML: true,
+      headerFormat: "<table>",
+      pointFormat:
+        '<tr><th colspan="2"><h3>{point.playerName} - {point.roleName}</h3></th></tr>' +
+        "<tr><th>勝率:</th><td><b>{point.winRate}%</b> ({point.wins}勝 {point.losses}敗)</td></tr>" +
+        "<tr><th>プレイ回数:</th><td><b>{point.z}回</b></td></tr>",
+      footerFormat: "</table>",
+      followPointer: true,
+    },
     plotOptions: {
-      column: {
-        stacking: "normal",
+      bubble: {
+        minSize: "10%",
+        maxSize: "80%", // セルからはみ出さないように調整
+        zMin: 0,
+        zMax: null, // 自動計算
+      },
+      series: {
         dataLabels: {
           enabled: true,
-          formatter: function (this: any) {
-            return this.y !== 0 ? Math.abs(this.y).toFixed(1) + "%" : "";
+          format: "{point.z}",
+          style: {
+            textOutline: "none",
+            fontWeight: "normal",
+            color: "black",
+            textShadow: "0px 0px 3px white",
+          },
+          filter: {
+            property: "z",
+            operator: ">",
+            value: 0,
           },
         },
       },
     },
-    series: chartData.series.map((s) => ({
-      name: s.name,
-      data: s.data,
-      color: s.color,
-      stack: s.isWin ? "win" : "loss",
-    })),
     legend: {
-      align: "center",
-      verticalAlign: "bottom",
-      layout: "horizontal",
+      enabled: true,
+      align: "right",
+      verticalAlign: "middle",
+      layout: "vertical",
+      title: {
+        text: "勝率",
+      },
     },
+    series: chartData.series.map((s) => ({
+      ...s,
+      colorKey: "winRate", // 色分けに使用するプロパティ
+    })),
     credits: { enabled: false },
   };
 

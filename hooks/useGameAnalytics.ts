@@ -47,11 +47,13 @@ interface PlayerOption {
 interface FilterState {
   selectedGameIds: string[];
   selectedPlayerIds: string[];
+  recentGamesCount: number | null;
 }
 
 interface FilterActions {
   setSelectedGameIds: (ids: string[]) => void;
   setSelectedPlayerIds: (ids: string[]) => void;
+  setRecentGamesCount: (count: number | null) => void;
   resetFilters: () => void;
 }
 
@@ -118,6 +120,7 @@ export function useGameAnalytics(): UseGameAnalyticsResult {
   const [parserErrors, setParserErrors] = useState<JsonLineError[]>([]);
   const [selectedGameIds, setSelectedGameIds] = useState<string[]>([]);
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
+  const [recentGamesCount, setRecentGamesCount] = useState<number | null>(null);
 
   const gameIdSet = useMemo(() => new Set(selectedGameIds), [selectedGameIds]);
   const playerIdSet = useMemo(
@@ -125,13 +128,27 @@ export function useGameAnalytics(): UseGameAnalyticsResult {
     [selectedPlayerIds]
   );
 
+  // 直近 N 試合のフィルタリング
+  const recentGameIds = useMemo(() => {
+    if (recentGamesCount === null || recentGamesCount <= 0) return undefined;
+    const recentIds = games
+      .slice(-recentGamesCount)
+      .map((game) => game.schema.game_id);
+    return new Set(recentIds);
+  }, [games, recentGamesCount]);
+
   const transformerOptions = useMemo<TransformerOptions>(
     () => ({
       games,
-      selectedGameIds: gameIdSet.size > 0 ? gameIdSet : undefined,
+      selectedGameIds:
+        gameIdSet.size > 0
+          ? gameIdSet
+          : recentGameIds && recentGameIds.size > 0
+          ? recentGameIds
+          : undefined,
       selectedPlayerIds: playerIdSet.size > 0 ? playerIdSet : undefined,
     }),
-    [games, gameIdSet, playerIdSet]
+    [games, gameIdSet, playerIdSet, recentGameIds]
   );
 
   const playerDirectory = useMemo(() => buildPlayerDirectory(games), [games]);
@@ -176,6 +193,7 @@ export function useGameAnalytics(): UseGameAnalyticsResult {
   const resetFilters = useCallback(() => {
     setSelectedGameIds([]);
     setSelectedPlayerIds([]);
+    setRecentGamesCount(null);
   }, []);
 
   const executeLoad = useCallback(async (signal?: AbortSignal) => {
@@ -210,8 +228,10 @@ export function useGameAnalytics(): UseGameAnalyticsResult {
   const filters: FilterState & FilterActions = {
     selectedGameIds,
     selectedPlayerIds,
+    recentGamesCount,
     setSelectedGameIds,
     setSelectedPlayerIds,
+    setRecentGamesCount,
     resetFilters,
   };
 

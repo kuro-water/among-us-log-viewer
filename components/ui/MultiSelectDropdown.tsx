@@ -119,7 +119,8 @@ export function MultiSelectDropdown({
               <button
                 type="button"
                 onClick={handleSelectAll}
-                className="text-xs text-slate-500 hover:text-indigo-600"
+                aria-pressed={selectedValues.length === options.length}
+                className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-100"
               >
                 {selectedValues.length === options.length ? "全解除" : "全選択"}
               </button>
