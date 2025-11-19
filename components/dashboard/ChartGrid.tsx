@@ -1,4 +1,5 @@
 import dynamic from "next/dynamic";
+
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import type { GameLog } from "@/types/game-data.types";
 import type {
@@ -120,6 +121,15 @@ export function ChartGrid({
         <RoleWinRateChart data={analytics.rolePerformance} className="h-96" />
       </ChartCard>
 
+      {/* 陣営別勝率（役職別勝率の下） */}
+      <ChartCard
+        title="陣営別勝率"
+        description="勝利数・試合数を割合で把握"
+        className="lg:col-span-12"
+      >
+        <FactionWinRateChart data={analytics.factionWinRate} className="h-96" />
+      </ChartCard>
+
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <ChartCard
           title="プレイヤーの陣営プレイ率"
@@ -136,16 +146,8 @@ export function ChartGrid({
         >
           <PlayerRolePlayRateChart options={chartOptions} />
         </ChartCard>
-        <ChartCard
-          title="陣営別勝率"
-          description="勝利数・試合数を割合で把握"
-          className="lg:col-span-4"
-        >
-          <FactionWinRateChart
-            data={analytics.factionWinRate}
-            className="h-80"
-          />
-        </ChartCard>
+        
+        {/* FactionWinRateChart removed as it is now in WinRateTabs */}
 
         <ChartCard
           title="プレイヤー × 陣営ヒートマップ"

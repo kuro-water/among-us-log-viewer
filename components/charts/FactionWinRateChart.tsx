@@ -16,62 +16,72 @@ export function FactionWinRateChart({
   data,
   className,
 }: FactionWinRateChartProps) {
-  const pieData = useMemo(
-    () =>
-      data.breakdown.map((item) => ({
-        name: getFactionDisplayName(item.faction as any),
-        y: item.wins,
-        color: item.color,
-        custom: {
-          games: item.games,
-          wins: item.wins,
-          losses: item.losses,
-          winRate: item.winRate * 100,
-        },
-      })),
-    [data]
-  );
+  const { categories, seriesData } = useMemo(() => {
+    // Sort by win rate descending
+    const sorted = data.breakdown.slice().sort((a, b) => b.winRate - a.winRate);
 
-  const totalGames = data.totalGames;
+    const categories = sorted.map((item) =>
+      getFactionDisplayName(item.faction as any)
+    );
+    const seriesData = sorted.map((item) => ({
+      y: item.winRate * 100,
+      color: item.color, // Use specific faction color
+      custom: {
+        games: item.games,
+        wins: item.wins,
+        losses: item.losses,
+      },
+    }));
+
+    return { categories, seriesData };
+  }, [data]);
 
   const options = useMemo<Options>(
     () => ({
-      chart: { type: "pie" },
+      chart: { type: "bar" },
       title: { text: undefined },
-      tooltip: {
-        pointFormat:
-          '<span style="font-weight:600;color:#0f172a">{point.name}</span><br/>' +
-          "勝率: {point.custom.winRate:.1f}%<br/>" +
-          "勝利: {point.custom.wins} / 試合数: {point.custom.games}",
+      xAxis: {
+        categories,
+        labels: { style: { color: "#475569", fontWeight: "500" } },
+      },
+      yAxis: {
+        min: 0,
+        max: 100,
+        title: { text: "勝率 (%)" },
+        labels: { format: "{value}%" },
       },
       plotOptions: {
-        pie: {
-          innerSize: "60%",
+        series: {
+          borderRadius: 6,
           dataLabels: {
             enabled: true,
-            useHTML: true,
-            format:
-              '<span style="font-weight:600;color:#0f172a">{point.name}</span><br/>' +
-              '<span style="color:#475569">{point.custom.winRate:.1f}%</span>',
+            format: "{y:.1f}%",
+            style: {
+              textOutline: "none",
+              fontWeight: "bold",
+              color: "#333333",
+            },
           },
         },
       },
+      legend: { enabled: false },
+      tooltip: {
+        pointFormat:
+          "<b>{point.y:.1f}%</b> （試合数: {point.custom.games}）<br/>" +
+          "勝利: {point.custom.wins} / 敗北: {point.custom.losses}",
+      },
       series: [
         {
-          type: "pie",
-          name: "勝利数",
-          data: pieData,
+          name: "勝率",
+          type: "bar",
+          data: seriesData,
         },
       ],
-      subtitle: {
-        text: totalGames > 0 ? `総試合数 ${totalGames}` : undefined,
-        style: { color: "#64748b", fontSize: "13px" },
-      },
     }),
-    [pieData, totalGames]
+    [categories, seriesData]
   );
 
-  if (pieData.length === 0) {
+  if (categories.length === 0) {
     return (
       <ChartEmptyState className={className} message="勝利データがありません" />
     );
