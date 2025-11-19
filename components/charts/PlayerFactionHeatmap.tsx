@@ -4,49 +4,24 @@ import { useMemo } from "react";
 import type { HeatmapData } from "../../lib/data-transformers/types";
 import { ChartEmptyState } from "./ChartEmptyState";
 import { getFactionDisplayName } from "../../lib/role-localization";
+import { getFactionColor } from "../../lib/role-mapping";
+import {
+  getHeatmapCellColor,
+  getHeatmapTextColor,
+} from "../../lib/heatmap-colors";
 
 interface PlayerFactionHeatmapProps {
   data: HeatmapData;
   className?: string;
 }
 
-function getBackgroundColor(
-  value: number | null,
-  playCount: number | undefined,
-  maxPlayCount: number
-): string {
-  if (value === null) return "bg-slate-100";
-  // Use win rate to determine hue (red -> yellow -> green) and playCount to
-  // determine intensity (lightness). The more plays, the darker the cell.
-  const hue = (value / 100) * 120; // 0..120
-  const normalized =
-    maxPlayCount > 0 && playCount ? Math.min(playCount / maxPlayCount, 1) : 0;
-  // Lightness: 92% (few plays) down to 36% (many plays) — darker as playCount grows
-  const lightness = 92 - normalized * 56;
-  const saturation = 78; // keep vivid colors
-  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-}
-
-function getTextColor(
-  value: number | null,
-  playCount: number | undefined,
-  maxPlayCount: number
-): string {
-  if (value === null) return "#94a3b8"; // tailwind slate-400
-  const hue = (value / 100) * 120;
-  const normalized =
-    maxPlayCount > 0 && playCount ? Math.min(playCount / maxPlayCount, 1) : 0;
-  const lightness = 92 - normalized * 56;
-  // If background is dark (lightness low), use white text
-  if (lightness < 55) return "#ffffff";
-  return `hsl(${hue}, 90%, 25%)`;
-}
+// Heatmap colorization is handled in lib/heatmap-colors.ts
 
 export function PlayerFactionHeatmap({
   data,
   className,
 }: PlayerFactionHeatmapProps) {
-  const { xAxisCategories, yAxisCategories, grid, maxPlayCount } =
+  const { xAxisCategories, yAxisCategories, yAxisRaw, grid, maxPlayCount } =
     useMemo(() => {
       const xCats = data.xAxis;
       const yCats = data.yAxis;
@@ -72,6 +47,7 @@ export function PlayerFactionHeatmap({
       return {
         xAxisCategories: xCats,
         yAxisCategories: yCats.map((f) => getFactionDisplayName(f as any)),
+        yAxisRaw: yCats,
         grid: gridData,
         maxPlayCount: maxPlay,
       };
@@ -108,21 +84,29 @@ export function PlayerFactionHeatmap({
           {yAxisCategories.map((faction, yIndex) => (
             <tr key={faction} className="border-t border-slate-100">
               <td className="sticky left-0 z-10 bg-white p-2 font-medium text-slate-700 shadow-[1px_0_0_0_#e2e8f0]">
-                {faction}
+                <div className="flex items-center gap-2">
+                  <span
+                    className="inline-block h-3 w-3 rounded-full"
+                    style={{
+                      backgroundColor: getFactionColor(yAxisRaw[yIndex] as any),
+                    }}
+                  />
+                  <span>{faction}</span>
+                </div>
               </td>
               {xAxisCategories.map((_, xIndex) => {
                 // grid[yIndex][xIndex] gives us the cell for Faction Y and Player X
                 const cell = grid[yIndex][xIndex];
-                const bgColor = getBackgroundColor(
-                  cell?.value ?? null,
-                  cell?.playCount,
-                  maxPlayCount
-                );
-                const textColor = getTextColor(
-                  cell?.value ?? null,
-                  cell?.playCount,
-                  maxPlayCount
-                );
+                const bgColor = getHeatmapCellColor(cell?.value ?? null, {
+                  playCount: cell?.playCount,
+                  maxPlayCount,
+                  mode: "gradient",
+                });
+                const textColor = getHeatmapTextColor(cell?.value ?? null, {
+                  playCount: cell?.playCount,
+                  maxPlayCount,
+                  mode: "gradient",
+                });
 
                 return (
                   <td key={`${xIndex}-${yIndex}`} className="p-1">

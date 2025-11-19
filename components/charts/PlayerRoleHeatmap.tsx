@@ -4,13 +4,11 @@ import { useMemo } from "react";
 import type { HeatmapData } from "../../lib/data-transformers/types";
 import { ChartEmptyState } from "./ChartEmptyState";
 import { getRoleDisplayName } from "../../lib/role-localization";
-
-interface PlayerRoleHeatmapProps {
-  data: HeatmapData;
-  className?: string;
-}
-
-import { getHeatmapCellColor, getHeatmapTextColor } from "../../lib/heatmap-colors";
+import { getFactionColorByRole } from "../../lib/role-mapping";
+import {
+  getHeatmapCellColor,
+  getHeatmapTextColor,
+} from "../../lib/heatmap-colors";
 
 interface PlayerRoleHeatmapProps {
   data: HeatmapData;
@@ -18,7 +16,7 @@ interface PlayerRoleHeatmapProps {
 }
 
 export function PlayerRoleHeatmap({ data, className }: PlayerRoleHeatmapProps) {
-  const { xAxisCategories, yAxisCategories, grid, maxPlayCount } =
+  const { xAxisCategories, yAxisCategories, yAxisRaw, grid, maxPlayCount } =
     useMemo(() => {
       const xCats = data.xAxis;
       const yCats = data.yAxis;
@@ -44,6 +42,7 @@ export function PlayerRoleHeatmap({ data, className }: PlayerRoleHeatmapProps) {
       return {
         xAxisCategories: xCats,
         yAxisCategories: yCats.map((r) => getRoleDisplayName(r)),
+        yAxisRaw: yCats,
         grid: gridData,
         maxPlayCount: maxPlay,
       };
@@ -80,13 +79,29 @@ export function PlayerRoleHeatmap({ data, className }: PlayerRoleHeatmapProps) {
           {yAxisCategories.map((role, yIndex) => (
             <tr key={role} className="border-t border-slate-100">
               <td className="sticky left-0 z-10 bg-white p-2 font-medium text-slate-700 shadow-[1px_0_0_0_#e2e8f0]">
-                {role}
+                <div className="flex items-center gap-2">
+                  <span
+                    className="inline-block h-3 w-3 rounded-full"
+                    style={{
+                      backgroundColor: getFactionColorByRole(yAxisRaw[yIndex]),
+                    }}
+                  />
+                  <span>{role}</span>
+                </div>
               </td>
               {xAxisCategories.map((_, xIndex) => {
                 // grid[yIndex][xIndex] gives us the cell for Role Y and Player X
                 const cell = grid[yIndex][xIndex];
-                const bgColor = getHeatmapCellColor(cell?.value ?? null);
-                const textColor = getHeatmapTextColor(cell?.value ?? null);
+                const bgColor = getHeatmapCellColor(cell?.value ?? null, {
+                  playCount: cell?.playCount,
+                  maxPlayCount,
+                  mode: "gradient",
+                });
+                const textColor = getHeatmapTextColor(cell?.value ?? null, {
+                  playCount: cell?.playCount,
+                  maxPlayCount,
+                  mode: "gradient",
+                });
 
                 return (
                   <td key={`${xIndex}-${yIndex}`} className="p-1">
