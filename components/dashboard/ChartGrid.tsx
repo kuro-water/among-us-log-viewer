@@ -148,7 +148,7 @@ export function ChartGrid({
         <ChartCard
           title="プレイヤー × 陣営ヒートマップ"
           description="勝率とプレイ回数をセル表示"
-          className="lg:col-span-6"
+          className="lg:col-span-12"
         >
           <PlayerFactionHeatmap
             data={analytics.playerFactionHeatmap}
@@ -159,7 +159,7 @@ export function ChartGrid({
         <ChartCard
           title="プレイヤー × 役職ヒートマップ"
           description="頻出役職トップ 12"
-          className="lg:col-span-6"
+          className="lg:col-span-12"
         >
           <PlayerRoleHeatmap
             data={analytics.playerRoleHeatmap}
