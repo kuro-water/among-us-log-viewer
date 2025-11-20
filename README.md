@@ -70,6 +70,7 @@ npm run dev
 - `lib/data-transformers/` — 生ログをグラフ向けデータに変換する純粋関数群（TransformerOptions を受ける）
 - `hooks/useGameAnalytics.ts` — データ読み込み、フィルタ、変換を行い、UI に渡すハブ
 - `components/charts/BaseChart.tsx` — Highcharts 初期化やテーマ適用を行う共通ラッパー
+- `components/ui/Card.tsx` — 汎用カードレイアウトコンポーネント（`ChartCard` のベースとして利用）
 - `components/dashboard/ChartGrid.tsx` — 表示するチャート群のレイアウト
 
 ### 新しいチャートを追加するには
@@ -95,6 +96,14 @@ npm run dev
 - 単体テスト: `npm run test`（Jest + ts-jest + @testing-library）
 - ウォッチ: `npm run test:watch`
 - Lint: `npm run lint`
+- Lint 自動修正: `npm run lint:fix`  # ファイルを自動修正（可能な限り）
+- CI 環境では警告をエラーにする: `npm run lint:ci`  # Pull Request ではこのコマンドが実行されます
+
+### E2E (Playwright)
+
+- Playwright E2E をローカルで実行するには dev サーバーやビルド済みサーバーが必要です。
+- Dev サーバー起動してから試す: `npm run dev` → `npm run e2e` (別ターミナル)
+- CI 実行: GitHub Actions `Playwright E2E` ワークフローが自動で `npm run build && npm run start` を行い、`npx playwright test` を実行します。
 
 テストは `*.test.ts`, `*.test.tsx` の命名規則です。transformer などのビジネスロジックはユニットテストを追加してください。
 

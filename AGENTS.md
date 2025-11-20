@@ -4,6 +4,12 @@
 
 Among Us Log Viewer は、Among Us の詳細ログ（JSONL）を読み込み、ゲームの進行状況と統計情報を可視化する Next.js（App Router）アプリケーションです。Highcharts と TypeScript を使って各種の可視化ダッシュボードを提供します。
 
+最新情報 (2025-11-21):
+
+- UI リファクタリング: `components/ui/Card.tsx` が導入され、UIのカード統一が行われました。`ChartCard` はこの `Card` をラップして `relative` レイアウトを付与します。
+- Highcharts のクレジットをカード内に固定: `components/charts/BaseChart.tsx` に `chart-wrapper` が追加され、`app/globals.css` で `.chart-wrapper .highcharts-credits` の配置を制御します。これによりクレジットがカード外にぶら下がる問題を修正しました。
+- テスト/CI: `components/dashboard/ChartCard.test.tsx` (Jest) と Playwright E2E `tests/ui/credit-placement.spec.ts` が追加され、`.github/workflows/playwright-e2e.yml` で E2E が PR でも実行されます。
+
 主要な目的：
 
 - クライアント（ブラウザ）で JSONL ファイルを読み込み、解析、集計、可視化する。
@@ -55,7 +61,8 @@ Notes:
 ## Development workflow & conventions
 
 - UI components are in `components/`.
-- Chart components live under `components/charts/` and use `components/charts/BaseChart.tsx` as a helper wrapper for Highcharts.
+  - `components/ui/` — shared presentational building blocks (e.g., `Card.tsx`) used across dashboards and pages.
+-- Chart components live under `components/charts/` and use `components/charts/BaseChart.tsx` as a helper wrapper for Highcharts. `BaseChart` now wraps charts in a `div.chart-wrapper` and exposes `data-testid="chart-wrapper"` for tests. This wrapper is used to position `.highcharts-credits` inside cards for consistent layout.
 - The main dashboard is in `components/dashboard/` and `app/page.tsx` composes the page.
 - JSONL parsing is implemented in `lib/jsonl-parser.ts`. It uses streaming parsing and returns typed `GameLog` entries.
 - Analytics transformations are implemented in `lib/data-transformers/*` and are pure functions taking `TransformerOptions` and returning chart-ready data.
@@ -70,6 +77,8 @@ Code style & patterns:
 - Keep components small, re-usable, and testable.
 
 UI: All presentational components use Tailwind CSS utility classes; follow existing style patterns.
+
+Tip: When adding a new chart, prefer wrapping it in `ChartCard` (which itself uses `Card`) and pass `span` for responsive grid behavior, for example `span="lg:col-span-12"`.
 
 ## How to add a new chart (recommended steps)
 
@@ -87,6 +96,7 @@ UI: All presentational components use Tailwind CSS utility classes; follow exist
 - Unit & integration tests: `npm run test` (Jest + ts-jest + @testing-library). Test files are `*.test.ts` or `*.test.tsx`.
 - Watch mode: `npm run test:watch`.
 - Lint: `npm run lint`. The ESLint config is in `eslint.config.mjs`.
+- E2E: Playwright を使った E2E は `npm run e2e` で実行します（dev server が起動している状態で実行）。CI では `Playwright E2E` ワークフローが `npm run build` → `npm run start` を行った後に `npm run e2e` を実行するようになっています。
 
 Tips:
 

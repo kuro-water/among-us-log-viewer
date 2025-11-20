@@ -41,3 +41,14 @@ a {
 button {
   font-family: inherit;
 }
+
+/* Chart layout helpers */
+.chart-wrapper {
+  position: relative;
+}
+.chart-wrapper .highcharts-credits {
+  position: absolute !important;
+  right: 1rem !important;
+  bottom: 1rem !important;
+  z-index: 10;
+}

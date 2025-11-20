@@ -155,7 +155,7 @@ function initHighcharts() {
                         "40%";
                       try {
                         series.update({ innerSize: fanInner }, false);
-                        } catch {
+                      } catch {
                         /* ignore */
                       }
                       chart.update({
@@ -195,7 +195,10 @@ export function BaseChart({ options, className }: BaseChartProps) {
   initHighcharts();
 
   return (
-    <div className={className}>
+    <div
+      className={["chart-wrapper", className].filter(Boolean).join(" ")}
+      data-testid="chart-wrapper"
+    >
       <HighchartsReact
         highcharts={Highcharts}
         options={chartOptions}

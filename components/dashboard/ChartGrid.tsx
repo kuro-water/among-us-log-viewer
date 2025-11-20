@@ -13,7 +13,6 @@ import type {
   MovementWithEventsData,
   PlayerWinRateData,
 } from "@/lib/data-transformers/types";
-
 const PlayerWinRateChart = dynamic(
   () => import("@/components/charts").then((m) => m.PlayerWinRateChart),
   { ssr: false }
@@ -103,21 +102,16 @@ export function ChartGrid({
 
   return (
     <>
-      {/* 独立セクション: プレイヤー勝率 */}
       <ChartCard
         title="プレイヤー勝率"
         description="プレイヤーごとの勝率"
-        className="lg:col-span-12"
+        span="lg:col-span-12"
       >
         <PlayerWinRateChart data={analytics.playerWinRate} className="h-96" />
       </ChartCard>
 
       {/* 役職別勝率（プレイヤー勝率の下） */}
-      <ChartCard
-        title="役職別勝率"
-        description="各役職の勝率"
-        className="lg:col-span-12"
-      >
+      <ChartCard description="各役職の勝率" span="lg:col-span-12">
         <RoleWinRateChart data={analytics.rolePerformance} className="h-96" />
       </ChartCard>
 
@@ -125,7 +119,7 @@ export function ChartGrid({
       <ChartCard
         title="陣営別勝率"
         description="勝利数・試合数を割合で把握"
-        className="lg:col-span-12"
+        span="lg:col-span-12"
       >
         <FactionWinRateChart data={analytics.factionWinRate} className="h-96" />
       </ChartCard>
@@ -134,7 +128,7 @@ export function ChartGrid({
         <ChartCard
           title="プレイヤーの陣営プレイ率"
           description="全プレイヤーの陣営プレイ割合"
-          className="lg:col-span-12"
+          span="lg:col-span-12"
         >
           <PlayerFactionPlayRateChart options={chartOptions} />
         </ChartCard>
@@ -142,7 +136,7 @@ export function ChartGrid({
         <ChartCard
           title="プレイヤーの役職ごとのプレイ率"
           description="全プレイヤーの役職プレイ割合"
-          className="lg:col-span-12"
+          span="lg:col-span-12"
         >
           <PlayerRolePlayRateChart options={chartOptions} />
         </ChartCard>
@@ -152,7 +146,7 @@ export function ChartGrid({
         <ChartCard
           title="プレイヤー × 陣営ヒートマップ"
           description="勝率とプレイ回数"
-          className="lg:col-span-12"
+          span="lg:col-span-12"
         >
           <PlayerFactionHeatmap
             data={analytics.playerFactionHeatmap}
@@ -163,7 +157,7 @@ export function ChartGrid({
         <ChartCard
           title="プレイヤー × 役職ヒートマップ"
           description="勝率とプレイ回数（全役職を含む。プレイ回数が0の役職は非表示）"
-          className="lg:col-span-12"
+          span="lg:col-span-12"
         >
           <PlayerRoleHeatmap
             data={analytics.playerRoleHeatmap}
@@ -174,7 +168,7 @@ export function ChartGrid({
         <ChartCard
           title="タスク進捗タイムライン"
           description="累計タスク数の推移"
-          className="lg:col-span-7"
+          span="lg:col-span-7"
         >
           <TaskTimelineChart data={analytics.taskTimeline} className="h-90" />
         </ChartCard>
@@ -182,7 +176,7 @@ export function ChartGrid({
         <ChartCard
           title="イベント密度"
           description="分単位のイベント発生数"
-          className="lg:col-span-5"
+          span="lg:col-span-5"
         >
           <EventDensityChart data={analytics.eventDensity} className="h-90" />
         </ChartCard>
@@ -190,7 +184,7 @@ export function ChartGrid({
         <ChartCard
           title="移動距離 × イベント"
           description="プレイヤー別の移動量と重要イベント"
-          className="lg:col-span-8"
+          span="lg:col-span-8"
         >
           <MovementWithEventsChart
             data={analytics.movementWithEvents}
@@ -201,7 +195,7 @@ export function ChartGrid({
         <ChartCard
           title="個人レーダー"
           description="勝率/キル/移動など 6 指標"
-          className="lg:col-span-4"
+          span="lg:col-span-4"
         >
           <PlayerRadarChart data={analytics.playerRadar} className="h-95" />
         </ChartCard>
@@ -209,7 +203,7 @@ export function ChartGrid({
         <ChartCard
           title="役職別パフォーマンス"
           description="平均タスク・平均生存時間"
-          className="lg:col-span-6"
+          span="lg:col-span-6"
         >
           <RolePerformanceChart
             data={analytics.rolePerformance}
@@ -220,7 +214,7 @@ export function ChartGrid({
         <ChartCard
           title="試合時間ヒストグラム"
           description="所要時間の分布"
-          className="lg:col-span-6"
+          span="lg:col-span-6"
         >
           <GameDurationChart data={analytics.gameDuration} className="h-105" />
         </ChartCard>
