@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import type { HeatmapData } from "../../lib/data-transformers/types";
 import { ChartEmptyState } from "./ChartEmptyState";
 import { getFactionDisplayName } from "../../lib/role-localization";
-import { getFactionColor } from "../../lib/role-mapping";
+import { getFactionColor, FACTION_COLORS } from "../../lib/role-mapping";
 import {
   getHeatmapCellColor,
   getHeatmapTextColor,
@@ -53,6 +53,12 @@ export function PlayerFactionHeatmap({
       };
     }, [data]);
 
+  const legendItems = useMemo(() => {
+    return (Object.entries(FACTION_COLORS) as [string, string][]).map(
+      ([faction, color]) => ({ faction, color })
+    );
+  }, []);
+
   if (xAxisCategories.length === 0 || yAxisCategories.length === 0) {
     return (
       <ChartEmptyState
@@ -64,6 +70,23 @@ export function PlayerFactionHeatmap({
 
   return (
     <div className={`overflow-x-auto ${className}`}>
+      <div className="mb-4 flex flex-wrap gap-2">
+        {legendItems.map(({ faction, color }) => (
+          <div
+            key={faction}
+            className="flex items-center gap-2 rounded-full px-3 py-1 text-sm text-slate-700"
+            style={{ backgroundColor: "rgba(15,23,42,0.05)" }}
+          >
+            <span
+              className="inline-block h-3 w-3 rounded-full"
+              style={{ backgroundColor: color }}
+            />
+            <span className="font-medium">
+              {getFactionDisplayName(faction as any)}
+            </span>
+          </div>
+        ))}
+      </div>
       <table className="min-w-full border-collapse text-sm">
         <thead>
           <tr>

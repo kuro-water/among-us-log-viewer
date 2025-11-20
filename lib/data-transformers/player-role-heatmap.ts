@@ -1,8 +1,6 @@
 import type { HeatmapData, TransformerOptions } from "./types";
 import { applyCommonFilters, buildPlayerAggregates } from "./utils";
 
-const MAX_ROLES = 12;
-
 export function buildPlayerRoleHeatmap(
   options: TransformerOptions
 ): HeatmapData {
@@ -19,9 +17,10 @@ export function buildPlayerRoleHeatmap(
     });
   });
 
+  // Include all roles but exclude those that have never been played (total games === 0)
   const roleAxis = Array.from(roleTotals.entries())
+    .filter(([, total]) => total > 0)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, MAX_ROLES)
     .map(([role]) => role);
 
   const cells = players.flatMap((player, playerIndex) =>

@@ -146,7 +146,7 @@ export function ChartGrid({
         >
           <PlayerRolePlayRateChart options={chartOptions} />
         </ChartCard>
-        
+
         {/* FactionWinRateChart removed as it is now in WinRateTabs */}
 
         <ChartCard
@@ -162,7 +162,7 @@ export function ChartGrid({
 
         <ChartCard
           title="プレイヤー × 役職ヒートマップ"
-          description="頻出役職トップ 12"
+          description="勝率とプレイ回数（全役職を含む。プレイ回数が0の役職は非表示）"
           className="lg:col-span-12"
         >
           <PlayerRoleHeatmap

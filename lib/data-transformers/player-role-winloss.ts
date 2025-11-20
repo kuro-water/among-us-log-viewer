@@ -38,6 +38,8 @@ export function buildPlayerRoleWinLossChartData(
   });
 
   const sortedRoles = Array.from(roleTotalGames.entries())
+    // Exclude roles with zero total games
+    .filter(([, total]) => total > 0)
     .sort((a, b) => b[1] - a[1]) // 降順
     .map(([role]) => role);
 
