@@ -1,1 +1,0 @@
-This is the Among Us log viewer project. It uses Next.js 16 (App Router) in TypeScript to read JSONL logs and display analytics with Highcharts. Primary folders: app/, public/, types/, etc. Key files: README.md, PLAN.md, game_history_sample.jsonl, ROLE_NAMES_IN_LOGS.md. Purpose: convert JSONL to interactive charts; many TODOs in PLAN.md remain.
