@@ -15,9 +15,8 @@ export function PlayerWinRateChart({
   data,
   className,
 }: PlayerWinRateChartProps) {
-  const { categories, seriesData, maxWinRate } = useMemo(() => {
+  const { categories, seriesData } = useMemo(() => {
     // 最大勝率を取得
-    const max = Math.max(...data.rows.map((row) => row.winRate * 100));
 
     // すべての役職を収集
     const allRoles = new Set<string>();
@@ -42,7 +41,7 @@ export function PlayerWinRateChart({
     return {
       categories: data.rows.map((row) => row.name),
       seriesData: series,
-      maxWinRate: 100,
+      // Note: `maxWinRate` is not currently used, keep percent axis fixed at 100.
     };
   }, [data]);
 

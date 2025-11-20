@@ -42,7 +42,7 @@ function initHighcharts() {
               try {
                 v(Highcharts);
                 return;
-              } catch (e) {
+              } catch {
                 // ignore and continue
               }
             }
@@ -53,7 +53,6 @@ function initHighcharts() {
       } catch (err) {
         // Don't fail the whole app if a single module initializer throws.
         // Log to console for debugging.
-        // eslint-disable-next-line no-console
         console.warn("Highcharts module initialization failed:", err);
       }
     };
@@ -141,7 +140,7 @@ function initHighcharts() {
                             "40%";
                           try {
                             series.update({ innerSize: fanInner }, false);
-                          } catch (err) {
+                          } catch {
                             // ignore if series.update not supported for innerSize
                           }
                           chart.update({
@@ -156,7 +155,7 @@ function initHighcharts() {
                         "40%";
                       try {
                         series.update({ innerSize: fanInner }, false);
-                      } catch (err) {
+                        } catch {
                         /* ignore */
                       }
                       chart.update({
@@ -181,7 +180,6 @@ function initHighcharts() {
       pieAnimatePatched = true;
     } catch (err) {
       // Non-critical: if we fail to patch, keep the original animate.
-      // eslint-disable-next-line no-console
       console.warn("Failed to patch pie animate", err);
     }
   }

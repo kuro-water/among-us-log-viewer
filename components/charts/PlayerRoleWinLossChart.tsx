@@ -1,4 +1,4 @@
-import dynamic from "next/dynamic";
+// dynamic import removed; BaseChart handles HighchartsReact initialization.
 import { useMemo } from "react";
 import { buildPlayerRoleWinLossChartData } from "../../lib/data-transformers/player-role-winloss";
 import type { TransformerOptions } from "../../lib/data-transformers/types";
@@ -8,9 +8,7 @@ interface PlayerRoleWinLossChartProps {
   options: TransformerOptions;
 }
 
-const HighchartsReact = dynamic(() => import("highcharts-react-official"), {
-  ssr: false,
-});
+// HighchartsReact は `BaseChart` 側で既に利用しているため、ここでは不要です。
 
 export default function PlayerRoleWinLossChart({
   options,

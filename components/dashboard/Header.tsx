@@ -1,4 +1,4 @@
-import { type MouseEventHandler } from "react";
+// no-op - MouseEventHandler unused here
 
 interface HeaderProps {
   loading: boolean;

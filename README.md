@@ -1,63 +1,147 @@
+
 # Among Us Log Viewer
 
-Among Us のゲームログデータ (`.jsonl` 形式) を読み込み、詳細な統計情報やゲームの進行状況を可視化・分析するための Web アプリケーションです。
-Next.js (App Router) と Highcharts を使用して構築されています。
+![project icon](/file.svg)
+
+Among Us の詳細ログ（JSONL）を読み込み、試合のタイムライン・イベント・プレイヤー統計を可視化する Next.js + TypeScript のシングルページアプリケーションです。
+
+このプロジェクトは、高度な Mod やカスタムロールから出力された詳細ログを解析して、Highcharts ベースのダッシュボードで視覚化します。
+
+---
+
+
+## クイックスタート（ローカル開発）
+
+ローンチ手順（推奨）:
+
+```bash
+# 依存インストール
+npm ci
+
+# 開発サーバー
+npm run dev
+```
+
+ブラウザで `http://localhost:3000` を開くとダッシュボードにアクセスできます。デフォルトでは `public/game_history_sample.jsonl` のサンプルを読み込みます。
+
+:::tip
+デフォルトのサンプル JSONL は `public/game_history_sample.jsonl` です。独自のファイルを使う場合は `loadGameHistory({ path: '/your/path.jsonl' })` を指定してください。
+:::
+:::note
+詳しいログのスキーマや記録している項目は `DETAILED_LOGGING_IMPLEMENTATION.md` を参照してください。役職名に関しては `ROLE_NAMES_IN_LOGS.md` を確認してください。
+:::
+
+---
+
 
 ## 主な機能
 
-- **ゲーム履歴の可視化**: タイムライン、タスク完了状況、移動履歴などをグラフ化して表示します。
-- **統計分析**: 陣営ごとの勝率、プレイヤーごとのパフォーマンス、役職別の統計などを分析できます。
-- **詳細ログ対応**: 移動距離、会議ボタン使用率、サボタージュ記録など、Modによって出力された詳細なログデータをサポートしています。
+- JSONL（JSON Lines）形式のゲームログをストリーミングで読み込み
+- 試合ごとのイベントタイムライン（タスク・サボタージュ・キル・会議など）
+- プレイヤー別統計（勝率、移動量、タスク完了数）と役職／陣営別の分析
+- タイムシリーズに基づくヒートマップ・移動軌跡の可視化
+- 自動エラー検出（不正 JSONL 行を収集して UI へ報告）
 
-## リポジトリ構造
+---
 
-プロジェクトの主要なディレクトリ構成は以下の通りです。
 
-```text
-.
-├── app/                 # Next.js App Router のページ定義とレイアウト
-│   ├── globals.css      # グローバルスタイル
-│   ├── layout.tsx       # ルートレイアウト
-│   └── page.tsx         # メインページ（ダッシュボード）
-├── components/          # UI コンポーネント
-│   ├── charts/          # Highcharts を使用した各種グラフコンポーネント
-│   └── dashboard/       # ダッシュボード用のカードやレイアウトコンポーネント
-├── config/              # アプリケーション全体の設定
-│   ├── factions.ts      # 陣営（Faction）の定義とカラー設定
-│   ├── roles.ts         # 役職（Role）のリスト定義
-│   ├── role-translations.ts # 役職名の日本語翻訳マッピング
-│   └── highcharts-theme.ts  # グラフのテーマ設定
-├── hooks/               # カスタム React Hooks
-│   └── useGameAnalytics.ts # ゲームデータの集計・分析ロジックを扱うフック
-├── lib/                 # ユーティリティ関数、データ変換ロジック
-│   ├── data-transformers/ # 生ログデータをグラフ用データに変換する処理群
-│   ├── jsonl-parser.ts    # JSONL 形式のログパーサー
-│   └── role-mapping.ts    # 役職と陣営のマッピングロジック
-├── public/              # 静的ファイル (サンプルログなど)
-└── types/               # TypeScript 型定義
-    └── game-data.types.ts # ゲームログデータの型定義
-```
+## データフォーマット（JSONL）
 
-## 開発の始め方
+各行が 1 試合分の JSON オブジェクトになっている JSONL（JSON Lines）形式を利用します。ファイルの例は `public/game_history_sample.jsonl` に含まれます。
 
-開発サーバーを起動して、ローカルでプレビューを確認できます。
+主なフィールド（例）:
+
+- `schema` — 実行時のスキーマ/バージョン。`game_id`, `generated_at` などを含みます。
+- `match` — 試合メタ（開始時間、マップ、プレイヤー数など）
+- `players` — プレイヤー配列／ディクショナリ（`identity`, `role`, `counters`, `timeseries_refs` など）
+- `events` — タイムライン、キル、会議、サボタージュ等
+- `timeseries` — 移動スナップショット等の時系列データ
+
+パーサー: `lib/jsonl-parser.ts` がストリーミング読み込みを実装し、不正行を `JsonLineError` として収集します。UI はこれらを `hooks/useGameAnalytics.ts` 経由で表示可能です。
+
+---
+
+
+## 開発ガイド（概要）
+
+### 主要ファイルの役割
+
+- `lib/jsonl-parser.ts` — JSONL のストリーミング読み込みとパース。エラー行の収集を行います。
+- `lib/data-transformers/` — 生ログをグラフ向けデータに変換する純粋関数群（TransformerOptions を受ける）
+- `hooks/useGameAnalytics.ts` — データ読み込み、フィルタ、変換を行い、UI に渡すハブ
+- `components/charts/BaseChart.tsx` — Highcharts 初期化やテーマ適用を行う共通ラッパー
+- `components/dashboard/ChartGrid.tsx` — 表示するチャート群のレイアウト
+
+### 新しいチャートを追加するには
+
+1. `lib/data-transformers` に新しい transformer を追加して必要な加工を実装します。
+1. `lib/data-transformers/index.ts` にエクスポートを追加します。
+1. `components/charts/` に新しいチャートコンポーネントを作成（`BaseChart.tsx` を再利用）。
+1. `hooks/useGameAnalytics.ts` に transformer 出力を追加して、`ChartGrid` へ渡します。
+1. 単体テスト（transformer）と UI テスト（チャートレンダリング）を追加します。
+
+### コード品質とスタイル
+
+- TypeScript を使用して型安全に実装してください。
+- React の関数型コンポーネントと Hooks を推奨します。
+- UI スタイルは Tailwind CSS を使用します。既存パターンに従ってください。
+- ESLint 設定は `eslint.config.mjs` を参照してください。
+
+---
+
+
+## テスト & Lint
+
+- 単体テスト: `npm run test`（Jest + ts-jest + @testing-library）
+- ウォッチ: `npm run test:watch`
+- Lint: `npm run lint`
+
+テストは `*.test.ts`, `*.test.tsx` の命名規則です。transformer などのビジネスロジックはユニットテストを追加してください。
+
+---
+
+
+## ビルド & デプロイ
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Production build
+npm run build
+
+# Static export (ex: GitHub Pages)
+npx next export
 ```
 
-ブラウザで [http://localhost:3000](http://localhost:3000) を開いて結果を確認してください。
+`next.config.ts` の `output: 'export'` により静的エクスポートが可能です。GitHub Pages にデプロイする際は `basePath` の設定に注意してください。
 
-## 技術スタック
+---
 
-- **Framework**: [Next.js](https://nextjs.org) (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Visualization**: Highcharts, Highcharts React
-- **Icons**: Lucide React
+
+## スクリプト（ローカル検査用）
+
+このリポジトリにはかつてローカル検査用スクリプトがありましたが、現在は削除されています。
+必要であれば簡単な Node スクリプトを作成して当地の `public/game_history_sample.jsonl` を解析してください。
+
+---
+
+
+## PR（簡易ガイド）
+
+- ブランチ名: `feature/<short-desc>` / `fix/<short-desc>` を推奨
+- PR タイトル: `[scope] <短 description>`（例: `[charts] Add movement chart`）
+- 必ず `npm run lint` と `npm run test` を通してください
+- ログスキーマに変更がある場合は `DETAILED_LOGGING_IMPLEMENTATION.md` の更新と型（`types/game-data.types.ts`）の更新を忘れないでください
+
+---
+
+
+## 参考（リポジトリ内）
+
+- `DETAILED_LOGGING_IMPLEMENTATION.md` — ログスキーマとイベント設計
+- `ROLE_NAMES_IN_LOGS.md` — ロール名の一覧
+- `AGENTS.md` — エージェント（自動化ツール）向け作業ガイド（新規）
+- `PLAN.md` — 今後の作業・TODO
+
+---
+
+ご不明点があれば issue を作成してください。
+

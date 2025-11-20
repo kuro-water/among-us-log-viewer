@@ -1,4 +1,4 @@
-import { type ChangeEvent, useState, useEffect } from "react";
+import { type ChangeEvent, useState, useMemo } from "react";
 
 import { MultiSelectDropdown } from "../ui/MultiSelectDropdown";
 
@@ -35,31 +35,33 @@ export function FilterSection({
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
 
   // カスタム入力状態（「カスタム」選択で数値入力フィールドを表示するため）
-  const [isCustomRecent, setIsCustomRecent] = useState<boolean>(false);
+  // - `isCustomRecent` は外部の `recentGamesCount` がプリセット以外の値かどうかを
+  //   派生（derived）して判定します。副作用で setState を呼ばないことで
+  //   `react-hooks/set-state-in-effect` ルールに違反しないようにします。
+  const [isCustomRecentLocal, setIsCustomRecentLocal] = useState<boolean>(false);
   const [customRecentValue, setCustomRecentValue] = useState<string>("");
 
   // recentGamesCount の外部変更と同期（プリセット以外はカスタム扱い）
-  useEffect(() => {
-    if (
-      recentGamesCount !== null &&
-      ![5, 10, 20, 50].includes(recentGamesCount)
-    ) {
-      setIsCustomRecent(true);
-      setCustomRecentValue(String(recentGamesCount));
-    } else {
-      setIsCustomRecent(false);
-      setCustomRecentValue("");
-    }
-  }, [recentGamesCount]);
+  // 外部から recentGamesCount に値が入ったとき、カスタムの選択肢であればその
+  // 値を入力欄のデフォルト表示に使います。ここでは副作用で state を更新せず
+  // 派生値で判定するため、直接 input の value 側で fallback を利用します。
+  const isCustomRecentDerived =
+    recentGamesCount !== null && ![5, 10, 20, 50].includes(recentGamesCount);
 
-  // 外部からの変更（リセットなど）を検知してモードを同期
-  useEffect(() => {
-    if (selectedGameIds.length > 0) {
-      setFilterMode("manual");
-    } else if (recentGamesCount !== null) {
-      setFilterMode("recent");
-    }
-  }, [selectedGameIds.length, recentGamesCount]);
+  // 外部の値（recentGamesCount）がカスタムであれば UI はカスタム表示となるよう
+  // に local フラグと OR を取り合わせた表示フラグを使う。
+  const isCustomRecent = isCustomRecentLocal || isCustomRecentDerived;
+
+  // `filterMode` はユーザー操作で変更するため state を残しますが、外部の
+  // `selectedGameIds` や `recentGamesCount` が指定されているときは UI 側で
+  // 上位の優先度（manual > recent > state）で表示するため、派生変数
+  // `effectiveFilterMode` を導出します。これにより副作用で setState を
+  // 呼ばずに外部と UI の整合性を取ります。
+  const effectiveFilterMode = useMemo<FilterMode>(() => {
+    if (selectedGameIds.length > 0) return "manual";
+    if (recentGamesCount !== null) return "recent";
+    return filterMode;
+  }, [selectedGameIds.length, recentGamesCount, filterMode]);
 
   // Adapter to convert string[] back to synthetic event for compatibility with existing hook
   const handleGameChange = (values: string[]) => {
@@ -109,6 +111,8 @@ export function FilterSection({
   const handleReset = () => {
     resetFilters();
     setFilterMode("all");
+    setIsCustomRecentLocal(false);
+    setCustomRecentValue("");
   };
 
   return (
@@ -140,7 +144,7 @@ export function FilterSection({
               type="button"
               onClick={() => handleModeChange("all")}
               className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-all ${
-                filterMode === "all"
+                effectiveFilterMode === "all"
                   ? "bg-white text-slate-900 shadow-sm"
                   : "text-slate-500 hover:text-slate-700"
               }`}
@@ -151,7 +155,7 @@ export function FilterSection({
               type="button"
               onClick={() => handleModeChange("recent")}
               className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-all ${
-                filterMode === "recent"
+                effectiveFilterMode === "recent"
                   ? "bg-white text-slate-900 shadow-sm"
                   : "text-slate-500 hover:text-slate-700"
               }`}
@@ -162,7 +166,7 @@ export function FilterSection({
               type="button"
               onClick={() => handleModeChange("manual")}
               className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-all ${
-                filterMode === "manual"
+                effectiveFilterMode === "manual"
                   ? "bg-white text-slate-900 shadow-sm"
                   : "text-slate-500 hover:text-slate-700"
               }`}
@@ -172,7 +176,7 @@ export function FilterSection({
           </div>
 
           {/* Recent Games Controls */}
-          {filterMode === "recent" && (
+          {effectiveFilterMode === "recent" && (
             <div className="animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="flex gap-3">
                 <select
@@ -188,7 +192,7 @@ export function FilterSection({
                   onChange={(e) => {
                     const value = e.target.value;
                     if (value === "custom") {
-                      setIsCustomRecent(true);
+                      setIsCustomRecentLocal(true);
                       setCustomRecentValue("");
                       setTimeout(() => {
                         const input = document.getElementById(
@@ -197,10 +201,10 @@ export function FilterSection({
                         input?.focus();
                       }, 0);
                     } else if (value === "") {
-                      setIsCustomRecent(false);
+                      setIsCustomRecentLocal(false);
                       onRecentGamesChange(null);
                     } else {
-                      setIsCustomRecent(false);
+                      setIsCustomRecentLocal(false);
                       const num = parseInt(value, 10);
                       if (!Number.isNaN(num)) onRecentGamesChange(num);
                     }
@@ -214,14 +218,19 @@ export function FilterSection({
                   <option value="50">直近 50 試合</option>
                   <option value="custom">カスタム</option>
                 </select>
-                {(isCustomRecent ||
-                  (recentGamesCount !== null &&
-                    ![5, 10, 20, 50].includes(recentGamesCount))) && (
+                {isCustomRecent && (
                   <input
                     id="custom-recent-games"
                     type="number"
                     min="1"
-                    value={customRecentValue}
+                    // `customRecentValue` はユーザーの編集中の値を保持します。
+                    // ただし外部から recentGamesCount がカスタム値で与えられた場合は
+                    // その値を表示する（入力中の fallback）。
+                    value={
+                      customRecentValue ||
+                      (isCustomRecentDerived && String(recentGamesCount)) ||
+                      ""
+                    }
                     onChange={(e) => {
                       const value = e.target.value;
                       setCustomRecentValue(value);
@@ -252,7 +261,7 @@ export function FilterSection({
           )}
 
           {/* Manual Selection Controls */}
-          {filterMode === "manual" && (
+          {effectiveFilterMode === "manual" && (
             <div className="animate-in fade-in slide-in-from-top-2 duration-200">
               <MultiSelectDropdown
                 label="試合一覧"
@@ -267,7 +276,7 @@ export function FilterSection({
           )}
 
           {/* All Games Message */}
-          {filterMode === "all" && (
+          {effectiveFilterMode === "all" && (
             <div className="animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-center text-sm text-slate-500">
                 すべての試合データが表示されます
