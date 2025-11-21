@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef } from "react";
+import gsap from "gsap";
 import type { PlayerAllStatsData } from "@/lib/data-transformers/types";
 import { formatNumber, formatDuration } from "@/lib/formatters";
 
@@ -130,6 +131,64 @@ export function PlayerStatsTable({ data, className = "" }: Props) {
     setSortDirection((d) => (d === "desc" ? "asc" : "desc"));
   }
 
+  function animateSortChange(key: SortKey) {
+    // manual FLIP: capture each row's bounding rect before the DOM update
+    const rows = Array.from(
+      (tbodyRef.current?.querySelectorAll(
+        "tr[data-row]"
+      ) as NodeListOf<HTMLElement>) || []
+    );
+    const rects = new Map<string, DOMRect>();
+    rows.forEach((r) => {
+      const id = r.getAttribute("data-row") || "";
+      rects.set(id, r.getBoundingClientRect());
+    });
+
+    // perform sort state update synchronously so tests don't complain about async state changes
+    if (sortMetric === key) {
+      setSortDirection((d) => (d === "desc" ? "asc" : "desc"));
+    } else {
+      setSortMetric(key);
+      setSortDirection("desc");
+    }
+
+    // after React reorders DOM, animate rows from previous positions -> new positions
+    requestAnimationFrame(() => {
+      const newRows = Array.from(
+        (tbodyRef.current?.querySelectorAll(
+          "tr[data-row]"
+        ) as NodeListOf<HTMLElement>) || []
+      );
+
+      // for each row, compute the delta and animate from old to new
+      newRows.forEach((el, idx) => {
+        const id = el.getAttribute("data-row") || "";
+        const prev = rects.get(id);
+        if (!prev) return; // new element
+
+        const next = el.getBoundingClientRect();
+        const dx = prev.left - next.left;
+        const dy = prev.top - next.top;
+        if (dx === 0 && dy === 0) return;
+
+        // apply transform animation from previous offset to 0
+        gsap.fromTo(
+          el,
+          { x: dx, y: dy },
+          {
+            x: 0,
+            y: 0,
+            duration: 0.45,
+            ease: "power2.inOut",
+            delay: idx * 0.01,
+          }
+        );
+      });
+    });
+  }
+
+  const tbodyRef = useRef<HTMLTableSectionElement | null>(null);
+
   return (
     <div
       className={`overflow-x-auto ${className}`}
@@ -155,10 +214,7 @@ export function PlayerStatsTable({ data, className = "" }: Props) {
               <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600">
                 <button
                   aria-label="sort-name"
-                  onClick={() => {
-                    if (sortMetric === "name") toggleDirection();
-                    else setSortMetric("name");
-                  }}
+                  onClick={() => animateSortChange("name")}
                   className="inline-flex items-center gap-2"
                 >
                   プレイヤー
@@ -180,13 +236,7 @@ export function PlayerStatsTable({ data, className = "" }: Props) {
                 >
                   <button
                     aria-label={`sort-${metric.key}`}
-                    onClick={() => {
-                      if (sortMetric === metric.key) toggleDirection();
-                      else {
-                        setSortMetric(metric.key);
-                        setSortDirection("desc");
-                      }
-                    }}
+                    onClick={() => animateSortChange(metric.key)}
                     className="inline-flex items-center gap-2"
                   >
                     {metric.label}
@@ -204,10 +254,11 @@ export function PlayerStatsTable({ data, className = "" }: Props) {
               ))}
             </tr>
           </thead>
-          <tbody>
+          <tbody ref={tbodyRef}>
             {sortedPlayers.map((p) => (
               <tr
                 key={p.uuid}
+                data-row={p.uuid}
                 className="border-t last:border-b hover:bg-slate-50"
               >
                 <td className="px-4 py-3 align-top font-medium text-slate-800">

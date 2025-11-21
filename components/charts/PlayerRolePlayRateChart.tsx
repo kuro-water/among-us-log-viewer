@@ -136,6 +136,41 @@ export default function PlayerRolePlayRateChart({
                 ],
               },
             },
+            responsive: {
+              rules: [
+                {
+                  condition: { maxWidth: 720 },
+                  chartOptions: {
+                    title: { style: { fontSize: "0.85em" } },
+                    subtitle: { style: { fontSize: "0.65em" } },
+                    plotOptions: {
+                      pie: {
+                        dataLabels: [
+                          { style: { fontSize: "0.65em" } },
+                          { style: { fontSize: "0.85em" } },
+                        ],
+                      },
+                    },
+                  },
+                },
+                {
+                  condition: { maxWidth: 420 },
+                  chartOptions: {
+                    title: { style: { fontSize: "0.8em" } },
+                    subtitle: { style: { fontSize: "0.6em" } },
+                    plotOptions: {
+                      pie: {
+                        dataLabels: [
+                          { enabled: false },
+                          { style: { fontSize: "0.7em" }, distance: -20 },
+                        ],
+                        connectorPadding: 4,
+                      },
+                    },
+                  },
+                },
+              ],
+            },
             series: [
               {
                 type: "pie",

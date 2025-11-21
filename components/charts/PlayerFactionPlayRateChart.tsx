@@ -90,15 +90,10 @@ export default function PlayerFactionPlayRateChart({
               pointFormat: "<b>{point.name}</b>: {point.y:.1f}%",
             },
             exporting: {
-              // Hide the export/context menu for this chart — user requested no options menu
               enabled: false,
-              buttons: {
-                contextButton: { enabled: false },
-              },
+              buttons: { contextButton: { enabled: false } },
             },
-            accessibility: {
-              point: { valueSuffix: "%" },
-            },
+            accessibility: { point: { valueSuffix: "%" } },
             plotOptions: {
               pie: {
                 borderWidth: 4,
@@ -127,14 +122,50 @@ export default function PlayerFactionPlayRateChart({
                       opacity: 0.9,
                       color: "#ffffff",
                     },
-                    filter: {
-                      operator: ">",
-                      property: "percentage",
-                      value: 8,
-                    },
+                    filter: { operator: ">", property: "percentage", value: 8 },
                   },
                 ],
               },
+            },
+            responsive: {
+              rules: [
+                {
+                  // half-width-ish cards -> reduce spacing and font sizes
+                  condition: { maxWidth: 720 },
+                  chartOptions: {
+                    title: { style: { fontSize: "0.85em" } },
+                    subtitle: { style: { fontSize: "0.65em" } },
+                    plotOptions: {
+                      pie: {
+                        dataLabels: [
+                          { style: { fontSize: "0.65em" } },
+                          { style: { fontSize: "0.85em" } },
+                        ],
+                      },
+                    },
+                  },
+                },
+                {
+                  // small phones -> hide name labels and keep small percent inside
+                  condition: { maxWidth: 420 },
+                  chartOptions: {
+                    title: { style: { fontSize: "0.8em" } },
+                    subtitle: { style: { fontSize: "0.6em" } },
+                    plotOptions: {
+                      pie: {
+                        dataLabels: [
+                          // hide name labels on tiny charts
+                          { enabled: false },
+                          // put percent inside and smaller
+                          { style: { fontSize: "0.7em" }, distance: -20 },
+                        ],
+                        // tighten connector/padding
+                        connectorPadding: 4,
+                      },
+                    },
+                  },
+                },
+              ],
             },
             series: [
               {
