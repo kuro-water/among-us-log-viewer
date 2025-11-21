@@ -7,11 +7,16 @@
     "build": "next build",
     "start": "next start",
     "test": "jest",
+    "test:coverage": "jest --coverage",
+    "report-coverage": "npm run test:coverage && open coverage/lcov-report/index.html",
     "test:watch": "jest --watch",
     "lint": "eslint",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "lint:ci": "eslint . --ext .ts,.tsx --max-warnings=0",
-    "e2e": "playwright test"
+    "e2e": "npx playwright install --with-deps && playwright test",
+    "e2e:dev": "npx playwright install --with-deps && npx wait-on http://localhost:3000 --timeout 120000 && playwright test",
+    "e2e:ci": "npx playwright install --with-deps && DISABLE_BASEPATH=true npm run build && lsof -ti :3000 | xargs -r kill -9 || true && npx serve@latest out -l 3000 & echo $! > .next_server_pid && npx wait-on http://localhost:3000 --timeout 120000 && playwright test; kill $(cat .next_server_pid) || true",
+    "e2e:setup": "npx playwright install --with-deps"
   },
   "dependencies": {
     "highcharts": "^12.4.0",

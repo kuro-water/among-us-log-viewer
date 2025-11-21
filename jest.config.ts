@@ -12,8 +12,10 @@ const config: Config.InitialOptions = {
     "\\.(jpg|jpeg|png|gif|webp|svg)$": "<rootDir>/__mocks__/fileMock.ts",
   },
   testMatch: ["**/?(*.)+(spec|test).ts?(x)"],
+  testPathIgnorePatterns: ["<rootDir>/tests/"],
   moduleDirectories: ["node_modules", "<rootDir>"],
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
+  setupFiles: ["<rootDir>/jest.pre-setup.ts"],
   // No globals: ts-jest config is provided directly in transform to avoid deprecation warnings.
 };
 

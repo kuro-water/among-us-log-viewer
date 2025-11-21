@@ -7,7 +7,7 @@ Among Us Log Viewer は、Among Us の詳細ログ（JSONL）を読み込み、�
 最新情報 (2025-11-21):
 
 - UI リファクタリング: `components/ui/Card.tsx` が導入され、UIのカード統一が行われました。`ChartCard` はこの `Card` をラップして `relative` レイアウトを付与します。
-- Highcharts のクレジットをカード内に固定: `components/charts/BaseChart.tsx` に `chart-wrapper` が追加され、`app/globals.css` で `.chart-wrapper .highcharts-credits` の配置を制御します。これによりクレジットがカード外にぶら下がる問題を修正しました。
+- Highcharts のクレジットをカード内に固定: `components/charts/BaseChart.tsx` に `chart-wrapper` が追加され、`app/globals.css` で `.chart-wrapper .highcharts-credits` の配置を制御します。これによりクレジットがカード外にぶら下がる問題を修正しました（`config/highcharts-theme.ts` の `credits` オプションで切り替え可能; ライセンス要件を確認してください）。
 - テスト/CI: `components/dashboard/ChartCard.test.tsx` (Jest) と Playwright E2E `tests/ui/credit-placement.spec.ts` が追加され、`.github/workflows/playwright-e2e.yml` で E2E が PR でも実行されます。
 
 主要な目的：
@@ -84,9 +84,9 @@ Tip: When adding a new chart, prefer wrapping it in `ChartCard` (which itself us
 
 1. Add a new transformer function in `lib/data-transformers/<name>.ts` that implements the desired aggregation and exported function that accepts `TransformerOptions`.
 1. Export the transformer from `lib/data-transformers/index.ts` and add types to `lib/data-transformers/types.ts` if needed.
-1. Add a chart component in `components/charts`, using `BaseChart.tsx` and the existing chart patterns.
+1. Add a chart component in `components/charts`, using `BaseChart.tsx` and the existing chart patterns. Wrap the chart in a `ChartCard` in `components/dashboard/ChartGrid.tsx` with the desired `span`. Make sure to use `className` for chart height (e.g., `className="h-96"`).
 1. Import the chart into `components/dashboard/ChartGrid.tsx` (or another appropriate container) and wire the transformer into `hooks/useGameAnalytics.ts`.
-1. Add sample test(s) for the transformer and/or chart: transformer unit tests (`__tests__` or `*.test.ts` near `lib/data-transformers`) and chart rendering tests (`@testing-library/react` in `components/charts`).
+1. Add sample test(s) for the transformer and/or chart: transformer unit tests (`__tests__` or `*.test.ts` near `lib/data-transformers`) and chart rendering tests (`@testing-library/react` in `components/charts`). Use `__mocks__/highcharts-react-official.tsx` to simulate the Highcharts DOM when writing unit tests for chart rendering.
 
 1. Run `npm run test` and `npm run lint`, update documentation if necessary.
 
@@ -97,6 +97,38 @@ Tip: When adding a new chart, prefer wrapping it in `ChartCard` (which itself us
 - Watch mode: `npm run test:watch`.
 - Lint: `npm run lint`. The ESLint config is in `eslint.config.mjs`.
 - E2E: Playwright を使った E2E は `npm run e2e` で実行します（dev server が起動している状態で実行）。CI では `Playwright E2E` ワークフローが `npm run build` → `npm run start` を行った後に `npm run e2e` を実行するようになっています。
+  ローカル実行メモ:
+
+  - Playwright はブラウザがローカルに必要です。初回は次を実行してください:
+
+    ```bash
+    npx playwright install --with-deps
+    # or use script
+    npm run e2e:setup
+    ```
+
+  - 既存の `npm run e2e` スクリプトは Playwright を走らせるのみです。ローカルで実行する際は Dev サーバーを別ターミナルで起動しておくか、CI 用の `e2e:ci` スクリプトを利用してください。
+
+    - Dev server 起動後（別ターミナル）:`npm run dev` → `npm run e2e`（推奨、素早く走らせたいとき）
+    - CI 相当の実行（build + serve + test）:`npm run e2e:ci` — こちらはローカルでも利用可能で、ビルドして静的出力を `out/` に作成し、`npx serve@latest out` でローカルファイルを配信、Playwright を実行してからサーバーを停止します。
+    - サーバー起動を待つだけ:`npm run e2e:dev` — `npm run dev` でサーバーを立ち上げたまま Playwright を走らせるためのヘルパー（`npx wait-on` を利用）
+
+  - CI 実行: GitHub Actions `Playwright E2E` ワークフローが自動で `npm run build && npm run start` を行い、`npx playwright test` を実行します。
+
+  - ノート: デフォルトでは Next.js の `basePath` が有効な場合（例: GitHub Pages 用に `/among-us-log-viewer` を追加しているとき）、E2E 実行時はビルドに `DISABLE_BASEPATH=true` を設定して `basePath` をオフにする必要があります。`e2e:ci` はこの点を自動化しています。
+
+  - Playwright テストでは、クレジットの位置がプラットフォーム差（フォント・レンダリング差）で微妙にずれることがあります。テストでは小さな誤差（TOLERANCE）を許容することでフレークを抑えています。予期せぬ大きなズレが出る場合は、Highcharts のテーマや CSS を確認してください。
+  ローカル実行メモ:
+
+  - Playwright はブラウザがローカルに必要です。初回は次を実行してください:
+
+    ```bash
+    npx playwright install --with-deps
+    # or use script
+    npm run e2e:setup
+    ```
+
+  - `npm run e2e` スクリプトは上の `npx playwright install` を実行してから `playwright test` を走らせます。`npm run e2e` を実行する前に `npm run dev` でアプリを起動しておく必要があります（CI は `npm run start` で起動します）。
 
 Tips:
 
@@ -171,3 +203,16 @@ npm run lint
 ---
 
 If you are an agent contributing code, please read this file carefully before making changes and update it if you find missing or outdated instructions.
+
+
+Agent checklist (what we changed):
+
+- [x] Added `chart-wrapper` in `BaseChart.tsx` with `data-testid="chart-wrapper"` for tests.
+- [x] Added `.chart-wrapper` CSS for `.highcharts-credits` placement in `app/globals.css`.
+- [x] Introduced `components/ui/Card.tsx` and `ChartCard` wraps this with `relative` layout.
+- [x] Added Jest unit test (`ChartCard.test.tsx`) and Playwright E2E (`tests/ui/credit-placement.spec.ts`).
+ 
+- Notes / follow-ups:
+
+- [ ] Optionally add default `credits` option in `config/highcharts-theme.ts` (check `SEC-001` Highcharts licensing before disabling credits by default).
+- [ ] If you plan to hide credits by default, add a `NEXT_PUBLIC_HIGHCHARTS_CREDITS` environment flag in `.env.local` to allow toggling at runtime.
