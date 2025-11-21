@@ -108,8 +108,11 @@ export default function PlayerRolePlayRateChart({
                 dataLabels: [
                   {
                     enabled: true,
-                    distance: 20,
+                    distance: 40,
                     format: "{point.name}",
+                    connectorWidth: 2,
+                    connectorColor: "#cbd5e1",
+                    connectorPadding: 6,
                     style: {
                       fontSize: "0.75em",
                       fontWeight: "500",
@@ -138,6 +141,22 @@ export default function PlayerRolePlayRateChart({
             },
             responsive: {
               rules: [
+                {
+                  // very wide viewports: keep larger, pre-change label sizes
+                  condition: { minWidth: 1200 },
+                  chartOptions: {
+                    title: { style: { fontSize: "1.05em" } },
+                    subtitle: { style: { fontSize: "0.85em" } },
+                    plotOptions: {
+                      pie: {
+                        dataLabels: [
+                          { style: { fontSize: "0.85em" }, distance: 48 },
+                          { style: { fontSize: "1.25em" } },
+                        ],
+                      },
+                    },
+                  },
+                },
                 {
                   condition: { maxWidth: 720 },
                   chartOptions: {
