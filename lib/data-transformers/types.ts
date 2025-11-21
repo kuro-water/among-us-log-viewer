@@ -57,6 +57,27 @@ export interface PlayerWinRateData {
   rows: PlayerWinRateRow[];
 }
 
+export interface PlayerAllStatsRow {
+  uuid: string;
+  name: string;
+  appearances: number;
+  wins: number;
+  losses: number;
+  deaths: number;
+  kills: number;
+  tasksCompleted: number;
+  movementDistance: number;
+  emergencyButtons: number;
+  sabotagesTriggered: number;
+  timeAlive: number; // seconds
+  factions: { faction: string; games: number; wins: number }[];
+  roles: { role: string; games: number; wins: number }[];
+}
+
+export interface PlayerAllStatsData {
+  rows: PlayerAllStatsRow[];
+}
+
 export interface HeatmapCell {
   x: number;
   y: number;

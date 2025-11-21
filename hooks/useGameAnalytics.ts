@@ -9,6 +9,7 @@ import {
   buildPlayerFactionHeatmap,
   buildPlayerRoleHeatmap,
   buildPlayerWinRateData,
+  buildPlayerAllStatsData,
   buildRolePerformanceData,
   buildTaskTimelineData,
 } from "@/lib/data-transformers";
@@ -20,6 +21,7 @@ import type {
   MovementWithEventsData,
   PlayerIdentitySummary,
   PlayerWinRateData,
+  PlayerAllStatsData,
   RolePerformanceData,
   TaskTimelineData,
   TransformerOptions,
@@ -65,6 +67,7 @@ interface AnalyticsPayload {
   taskTimeline: TaskTimelineData | null;
   eventDensity: EventDensityData;
   movementWithEvents: MovementWithEventsData | null;
+  playerAllStats: PlayerAllStatsData;
 }
 
 export interface UseGameAnalyticsResult {
@@ -175,6 +178,7 @@ export function useGameAnalytics(): UseGameAnalyticsResult {
     () => ({
       factionWinRate: buildFactionWinRateData(transformerOptions),
       playerWinRate: buildPlayerWinRateData(transformerOptions),
+      playerAllStats: buildPlayerAllStatsData(transformerOptions),
       playerFactionHeatmap: buildPlayerFactionHeatmap(transformerOptions),
       playerRoleHeatmap: buildPlayerRoleHeatmap(transformerOptions),
       rolePerformance: buildRolePerformanceData(transformerOptions),
