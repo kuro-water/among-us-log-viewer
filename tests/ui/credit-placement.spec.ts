@@ -12,7 +12,17 @@ test("Highcharts credits appear inside chart wrapper within a Card", async ({
   await expect(wrapper).toBeVisible({ timeout: 15000 });
 
   const credits = wrapper.locator(".highcharts-credits").first();
-  await expect(credits).toBeVisible();
+
+  // Show or hide credits based on NEXT_PUBLIC_HIGHCHARTS_CREDITS environment flag.
+  // If the environment flag isn't set, assume production default: hidden.
+  const creditsEnabled = process.env.NEXT_PUBLIC_HIGHCHARTS_CREDITS === "true";
+  if (creditsEnabled) {
+    await expect(credits).toBeVisible();
+  } else {
+    await expect(credits).not.toBeVisible();
+    // If credits are disabled, skip bounding-box checks
+    return;
+  }
 
   // boundingBox returns an object of { x, y, width, height }
   const wrapperBox = await wrapper.boundingBox();

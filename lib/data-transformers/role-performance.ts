@@ -62,6 +62,7 @@ export function buildRolePerformanceData(
         role: stats.role,
         faction,
         games: stats.games,
+        wins: stats.wins,
         winRate: stats.games > 0 ? stats.wins / stats.games : 0,
         taskCompletionRate:
           stats.totalTasksAssigned > 0

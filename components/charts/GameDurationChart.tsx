@@ -12,8 +12,15 @@ interface GameDurationChartProps {
 }
 
 export function GameDurationChart({ data, className }: GameDurationChartProps) {
+  const BIN_MINUTES = 3;
+
   const chartData = useMemo(
-    () => data.distribution.map((d) => [d.minute, d.count]),
+    () =>
+      data.distribution.map((d) => ({
+        x: d.minute,
+        y: d.count,
+        custom: { rangeLabel: `${d.minute}-${d.minute + BIN_MINUTES - 1}` },
+      })),
     [data]
   );
 
@@ -22,18 +29,20 @@ export function GameDurationChart({ data, className }: GameDurationChartProps) {
       chart: { type: "area" },
       title: { text: undefined },
       xAxis: {
-        title: { text: "試合時間 (分)" },
+        title: { text: `試合時間 (分, ${BIN_MINUTES}分刻み)` },
         labels: { format: "{value}分" },
         allowDecimals: false,
+        tickInterval: BIN_MINUTES,
       },
       yAxis: {
         title: { text: "試合数" },
-        allowDecimals: false,
+        allowDecimals: true,
       },
       legend: { enabled: false },
       tooltip: {
         headerFormat: "",
-        pointFormat: "{point.x}分: <b>{point.y} 試合</b>",
+        // Show the three-minute range for the bin and include smoothed counts
+        pointFormat: "{point.custom.rangeLabel}分: <b>{point.y:.1f} 試合</b>",
       },
       plotOptions: {
         area: {

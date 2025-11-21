@@ -126,6 +126,14 @@ export function applyHighchartsTheme() {
         },
       },
     },
+    // Control Highcharts credits visibility via environment flag.
+    // By default credits are disabled in this app because the project
+    // has a commercial license under our operation; set
+    // NEXT_PUBLIC_HIGHCHARTS_CREDITS=true to force them on.
+    credits: {
+      enabled: process.env.NEXT_PUBLIC_HIGHCHARTS_CREDITS === "true",
+    },
+
     lang: {
       thousandsSep: ",",
     },

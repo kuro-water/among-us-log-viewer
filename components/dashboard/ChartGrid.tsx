@@ -104,10 +104,10 @@ export function ChartGrid({
         <PlayerWinRateChart data={analytics.playerWinRate} className="h-96" />
       </ChartCard>
 
-      {/* 役職別勝率（プレイヤー勝率の下） */}
+      {/* 役職別勝敗率（プレイヤー勝率の下） */}
       <ChartCard
-        title="役職別勝率"
-        description="各役職の勝率"
+        title="役職別勝敗率"
+        description="各役職の勝敗率"
         span="lg:col-span-12"
       >
         <RoleWinRateChart data={analytics.rolePerformance} className="h-96" />

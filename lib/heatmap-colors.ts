@@ -18,6 +18,10 @@ const BUCKET_COLORS = {
 // Options for selecting a colorization algorithm
 export type HeatmapColorMode = "gradient" | "buckets";
 
+// Single base color for monochrome heatmaps (used when project opts for a
+// single-color palette). This will produce lighter/darker rgba variants.
+export const SINGLE_HEATMAP_COLOR = "#0ea5a7"; // tailwind teal-500
+
 export interface HeatmapColorOptions {
   playCount?: number;
   maxPlayCount?: number;

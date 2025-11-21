@@ -109,8 +109,6 @@ JSONL パーサー: `lib/jsonl-parser.ts`（ストリーミング実装、`JsonL
 - Lint 自動修正: `npm run lint:fix`
 - CI: `npm run lint:ci`  # PR で実行されます
 
-[![Coverage Status](https://codecov.io/gh/kuro-water/among-us-log-viewer/branch/main/graph/badge.svg)](https://codecov.io/gh/kuro-water/among-us-log-viewer)
-
 
 ### カバレッジ
 
@@ -119,87 +117,6 @@ npm run test:coverage
 ```
 
 結果は `coverage/lcov-report/index.html` をブラウザで開いて確認できます。CI は coverage レポートをアーティファクトとして保存し、PR にコメントを投稿する仕組みがあります。
-
-### カバレッジを外部サービスにアップロードする（トークン不要の選択肢）
-
-外部のカバレッジサービスにアップロードすると PR コメントや差分のカバレッジ表示など便利な機能が使えます。注意点は "プライベートリポジトリ" では多くのサービスが token を要求することです。以下はトークンを設定せずに使えることが多い選択肢です（公開リポジトリ向け）。
- 
-- Codecov (公開リポジトリ): GitHub Actions の公式 `codecov/codecov-action` を使えば、公開リポジトリでは `CODECOV_TOKEN` を用意しなくてもアップロード可能です。
-
-例 (GitHub Actions):
-
-```yaml
-name: CI
-on: [push, pull_request]
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-      - run: npm ci
-      - run: npm run test:coverage
-      - uses: codecov/codecov-action@v4
-        with:
-          files: coverage/lcov.info
-```
-
-
-(プライベートリポジトリでは `secrets.CODECOV_TOKEN` などをセットする必要があります)
-
-- Coveralls (公開リポジトリ): `coverallsapp/github-action` は GitHub Actions の `GITHUB_TOKEN` を利用して動作する場合があり、公開リポジトリでは別途シークレットが不要なケースもあります。プライベートの場合は Coveralls の repo token が必要です。
-
-
-例 (GitHub Actions):
-
-```yaml
-
-- name: Upload coverage to Coveralls
-  uses: coverallsapp/github-action@v2
-  with:
-    github-token: ${{ secrets.GITHUB_TOKEN }}
-```
-
-- GitHub Pages に coverage を公開: 外部サービスにアップロードせず、`coverage/lcov-report` を HTML として GitHub Pages に公開する方法があります。これは追加のトークンを不要とし、GitHub Actions の `GITHUB_TOKEN` で完結します。
-
-### PR に Coverage コメントを投稿する（自動）
-
-プルリク作成 / 更新時に CI が coverage を計算して、PR に一覧のようなコメントを自動で投稿するワークフローを追加しました（`.github/workflows/pr-coverage-comment.yml`）。このワークフローの挙動:
-
-- PR が open / update / reopened のときに実行
-- `npm run test:coverage` を走らせて `coverage/coverage-summary.json` を生成
-- JSON の `total` ブロックから Lines / Statements / Branches / Functions のパーセンテージを読み取り、PR のコメントに Markdown テーブルで投稿
-- すでに coverage コメントが存在する場合は更新（複数コメントは増えません）
-
-:::note
-PR coverage コメントの改善点:
-
-- キャッシュ: `npm ci` を早くするために `~/.npm` をキャッシュします（`actions/cache`）。
-- 並列取消: 新しいコミットで古い実行をキャンセルして実行数を最小化します。
-- パスフィルター: ドキュメントのみの変更では coverage ワークフローをスキップするため、`lib/`, `components/` などのパス変更時のみ実行します。
-- アーティファクト: coverage の HTML レポートをアップロードして、失敗時でもダウンロード可能にします。
-- フォールバック: `coverage/coverage-summary.json` が無い場合はフレンドリーなメッセージを PR に投稿します。
-- 差分表示: PR と base のカバレッジ差分を比較してテーブルを表示します。
-
- 
-:::
-
-このワークフローにより、レビュー時にカバレッジ概要が一目で見れるようになります。もしコメントのフォーマットを変えたい場合は PR コメントのテンプレートを編集してください（`.github/workflows/pr-coverage-comment.yml`）。
-
-例: `peaceiris/actions-gh-pages` を使ったワークフロー
-
-```yaml
-
-- name: Publish coverage to GitHub Pages
-  uses: peaceiris/actions-gh-pages@v3
-  with:
-    github_token: ${{ secrets.GITHUB_TOKEN }}
-    publish_dir: ./coverage/lcov-report
-```
-
-これらの方法は、公開リポジトリなら外部トークンが不要で導入が簡単です。プライベートリポジトリや組織ポリシーの場合は、わずかなシークレット設定や課金が必要になる可能性があるので注意してください。
 
 
 ### E2E (Playwright)

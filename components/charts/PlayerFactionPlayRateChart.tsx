@@ -101,7 +101,7 @@ export default function PlayerFactionPlayRateChart({
             },
             plotOptions: {
               pie: {
-                borderWidth: 2,
+                borderWidth: 4,
                 borderColor: "#ffffff",
                 allowPointSelect: true,
                 cursor: "pointer",

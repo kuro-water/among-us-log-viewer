@@ -81,6 +81,7 @@ export interface RolePerformanceRow {
   role: string;
   faction: Faction;
   games: number;
+  wins?: number;
   winRate: number;
   taskCompletionRate: number;
   avgTimeAlive: number;

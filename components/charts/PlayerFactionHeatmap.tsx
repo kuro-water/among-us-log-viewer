@@ -134,18 +134,28 @@ export function PlayerFactionHeatmap({
                         <>
                           <span
                             className="text-lg font-bold"
-                            style={{
-                              color: textColor,
-                            }}
+                            style={
+                              textColor === "#ffffff"
+                                ? {
+                                    color: textColor,
+                                    textShadow: "0 1px 2px rgba(2,6,23,0.6)",
+                                  }
+                                : { color: textColor }
+                            }
                           >
                             {cell.value?.toFixed(0)}%
                           </span>
                           <span
                             className="text-xs"
-                            style={{
-                              color: textColor,
-                              opacity: 0.8,
-                            }}
+                            style={
+                              textColor === "#ffffff"
+                                ? {
+                                    color: textColor,
+                                    opacity: 0.85,
+                                    textShadow: "0 1px 2px rgba(2,6,23,0.5)",
+                                  }
+                                : { color: textColor, opacity: 0.8 }
+                            }
                           >
                             {cell.playCount}回
                           </span>
