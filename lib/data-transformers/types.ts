@@ -61,6 +61,7 @@ export interface HeatmapCell {
   x: number;
   y: number;
   value: number | null;
+  color?: string;
   playCount: number;
   wins: number;
   meta: {
@@ -81,7 +82,7 @@ export interface RolePerformanceRow {
   faction: Faction;
   games: number;
   winRate: number;
-  avgTasks: number;
+  taskCompletionRate: number;
   avgTimeAlive: number;
 }
 
@@ -91,18 +92,7 @@ export interface RolePerformanceData {
 
 export interface GameDurationData {
   durations: number[];
-}
-
-export interface PlayerRadarMetric {
-  label: string;
-  value: number;
-  max: number;
-}
-
-export interface PlayerRadarData {
-  playerUuid: PlayerId;
-  playerName: string;
-  metrics: PlayerRadarMetric[];
+  distribution: { minute: number; count: number }[];
 }
 
 export interface TimelinePoint {

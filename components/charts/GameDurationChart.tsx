@@ -12,19 +12,19 @@ interface GameDurationChartProps {
 }
 
 export function GameDurationChart({ data, className }: GameDurationChartProps) {
-  const minutes = useMemo(
-    () => data.durations.map((value) => Number((value / 60).toFixed(2))),
+  const chartData = useMemo(
+    () => data.distribution.map((d) => [d.minute, d.count]),
     [data]
   );
 
-  const histogramId = "game-duration-base";
-
   const options = useMemo<Options>(
     () => ({
+      chart: { type: "area" },
       title: { text: undefined },
       xAxis: {
         title: { text: "試合時間 (分)" },
         labels: { format: "{value}分" },
+        allowDecimals: false,
       },
       yAxis: {
         title: { text: "試合数" },
@@ -33,29 +33,27 @@ export function GameDurationChart({ data, className }: GameDurationChartProps) {
       legend: { enabled: false },
       tooltip: {
         headerFormat: "",
-        pointFormat: "{point.x:.1f}〜{point.x2:.1f} 分: <b>{point.y} 試合</b>",
+        pointFormat: "{point.x}分: <b>{point.y} 試合</b>",
+      },
+      plotOptions: {
+        area: {
+          marker: { enabled: false },
+          color: "#2563eb",
+          fillOpacity: 0.3,
+        },
       },
       series: [
         {
-          id: histogramId,
-          type: "scatter",
-          data: minutes,
-          visible: false,
-          showInLegend: false,
-        },
-        {
-          type: "histogram",
-          baseSeries: histogramId,
-          binsNumber: "square-root",
+          type: "area",
           name: "試合数",
-          color: "#2563eb",
+          data: chartData,
         },
       ],
     }),
-    [minutes]
+    [chartData]
   );
 
-  if (minutes.length === 0) {
+  if (chartData.length === 0) {
     return (
       <ChartEmptyState
         className={className}

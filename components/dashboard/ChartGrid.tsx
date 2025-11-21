@@ -7,7 +7,6 @@ import type {
   HeatmapData,
   RolePerformanceData,
   GameDurationData,
-  PlayerRadarData,
   TaskTimelineData,
   EventDensityData,
   MovementWithEventsData,
@@ -53,10 +52,6 @@ const MovementWithEventsChart = dynamic(
   () => import("@/components/charts").then((m) => m.MovementWithEventsChart),
   { ssr: false }
 );
-const PlayerRadarChart = dynamic(
-  () => import("@/components/charts").then((m) => m.PlayerRadarChart),
-  { ssr: false }
-);
 const RolePerformanceChart = dynamic(
   () => import("@/components/charts").then((m) => m.RolePerformanceChart),
   { ssr: false }
@@ -73,7 +68,6 @@ interface AnalyticsPayload {
   playerRoleHeatmap: HeatmapData;
   rolePerformance: RolePerformanceData;
   gameDuration: GameDurationData;
-  playerRadar: PlayerRadarData | null;
   taskTimeline: TaskTimelineData | null;
   eventDensity: EventDensityData;
   movementWithEvents: MovementWithEventsData | null;
@@ -111,7 +105,11 @@ export function ChartGrid({
       </ChartCard>
 
       {/* 役職別勝率（プレイヤー勝率の下） */}
-      <ChartCard description="各役職の勝率" span="lg:col-span-12">
+      <ChartCard
+        title="役職別勝率"
+        description="各役職の勝率"
+        span="lg:col-span-12"
+      >
         <RoleWinRateChart data={analytics.rolePerformance} className="h-96" />
       </ChartCard>
 
@@ -150,7 +148,7 @@ export function ChartGrid({
         >
           <PlayerFactionHeatmap
             data={analytics.playerFactionHeatmap}
-            className="h-105"
+            className="min-h-[400px]"
           />
         </ChartCard>
 
@@ -161,7 +159,7 @@ export function ChartGrid({
         >
           <PlayerRoleHeatmap
             data={analytics.playerRoleHeatmap}
-            className="h-105"
+            className="min-h-[400px]"
           />
         </ChartCard>
 
@@ -193,16 +191,8 @@ export function ChartGrid({
         </ChartCard>
 
         <ChartCard
-          title="個人レーダー"
-          description="勝率/キル/移動など 6 指標"
-          span="lg:col-span-4"
-        >
-          <PlayerRadarChart data={analytics.playerRadar} className="h-95" />
-        </ChartCard>
-
-        <ChartCard
           title="役職別パフォーマンス"
-          description="平均タスク・平均生存時間"
+          description="タスク完了率・平均生存時間"
           span="lg:col-span-6"
         >
           <RolePerformanceChart
@@ -212,7 +202,7 @@ export function ChartGrid({
         </ChartCard>
 
         <ChartCard
-          title="試合時間ヒストグラム"
+          title="試合時間分布"
           description="所要時間の分布"
           span="lg:col-span-6"
         >

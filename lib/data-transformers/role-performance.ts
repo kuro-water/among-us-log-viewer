@@ -7,7 +7,8 @@ interface RoleStats {
   role: string;
   games: number;
   wins: number;
-  totalTasks: number;
+  totalTasksCompleted: number;
+  totalTasksAssigned: number;
   totalTimeAlive: number;
 }
 
@@ -27,7 +28,8 @@ function updateRoleStats(
       role: roleName,
       games: 0,
       wins: 0,
-      totalTasks: 0,
+      totalTasksCompleted: 0,
+      totalTasksAssigned: 0,
       totalTimeAlive: 0,
     };
 
@@ -35,7 +37,8 @@ function updateRoleStats(
     if (record.lifecycle.is_winner) {
       stats.wins += 1;
     }
-    stats.totalTasks += record.progression.tasks_completed ?? 0;
+    stats.totalTasksCompleted += record.progression.tasks_completed ?? 0;
+    stats.totalTasksAssigned += record.progression.tasks_total ?? 0;
     stats.totalTimeAlive += record.lifecycle.time_alive_seconds ?? 0;
 
     map.set(roleName, stats);
@@ -60,7 +63,10 @@ export function buildRolePerformanceData(
         faction,
         games: stats.games,
         winRate: stats.games > 0 ? stats.wins / stats.games : 0,
-        avgTasks: stats.games > 0 ? stats.totalTasks / stats.games : 0,
+        taskCompletionRate:
+          stats.totalTasksAssigned > 0
+            ? stats.totalTasksCompleted / stats.totalTasksAssigned
+            : 0,
         avgTimeAlive: stats.games > 0 ? stats.totalTimeAlive / stats.games : 0,
       };
     })

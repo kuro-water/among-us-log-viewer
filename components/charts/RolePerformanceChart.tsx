@@ -23,7 +23,7 @@ export function RolePerformanceChart({
     return {
       categories: data.rows.map((row) => getRoleDisplayName(row.role)),
       tasks: data.rows.map((row, index) => ({
-        y: Number(row.avgTasks.toFixed(1)),
+        y: Number((row.taskCompletionRate * 100).toFixed(1)),
         color: FACTION_COLORS[row.faction],
         custom: {
           winRate: winRateText[index],
@@ -67,7 +67,7 @@ export function RolePerformanceChart({
       },
       series: [
         {
-          name: "平均タスク数",
+          name: "タスク完了率 (%)",
           type: "bar",
           data: tasks,
         },

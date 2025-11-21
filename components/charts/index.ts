@@ -11,7 +11,6 @@ export { RoleWinRateChart } from "./RoleWinRateChart";
 export { GameDurationChart } from "./GameDurationChart";
 export { TaskTimelineChart } from "./TaskTimelineChart";
 export { EventDensityChart } from "./EventDensityChart";
-export { PlayerRadarChart } from "./PlayerRadarChart";
 export { MovementWithEventsChart } from "./MovementWithEventsChart";
 export { default as PlayerRolePlayRateChart } from "./PlayerRolePlayRateChart";
 export { default as PlayerFactionPlayRateChart } from "./PlayerFactionPlayRateChart";

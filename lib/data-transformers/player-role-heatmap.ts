@@ -1,5 +1,8 @@
 import type { HeatmapData, TransformerOptions } from "./types";
 import { applyCommonFilters, buildPlayerAggregates } from "./utils";
+import { getRoleFaction } from "../role-mapping";
+import { FACTION_CONFIG } from "@/config/factions";
+import { hexToRgba } from "@/lib/heatmap-colors";
 
 export function buildPlayerRoleHeatmap(
   options: TransformerOptions
@@ -31,10 +34,21 @@ export function buildPlayerRoleHeatmap(
         playCount > 0
           ? Number(((stats.wins / playCount) * 100).toFixed(1))
           : null;
+
+      const faction = getRoleFaction(role);
+      const color =
+        value !== null
+          ? hexToRgba(
+              FACTION_CONFIG[faction].color,
+              0.15 + 0.85 * (value / 100)
+            )
+          : "#f8fafc";
+
       return {
         x: playerIndex,
         y: roleIndex,
         value,
+        color,
         playCount,
         wins: stats.wins,
         meta: {

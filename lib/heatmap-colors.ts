@@ -60,6 +60,15 @@ function hexToRgb(hex: string) {
   };
 }
 
+export function hexToRgba(hex: string, alpha: number): string {
+  const result = /^#?([a-fA-F\d]{2})([a-fA-F\d]{2})([a-fA-F\d]{2})$/.exec(hex);
+  if (!result) return hex;
+  const r = parseInt(result[1], 16);
+  const g = parseInt(result[2], 16);
+  const b = parseInt(result[3], 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 // Compute luminance using sRGB relative luminance formula
 function getLuminanceFromRgb(rgb: { r: number; g: number; b: number }) {
   const srgb = [rgb.r, rgb.g, rgb.b].map((c) => c / 255);
@@ -116,6 +125,46 @@ export function getHeatmapTextColor(
   if (!rgb) return "#ffffff";
   const luminance = getLuminanceFromRgb(rgb);
   // pick white if dark background
+  return luminance > 0.5 ? "#1e293b" : "#ffffff";
+}
+
+export function getTextColorForBackground(bgColor: string): string {
+  const rgb = hexToRgb(bgColor);
+  if (!rgb) {
+    // Try parsing rgba
+    const rgba = /^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)$/.exec(
+      bgColor
+    );
+    if (rgba) {
+      const r = parseInt(rgba[1], 10);
+      const g = parseInt(rgba[2], 10);
+      const b = parseInt(rgba[3], 10);
+      // If alpha is low, the effective color is close to white (assuming white bg)
+      // But here we assume the color is what we see.
+      // Actually if alpha is low, it's light.
+      // Let's just check luminance of the RGB part.
+      // If alpha is low, we should probably use dark text.
+      // But wait, hexToRgba returns rgba.
+      // If I use rgba(0,0,255, 0.1), it's very light blue. Text should be black.
+      // If I use rgba(0,0,255, 1.0), it's deep blue. Text should be white.
+      // So I should blend with white background to get effective luminance.
+      // effective = c * alpha + white * (1 - alpha)
+      // But for now let's just use a simple heuristic or just use the RGB luminance if alpha > 0.5?
+      // Let's implement blending.
+      const alphaVal = parseFloat(rgba[4] ?? "1");
+      const blendedR = r * alphaVal + 255 * (1 - alphaVal);
+      const blendedG = g * alphaVal + 255 * (1 - alphaVal);
+      const blendedB = b * alphaVal + 255 * (1 - alphaVal);
+      const blendedLum = getLuminanceFromRgb({
+        r: blendedR,
+        g: blendedG,
+        b: blendedB,
+      });
+      return blendedLum > 0.5 ? "#1e293b" : "#ffffff";
+    }
+    return "#1e293b";
+  }
+  const luminance = getLuminanceFromRgb(rgb);
   return luminance > 0.5 ? "#1e293b" : "#ffffff";
 }
 

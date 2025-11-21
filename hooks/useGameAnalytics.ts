@@ -7,7 +7,6 @@ import {
   buildGameDurationData,
   buildMovementWithEventsData,
   buildPlayerFactionHeatmap,
-  buildPlayerRadarData,
   buildPlayerRoleHeatmap,
   buildPlayerWinRateData,
   buildRolePerformanceData,
@@ -20,7 +19,6 @@ import type {
   HeatmapData,
   MovementWithEventsData,
   PlayerIdentitySummary,
-  PlayerRadarData,
   PlayerWinRateData,
   RolePerformanceData,
   TaskTimelineData,
@@ -64,7 +62,6 @@ interface AnalyticsPayload {
   playerRoleHeatmap: HeatmapData;
   rolePerformance: RolePerformanceData;
   gameDuration: GameDurationData;
-  playerRadar: PlayerRadarData | null;
   taskTimeline: TaskTimelineData | null;
   eventDensity: EventDensityData;
   movementWithEvents: MovementWithEventsData | null;
@@ -182,7 +179,6 @@ export function useGameAnalytics(): UseGameAnalyticsResult {
       playerRoleHeatmap: buildPlayerRoleHeatmap(transformerOptions),
       rolePerformance: buildRolePerformanceData(transformerOptions),
       gameDuration: buildGameDurationData(transformerOptions),
-      playerRadar: buildPlayerRadarData(transformerOptions),
       taskTimeline: buildTaskTimelineData(transformerOptions),
       eventDensity: buildEventDensityData(transformerOptions),
       movementWithEvents: buildMovementWithEventsData(transformerOptions),

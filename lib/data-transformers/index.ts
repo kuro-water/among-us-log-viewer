@@ -5,7 +5,6 @@ export { buildPlayerFactionHeatmap } from "./player-faction-heatmap";
 export { buildPlayerRoleHeatmap } from "./player-role-heatmap";
 export { buildRolePerformanceData } from "./role-performance";
 export { buildGameDurationData } from "./game-duration";
-export { buildPlayerRadarData } from "./player-radar";
 export { buildTaskTimelineData } from "./task-timeline";
 export { buildEventDensityData } from "./event-density";
 export { buildMovementWithEventsData } from "./movement-with-events";

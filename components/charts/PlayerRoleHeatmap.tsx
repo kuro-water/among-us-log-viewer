@@ -8,10 +8,7 @@ import {
   getFactionDisplayName,
 } from "../../lib/role-localization";
 import { getFactionColorByRole, FACTION_COLORS } from "../../lib/role-mapping";
-import {
-  getHeatmapCellColor,
-  getHeatmapTextColor,
-} from "../../lib/heatmap-colors";
+import { getTextColorForBackground } from "../../lib/heatmap-colors";
 
 interface PlayerRoleHeatmapProps {
   data: HeatmapData;
@@ -19,37 +16,36 @@ interface PlayerRoleHeatmapProps {
 }
 
 export function PlayerRoleHeatmap({ data, className }: PlayerRoleHeatmapProps) {
-  const { xAxisCategories, yAxisCategories, yAxisRaw, grid, maxPlayCount } =
-    useMemo(() => {
-      const xCats = data.xAxis;
-      const yCats = data.yAxis;
+  const { xAxisCategories, yAxisCategories, yAxisRaw, grid } = useMemo(() => {
+    const xCats = data.xAxis;
+    const yCats = data.yAxis;
 
-      // Create a grid [y][x] -> cell
-      const gridData = Array.from({ length: yCats.length }, () =>
-        Array.from({ length: xCats.length }, () => null as any)
-      );
+    // Create a grid [y][x] -> cell
+    const gridData = Array.from({ length: yCats.length }, () =>
+      Array.from({ length: xCats.length }, () => null as any)
+    );
 
-      data.cells.forEach((cell) => {
-        if (
-          cell.y >= 0 &&
-          cell.y < yCats.length &&
-          cell.x >= 0 &&
-          cell.x < xCats.length
-        ) {
-          gridData[cell.y][cell.x] = cell;
-        }
-      });
+    data.cells.forEach((cell) => {
+      if (
+        cell.y >= 0 &&
+        cell.y < yCats.length &&
+        cell.x >= 0 &&
+        cell.x < xCats.length
+      ) {
+        gridData[cell.y][cell.x] = cell;
+      }
+    });
 
-      const maxPlay = Math.max(...data.cells.map((c) => c.playCount ?? 0), 0);
+    const maxPlay = Math.max(...data.cells.map((c) => c.playCount ?? 0), 0);
 
-      return {
-        xAxisCategories: xCats,
-        yAxisCategories: yCats.map((r) => getRoleDisplayName(r)),
-        yAxisRaw: yCats,
-        grid: gridData,
-        maxPlayCount: maxPlay,
-      };
-    }, [data]);
+    return {
+      xAxisCategories: xCats,
+      yAxisCategories: yCats.map((r) => getRoleDisplayName(r)),
+      yAxisRaw: yCats,
+      grid: gridData,
+      maxPlayCount: maxPlay,
+    };
+  }, [data]);
 
   const legendItems = useMemo(() => {
     return (Object.entries(FACTION_COLORS) as [string, string][]).map(
@@ -118,16 +114,8 @@ export function PlayerRoleHeatmap({ data, className }: PlayerRoleHeatmapProps) {
               {xAxisCategories.map((_, xIndex) => {
                 // grid[yIndex][xIndex] gives us the cell for Role Y and Player X
                 const cell = grid[yIndex][xIndex];
-                const bgColor = getHeatmapCellColor(cell?.value ?? null, {
-                  playCount: cell?.playCount,
-                  maxPlayCount,
-                  mode: "gradient",
-                });
-                const textColor = getHeatmapTextColor(cell?.value ?? null, {
-                  playCount: cell?.playCount,
-                  maxPlayCount,
-                  mode: "gradient",
-                });
+                const bgColor = cell?.color ?? "#f8fafc";
+                const textColor = getTextColorForBackground(bgColor);
 
                 return (
                   <td key={`${xIndex}-${yIndex}`} className="p-1">
@@ -150,7 +138,13 @@ export function PlayerRoleHeatmap({ data, className }: PlayerRoleHeatmapProps) {
                           >
                             {cell.value?.toFixed(0)}%
                           </span>
-                          <span className="text-xs text-slate-500">
+                          <span
+                            className="text-xs"
+                            style={{
+                              color: textColor,
+                              opacity: 0.8,
+                            }}
+                          >
                             {cell.playCount}回
                           </span>
                         </>

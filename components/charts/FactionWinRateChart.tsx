@@ -38,7 +38,7 @@ export function FactionWinRateChart({
 
   const options = useMemo<Options>(
     () => ({
-      chart: { type: "bar" },
+      chart: { type: "bar", marginRight: 30 },
       title: { text: undefined },
       xAxis: {
         categories,
