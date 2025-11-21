@@ -150,6 +150,28 @@ npx next export
 
 `next.config.ts` で `output: 'export'` が有効なので静的サイトとしてエクスポートできます。GitHub Pages などで公開する際は `basePath` の設定に注意してください。
 
+### GitHub Pages へデプロイする方法
+
+このリポジトリには GitHub Pages 向けの静的エクスポート/デプロイを簡単にする手順とスクリプトが追加されています。
+
+- ローカルで静的ファイルを作る（production ビルド + export）:
+
+```bash
+# production 環境でビルド & export
+npm ci
+npm run export
+```
+
+- out/ 配下の静的ファイルを gh-pages ブランチに公開する（ローカルから）：
+
+```bash
+npm run deploy
+```
+
+- GitHub Actions による自動デプロイ: push が `main` にマージされると自動でビルド & export (NODE_ENV=production) し、`out/` を `gh-pages` ブランチに公開するワークフロー `.github/workflows/deploy-gh-pages.yml` を追加済みです。
+
+注意: `next.config.ts` は production のビルド時に `basePath` を `/among-us-log-viewer` に設定するようになっているため、GitHub Pages で公開する場合は追加の設定を行わずにそのまま動作するはずです。ローカルで `next export` して確認する場合は `DISABLE_BASEPATH=true` を使うと basePath を無効化して `/` から出力可能です（E2E 用に既に使われているフラグです）。
+
 ---
 
 

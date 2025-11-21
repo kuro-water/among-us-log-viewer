@@ -16,7 +16,9 @@
     "e2e": "npx playwright install --with-deps && playwright test",
     "e2e:dev": "npx playwright install --with-deps && npx wait-on http://localhost:3000 --timeout 120000 && playwright test",
     "e2e:ci": "npx playwright install --with-deps && DISABLE_BASEPATH=true npm run build && lsof -ti :3000 | xargs -r kill -9 || true && npx serve@latest out -l 3000 & echo $! > .next_server_pid && npx wait-on http://localhost:3000 --timeout 120000 && playwright test; kill $(cat .next_server_pid) || true",
-    "e2e:setup": "npx playwright install --with-deps"
+    "e2e:setup": "npx playwright install --with-deps",
+    "export": "NODE_ENV=production next build",
+    "deploy": "npm run export && npx gh-pages -d out"
   },
   "dependencies": {
     "highcharts": "^12.4.0",
@@ -42,7 +44,9 @@
     "tailwindcss": "^4",
     "ts-jest": "^29.4.5",
     "ts-node": "^10.9.2",
-    "typescript": "^5"
-    ,"@playwright/test": "^1.45.0"
+    "typescript": "^5",
+    "@playwright/test": "^1.45.0",
+    "gh-pages": "^5.0.0"
+    
   }
 }
