@@ -1,6 +1,7 @@
 export * from "./types";
 export { buildFactionWinRateData } from "./faction-win-rate";
 export { buildPlayerWinRateData } from "./player-win-rate";
+export { buildPlayerAllStatsData } from "./player-all-stats";
 export { buildPlayerFactionHeatmap } from "./player-faction-heatmap";
 export { buildPlayerRoleHeatmap } from "./player-role-heatmap";
 export { buildRolePerformanceData } from "./role-performance";

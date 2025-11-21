@@ -61,6 +61,11 @@ const GameDurationChart = dynamic(
   { ssr: false }
 );
 
+const PlayerStatsTable = dynamic(
+  () => import("@/components/charts").then((m) => m.PlayerStatsTable),
+  { ssr: false }
+);
+
 interface AnalyticsPayload {
   factionWinRate: FactionWinRateData;
   playerWinRate: PlayerWinRateData;
@@ -71,6 +76,7 @@ interface AnalyticsPayload {
   taskTimeline: TaskTimelineData | null;
   eventDensity: EventDensityData;
   movementWithEvents: MovementWithEventsData | null;
+  playerAllStats: import("@/lib/data-transformers/types").PlayerAllStatsData;
 }
 
 interface ChartGridProps {
@@ -161,6 +167,15 @@ export function ChartGrid({
             data={analytics.playerRoleHeatmap}
             className="min-h-[400px]"
           />
+        </ChartCard>
+
+        {/* プレイヤー統計テーブル - ヒートマップ群の下に配置 */}
+        <ChartCard
+          title="プレイヤー統計一覧"
+          description="全プレイヤーの集計統計（試合数, 勝利, キルなど）。列はプレイヤー、行は指標です。"
+          span="lg:col-span-12"
+        >
+          <PlayerStatsTable data={analytics.playerAllStats} />
         </ChartCard>
 
         <ChartCard
