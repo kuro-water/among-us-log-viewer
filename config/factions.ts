@@ -9,7 +9,7 @@ export const FACTION_CONFIG: Record<Faction, FactionConfig> = {
   Crewmate: { color: "#00bcd4", label: "クルーメイト" },
   Impostor: { color: "#e74c3c", label: "インポスター" },
   Madmate: { color: "#c0392b", label: "マッドメイト" },
-  Neutral: { color: "#27ae60", label: "第三陣営" },
+  Neutral: { color: "#27ae60", label: "ニュートラル" },
   Other: { color: "#6c757d", label: "その他" },
 };
 
