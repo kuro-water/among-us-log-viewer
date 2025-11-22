@@ -1,218 +1,193 @@
-# AGENTS.md
+# AGENTS.md — Among Us Log Viewer（エージェント向け）
 
-## Project Overview
+このリポジトリで自動化エージェントや開発者が効率よく作業するための機械向けドキュメントです。
+README.md を補完する目的で、プロジェクト構成、開発フロー、テストと CI、よくあるトラブルシュート、そしてエージェントが自律的に安全に変更できるための具体的手順をまとめています。
 
-Among Us Log Viewer は、Among Us の詳細ログ（JSONL）を読み込み、ゲームの進行状況と統計情報を可視化する Next.js（App Router）アプリケーションです。Highcharts と TypeScript を使って各種の可視化ダッシュボードを提供します。
+更新日: 2025-11-22
 
-最新情報 (2025-11-21):
+---
 
-- UI リファクタリング: `components/ui/Card.tsx` が導入され、UIのカード統一が行われました。`ChartCard` はこの `Card` をラップして `relative` レイアウトを付与します。
-- Highcharts のクレジットをカード内に固定: `components/charts/BaseChart.tsx` に `chart-wrapper` が追加され、`app/globals.css` で `.chart-wrapper .highcharts-credits` の配置を制御します。これによりクレジットがカード外にぶら下がる問題を修正しました（`config/highcharts-theme.ts` の `credits` オプションで切り替え可能; ライセンス要件を確認してください）。
-- テスト/CI: `components/dashboard/ChartCard.test.tsx` (Jest) と Playwright E2E `tests/ui/credit-placement.spec.ts` が追加され、`.github/workflows/playwright-e2e.yml` で E2E が PR でも実行されます。
+## 要点（短く）
 
-主要な目的：
+- Next.js (App Router), TypeScript, TailwindCSS ベースの SPA（フロントエンド可視化アプリ）です。Highcharts + React でブラウザに可視化を行います。
+- サンプルログ: `public/game_history_sample.jsonl`（1 行 = 1 試合）。実データやシークレットを public に置かないでください。
+- 静的エクスポート（GitHub Pages など）や basePath を使う環境では、fetch に絶対パス(`/...`)を使うと 404 が発生します。実装は相対パス優先で安全に設計されています。CI で E2E を回す際には `DISABLE_BASEPATH=true` の利用に注意してください。
 
-- クライアント（ブラウザ）で JSONL ファイルを読み込み、解析、集計、可視化する。
-- カスタムロールや Mod による詳細ログに対応し、役職・プレイヤー・陣営単位での分析をサポートする。
+---
 
-- ## Quick facts
+## 最初に見るべき場所（エージェント向け即戦力）
 
-- Framework: Next.js (App Router)
-- Language: TypeScript
-- Charts: Highcharts (highcharts-react-official)
-- Styling: Tailwind CSS
-- Testing: Jest, @testing-library/react
+- `app/page.tsx` — ダッシュボードのエントリポイント
+- `hooks/useGameAnalytics.ts` — JSONL の読み込みと transformer の統括
+- `lib/jsonl-parser.ts` — ストリーミング JSONL パーサ（loadGameHistory）
+- `lib/data-transformers/` — ゲームデータ変換ロジック（純粋関数）
+- `types/game-data.types.ts` — ログの型定義（変更時は必ず更新）
+- `components/charts/`, `components/dashboard/`, `components/ui/` — UI / 可視化コンポーネント
+- `__mocks__/highcharts-react-official.tsx` — Jest テストで Highcharts をモックする実装
 
-## Required Setup (for developers / agents)
+---
 
-1. Install dependencies (pick a package manager):
+## JSONL 読み込みの挙動（重要）
+
+1. まず相対パス `game_history.jsonl` を参照（サイト管理者が提供する実データを優先）
+2. 見つからない、あるいは games が 0 件なら `public/game_history_sample.jsonl` をフォールバック
+
+理由: 静的 export や basePath のある環境で絶対パスをそのまま使うと 404 になるため、相対パス優先で安全に実装されています。
+
+---
+
+## 開発 / 実行（速攻コマンド）
+
+前提: Node.js 18 以上（ローカルの Node バージョンに依存）。
+
+依存のインストール:
 
 ```bash
 npm ci
-# or
-pnpm install
-# or
-yarn install
+# または pnpm install / yarn install
 ```
 
-1. Run dev server:
+開発サーバー:
 
 ```bash
 npm run dev
-# or
-pnpm dev
-# or
-yarn dev
+# ローカル: http://localhost:3000
 ```
 
-1. Build (production) & static export (optional for GitHub Pages):
+静的ビルド (GitHub Pages 用):
 
 ```bash
-npm run build  # builds the Next.js app
-npx next export # export to `out/` (static export due to `output: "export"` in next.config.ts)
+npm run build && npx next export
 ```
 
+---
 
-Notes:
+## テスト
 
-- The app expects a default JSONL source at `/game_history_sample.jsonl`. A sample file is bundled in `public/game_history_sample.jsonl`.
-- For static export, `next.config.ts` sets `basePath` when NODE_ENV=production: you may need to set `NODE_ENV=production` before building for GitHub Pages.
+### ユニット / 統合（Jest + @testing-library）
 
-## Development workflow & conventions
+```bash
+npm test
+npm run test:watch
+```
 
-- UI components are in `components/`.
-  - `components/ui/` — shared presentational building blocks (e.g., `Card.tsx`) used across dashboards and pages.
--- Chart components live under `components/charts/` and use `components/charts/BaseChart.tsx` as a helper wrapper for Highcharts. `BaseChart` now wraps charts in a `div.chart-wrapper` and exposes `data-testid="chart-wrapper"` for tests. This wrapper is used to position `.highcharts-credits` inside cards for consistent layout.
-- The main dashboard is in `components/dashboard/` and `app/page.tsx` composes the page.
-- JSONL parsing is implemented in `lib/jsonl-parser.ts`. It uses streaming parsing and returns typed `GameLog` entries.
-- Analytics transformations are implemented in `lib/data-transformers/*` and are pure functions taking `TransformerOptions` and returning chart-ready data.
-- `hooks/useGameAnalytics.ts` loads the JSONL and orchestrates the transformations; update this to wire new transformer outputs into the UI.
-- Types live under `types/` and `lib/data-transformers/types.ts`.
+Jest のコンフィグ (`jest.config.ts`) と事前セットアップ (`jest.pre-setup.ts` / `jest.setup.ts`) を確認してください。Highcharts は `__mocks__/highcharts-react-official.tsx` を使ってモックされています。
 
-Code style & patterns:
+### E2E（Playwright）
 
-- Use functional components and hooks in React.
-- `use client` is used for client-side components; keep Next.js server/client boundaries in mind.
-- Follow the TypeScript types and expand `types/game-data.types.ts` when adding new fields.
-- Keep components small, re-usable, and testable.
+```bash
+npm run e2e:setup   # 初回ブラウザをインストール
+npm run e2e         # Playwright を直接実行
+npm run e2e:dev     # dev サーバーに wait-on してから実行
+npm run e2e:ci      # CI 流れ: export -> serve(out) -> run tests
+```
 
-UI: All presentational components use Tailwind CSS utility classes; follow existing style patterns.
+備考: CI では basePath による 404 を防ぐため `DISABLE_BASEPATH=true` を用いるフローがあります（package.json のスクリプト参照）。Playwright テストは `playwright.config.ts` を確認してください。
 
-Tip: When adding a new chart, prefer wrapping it in `ChartCard` (which itself uses `Card`) and pass `span` for responsive grid behavior, for example `span="lg:col-span-12"`.
+---
 
-## How to add a new chart (recommended steps)
+## 変更作業時のガイドライン / コードスタイル
 
-1. Add a new transformer function in `lib/data-transformers/<name>.ts` that implements the desired aggregation and exported function that accepts `TransformerOptions`.
-1. Export the transformer from `lib/data-transformers/index.ts` and add types to `lib/data-transformers/types.ts` if needed.
-1. Add a chart component in `components/charts`, using `BaseChart.tsx` and the existing chart patterns. Wrap the chart in a `ChartCard` in `components/dashboard/ChartGrid.tsx` with the desired `span`. Make sure to use `className` for chart height (e.g., `className="h-96"`).
-1. Import the chart into `components/dashboard/ChartGrid.tsx` (or another appropriate container) and wire the transformer into `hooks/useGameAnalytics.ts`.
-1. Add sample test(s) for the transformer and/or chart: transformer unit tests (`__tests__` or `*.test.ts` near `lib/data-transformers`) and chart rendering tests (`@testing-library/react` in `components/charts`). Use `__mocks__/highcharts-react-official.tsx` to simulate the Highcharts DOM when writing unit tests for chart rendering.
+- TypeScript を活用し、型を必ず明示する（strict を想定）。
+- React コンポーネントは基本的に Function Component + Hooks。クライアント専用ロジックは `'use client'` を明記。
+- App Router (app/) を採用しているので Server Component と Client Component の責務を守ること。Server コンポーネントで client-only のライブラリを `next/dynamic` で { ssr: false } するのは非推奨（エラーの原因）。
+- スタイルは Tailwind の既存パターンに従う。
+- transformer / 変換ロジックは純粋関数にしてユニットテストを付けること。型の変更を伴う場合は `types/game-data.types.ts` を更新しテストを追加。
+- Highcharts に関しては Jest 用のモックがあるため（`__mocks__/highcharts-react-official.tsx`）テストは壊れにくいですが、レンダリングや props に変更を加える場合はモックを見直してください。
+- Lint: `npm run lint` / `npm run lint:ci`（CI では警告をエラーにしている）
 
-1. Run `npm run test` and `npm run lint`, update documentation if necessary.
+PR チェックリスト（必須推奨）:
 
+- ブランチ名: `feature/<short-desc>` / `fix/<short-desc>`
+- PR タイトル: `[scope] Short description` 例: `[charts] Add movement chart`
+- 必須チェック: `npm ci`、`npm run lint`、`npm test` がすべて通ること
 
-## Testing & Linting
+---
 
-- Unit & integration tests: `npm run test` (Jest + ts-jest + @testing-library). Test files are `*.test.ts` or `*.test.tsx`.
-- Watch mode: `npm run test:watch`.
-- Lint: `npm run lint`. The ESLint config is in `eslint.config.mjs`.
-- E2E: Playwright を使った E2E は `npm run e2e` で実行します（dev server が起動している状態で実行）。CI では `Playwright E2E` ワークフローが `npm run build` → `npm run start` を行った後に `npm run e2e` を実行するようになっています。
-  ローカル実行メモ:
+## 新しいチャートを追加する（短縮レシピ）
 
-  - Playwright はブラウザがローカルに必要です。初回は次を実行してください:
+1. `lib/data-transformers/<name>.ts` に transformer を実装しユニットテストを追加
+2. `lib/data-transformers/index.ts` と types を更新
+3. `components/charts/<Name>.tsx` を作成し `BaseChart.tsx` でラップ
+4. `hooks/useGameAnalytics.ts` に統合し `components/dashboard/ChartGrid.tsx` に追加
+5. 必要なテスト（変換ロジックとコンポーネント）を追加し全テストを通す
 
-    ```bash
-    npx playwright install --with-deps
-    # or use script
-    npm run e2e:setup
-    ```
+※ 変更は小さなコミットに分割し、型やインポートが壊れないことをローカルで確認してください。
 
-  - 既存の `npm run e2e` スクリプトは Playwright を走らせるのみです。ローカルで実行する際は Dev サーバーを別ターミナルで起動しておくか、CI 用の `e2e:ci` スクリプトを利用してください。
+---
 
-    - Dev server 起動後（別ターミナル）:`npm run dev` → `npm run e2e`（推奨、素早く走らせたいとき）
-    - CI 相当の実行（build + serve + test）:`npm run e2e:ci` — こちらはローカルでも利用可能で、ビルドして静的出力を `out/` に作成し、`npx serve@latest out` でローカルファイルを配信、Playwright を実行してからサーバーを停止します。
-    - サーバー起動を待つだけ:`npm run e2e:dev` — `npm run dev` でサーバーを立ち上げたまま Playwright を走らせるためのヘルパー（`npx wait-on` を利用）
+## よくあるトラブルとデバッグ
 
-  - CI 実行: GitHub Actions `Playwright E2E` ワークフローが自動で `npm run build && npm run start` を行い、`npx playwright test` を実行します。
+- デプロイで `Failed to load game history (404 ...)` が出る場合: `basePath` と fetch の絶対/相対パスを確認してください。相対パスを優先する設計です。
+- JSONL の不正な行は `JsonLineError` として収集され、UI に表示されます（`lib/jsonl-parser.ts` を参照）。パーサー仕様を変えたらパース・エラーのテストを追加してください。
 
-  - ノート: デフォルトでは Next.js の `basePath` が有効な場合（例: GitHub Pages 用に `/among-us-log-viewer` を追加しているとき）、E2E 実行時はビルドに `DISABLE_BASEPATH=true` を設定して `basePath` をオフにする必要があります。`e2e:ci` はこの点を自動化しています。
+追加のよくある原因:
 
-  - Playwright テストでは、クレジットの位置がプラットフォーム差（フォント・レンダリング差）で微妙にずれることがあります。テストでは小さな誤差（TOLERANCE）を許容することでフレークを抑えています。予期せぬ大きなズレが出る場合は、Highcharts のテーマや CSS を確認してください。
-  ローカル実行メモ:
+- E2E が 404 になる: `basePath` の扱い、または静的エクスポート後の serve ポートが正しくない場合がある。CI 用スクリプトの `DISABLE_BASEPATH=true` を参照。
+- Playwright が flakey: UI アニメーション (GSAP) や遅延処理が原因のことがある。`await expect(...)` 系の web-first アサーションを使い、アニメーションをオフにする（テスト中）かテスト側で十分待つ。
+- TypeScript の型エラー/ESLint は CI で厳格にチェックされるため、リファクタ/移動時は `npm run lint` とタイプチェックを実行すること。
 
-  - Playwright はブラウザがローカルに必要です。初回は次を実行してください:
+---
 
-    ```bash
-    npx playwright install --with-deps
-    # or use script
-    npm run e2e:setup
-    ```
+## セキュリティ / テストデータの注意
 
-  - `npm run e2e` スクリプトは上の `npx playwright install` を実行してから `playwright test` を走らせます。`npm run e2e` を実行する前に `npm run dev` でアプリを起動しておく必要があります（CI は `npm run start` で起動します）。
+- `public/game_history_sample.jsonl` はサンプルです。実運用データやシークレットは置かないでください。
 
-Tips:
+Secrets: リポジトリに秘密情報を置かないこと。CI のシークレットは GitHub Actions の Secrets を利用してください。
 
-- Use `-t` to run specific tests with `jest -t "regex"`.
-- For changes in data transformers, write unit tests with small sample GameLog objects.
+---
 
-## Build & Deployment
+## エージェント向け注意（作業方針）
 
-- `next.config.ts` uses `output: 'export'`, which indicates the app can be statically exported via `next export`. For GitHub Pages or static hosts, run `next build && next export`.
-- For server deployment, use `next start` after `next build` (server side). `npm run start` currently runs `next start`.
+- 変更は小さく、テストカバレッジを追加してからマージしてください。
+- サンプル JSON を壊すとテストや UI に影響するため、スキーマの変更は `types/game-data.types.ts` とパーサー／変換のテストを必ず更新してください。
 
-## Files of interest
+エージェント向け短いガイドライン:
 
-- `app/` - Next.js App Router pages and layout
-- `components/` - React components and charts
-- `hooks/useGameAnalytics.ts` - Data orchestration hook (loads, parses, transforms)
-- `lib/jsonl-parser.ts` - Streaming JSONL reader
-- `lib/data-transformers/` - All transformers used by charts
-- `public/game_history_sample.jsonl` - Sample data used by the client by default
-- `types/game-data.types.ts` - Global types for game data
-- `config/highcharts-theme.ts` - global Highcharts theming
- (scripts: カスタムでデータを検査したい場合はローカルに簡易スクリプトを作成してください。以前は `countRoles` / `verifyRoleHeatmap` がありましたが、メンテナンスの都合で削除済みです。)
+- まず `npm ci && npm test` ですべてのテストがパスするのを確認。
+- 変更は小さく、単体テストと必要に応じて Playwright E2E を追加する。
+- 重大な動作変更をする場合は README と `ROLE_NAMES_IN_LOGS.md`、`config/*`（特に `factions.ts`）を忘れずに更新する。
+- 何か不明点があるときは `AGENTS.md` の該当セクションを更新して、次のエージェントが迷わないようにすること。
 
- 実行方法: Node 18+ を想定（必要であればローカルスクリプトを追加して使ってください）。
+---
 
-## Useful commands summary
+## 便利なショートコマンド
 
 ```bash
 # Install
 npm ci
 
-# Development server
+# Dev
 npm run dev
+
+# Tests
+npm test
+
+# Playwright / E2E
+npm run e2e:setup
+npm run e2e
 
 # Build / Static export
 npm run build && npx next export
 
-# Tests
-npm run test
-npm run test:watch
-
 # Lint
 npm run lint
+npm run lint:ci
 ```
 
-## Pull Request guidelines / contribution checks (recommended)
+便利なワンライナー例:
 
-- Branch name: `feature/<short-desc>` or `fix/<short-desc>`.
-- PR title: `[<scope>] <short description>` (e.g., `[charts] Add movement chart`)
-- Required checks: `npm ci`, `npm run lint`, `npm run test` should pass before merging.
-- Add tests for any new business logic (data transformers) or UI components.
-- Update `DETAILED_LOGGING_IMPLEMENTATION.md` / `ROLE_NAMES_IN_LOGS.md` / README if data or UX behavior changes.
+```bash
+# 個別テスト指定
+npm test -- -t "PlayerFactionPlayRateChart"
 
-## Debugging and troubleshooting
+# e2e をローカル dev サーバーで回す（デバッグ用）
+npm run dev & npx wait-on http://localhost:3000 && npm run e2e:dev
 
-- If the app doesn't load the JSONL data, ensure `public/game_history_sample.jsonl` exists or the data path is correctly provided via `loadGameHistory({ path: '/your/path.jsonl' })`.
-- Use `console.log()` for quick debugging in client code; for complex issues use the Next dev server which supports HMR and source maps.
-- For invalid JSONL lines, `lib/jsonl-parser.ts` collects `JsonLineError` entries so UI can display parsing errors.
-
-## Important notes for agents
-
-- Avoid changing the public sample data structure unexpectedly; prefer backward-compatible changes in parsers/transformers.
-- Keep `TransformerOptions` contract stable; transformers should accept `games`, `selectedGameIds?`, and `selectedPlayerIds?`.
-- If adding breaking schema changes to the game logs, update `DETAILED_LOGGING_IMPLEMENTATION.md` and `types/game-data.types.ts`, and provide test fixtures.
-
-## Additional resources / docs inside the repo
-
-- `DETAILED_LOGGING_IMPLEMENTATION.md` — schema and logging details
-- `ROLE_NAMES_IN_LOGS.md` — role name mapping and expected role values
-- `PLAN.md` — roadmap and TODOs
+# CI 風に静的 export -> serve -> e2e を実行
+DISABLE_BASEPATH=true npm run e2e:ci
+```
 
 ---
 
-If you are an agent contributing code, please read this file carefully before making changes and update it if you find missing or outdated instructions.
-
-
-Agent checklist (what we changed):
-
-- [x] Added `chart-wrapper` in `BaseChart.tsx` with `data-testid="chart-wrapper"` for tests.
-- [x] Added `.chart-wrapper` CSS for `.highcharts-credits` placement in `app/globals.css`.
-- [x] Introduced `components/ui/Card.tsx` and `ChartCard` wraps this with `relative` layout.
-- [x] Added Jest unit test (`ChartCard.test.tsx`) and Playwright E2E (`tests/ui/credit-placement.spec.ts`).
- 
-- Notes / follow-ups:
-
-- [ ] Optionally add default `credits` option in `config/highcharts-theme.ts` (check `SEC-001` Highcharts licensing before disabling credits by default).
-- [ ] If you plan to hide credits by default, add a `NEXT_PUBLIC_HIGHCHARTS_CREDITS` environment flag in `.env.local` to allow toggling at runtime.
+作業前はこのファイルと関連テストを必ず読み、既存のサンプル互換性を壊さないように注意してください。
