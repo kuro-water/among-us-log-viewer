@@ -15,12 +15,14 @@ export interface FetchJsonlOptions {
   signal?: AbortSignal;
   onProgress?: (loadedBytes: number) => void;
   /**
-   * Optional override path. Defaults to `/game_history_sample.jsonl` which is bundled under the public directory.
+   * Optional override path. Defaults to `game_history_sample.jsonl` (relative) which is bundled under the public directory.
    */
   path?: string;
 }
 
-const DEFAULT_SOURCE = "/game_history_sample.jsonl";
+// Use a relative path so the request is resolved relative to the app's basePath
+// (e.g., when the app is exported with next.config.basePath set for GitHub Pages).
+const DEFAULT_SOURCE = "game_history_sample.jsonl";
 
 const NEWLINE_PATTERN = /\r?\n/;
 

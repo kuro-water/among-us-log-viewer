@@ -203,7 +203,10 @@ export function useGameAnalytics(): UseGameAnalyticsResult {
     // Try to load a user's game_history.jsonl first (if deployed with a
     // custom history file). If it doesn't exist / yields no games, fall
     // back to the bundled sample (/game_history_sample.jsonl).
-    const primaryPath = "/game_history.jsonl";
+    // Try a relative path first so the request resolves correctly when the app
+    // is deployed under a basePath (e.g., GitHub Pages). Absolute '/' would
+    // point at the domain root which can cause 404s when basePath is enabled.
+    const primaryPath = "game_history.jsonl";
 
     try {
       // First attempt: primary path

@@ -34,7 +34,8 @@ describe("useGameAnalytics load fallback", () => {
     // Primary: missing (404)
     (global as any).fetch = jest.fn((input: RequestInfo) => {
       const url = String(input);
-      if (url.endsWith("/game_history.jsonl")) {
+      // match both absolute and relative forms
+      if (url.endsWith("game_history.jsonl")) {
         return Promise.resolve({
           ok: false,
           status: 404,
