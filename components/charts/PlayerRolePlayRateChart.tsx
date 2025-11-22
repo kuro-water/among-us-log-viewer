@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import type { TransformerOptions } from "../../lib/data-transformers/types";
 import { buildPlayerRolePlayRateData } from "../../lib/data-transformers/player-role-playrate";
 import { BaseChart } from "./BaseChart";
+import COMMON_PIE_PLOT_OPTIONS from "./pieChartStyles";
 import { FACTION_COLORS } from "../../lib/role-mapping";
 import {
   getFactionDisplayName,
@@ -99,43 +100,10 @@ export default function PlayerRolePlayRateChart({
             accessibility: {
               point: { valueSuffix: "%" },
             },
-            plotOptions: {
-              pie: {
-                borderWidth: 2,
-                borderColor: "#ffffff",
-                allowPointSelect: true,
-                cursor: "pointer",
-                dataLabels: [
-                  {
-                    enabled: true,
-                    distance: 20,
-                    format: "{point.name}",
-                    style: {
-                      fontSize: "0.75em",
-                      fontWeight: "500",
-                      textOutline: "none",
-                    },
-                  },
-                  {
-                    enabled: true,
-                    distance: -30,
-                    format: "{point.percentage:.1f}%",
-                    style: {
-                      fontSize: "1em",
-                      fontWeight: "bold",
-                      textOutline: "none",
-                      opacity: 0.9,
-                      color: "#ffffff",
-                    },
-                    filter: {
-                      operator: ">",
-                      property: "percentage",
-                      value: 8,
-                    },
-                  },
-                ],
-              },
-            },
+            plotOptions: COMMON_PIE_PLOT_OPTIONS,
+            // Match PlayerFactionPlayRateChart visual style (simpler labels,
+            // no connectors) — responsive tweaks are intentionally omitted so
+            // both charts present consistently.
             series: [
               {
                 type: "pie",
