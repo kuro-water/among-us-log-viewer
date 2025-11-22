@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import type { TransformerOptions } from "../../lib/data-transformers/types";
 import { buildPlayerRolePlayRateData } from "../../lib/data-transformers/player-role-playrate";
 import { BaseChart } from "./BaseChart";
+import COMMON_PIE_PLOT_OPTIONS from "./pieChartStyles";
 import { FACTION_COLORS } from "../../lib/role-mapping";
 import {
   getFactionDisplayName,
@@ -99,97 +100,10 @@ export default function PlayerRolePlayRateChart({
             accessibility: {
               point: { valueSuffix: "%" },
             },
-            plotOptions: {
-              pie: {
-                borderWidth: 2,
-                borderColor: "#ffffff",
-                allowPointSelect: true,
-                cursor: "pointer",
-                dataLabels: [
-                  {
-                    enabled: true,
-                    distance: 40,
-                    format: "{point.name}",
-                    connectorWidth: 2,
-                    connectorColor: "#cbd5e1",
-                    connectorPadding: 6,
-                    style: {
-                      fontSize: "0.75em",
-                      fontWeight: "500",
-                      textOutline: "none",
-                    },
-                  },
-                  {
-                    enabled: true,
-                    distance: -30,
-                    format: "{point.percentage:.1f}%",
-                    style: {
-                      fontSize: "1em",
-                      fontWeight: "bold",
-                      textOutline: "none",
-                      opacity: 0.9,
-                      color: "#ffffff",
-                    },
-                    filter: {
-                      operator: ">",
-                      property: "percentage",
-                      value: 8,
-                    },
-                  },
-                ],
-              },
-            },
-            responsive: {
-              rules: [
-                {
-                  // very wide viewports: keep larger, pre-change label sizes
-                  condition: { minWidth: 1200 },
-                  chartOptions: {
-                    title: { style: { fontSize: "1.05em" } },
-                    subtitle: { style: { fontSize: "0.85em" } },
-                    plotOptions: {
-                      pie: {
-                        dataLabels: [
-                          { style: { fontSize: "0.85em" }, distance: 48 },
-                          { style: { fontSize: "1.25em" } },
-                        ],
-                      },
-                    },
-                  },
-                },
-                {
-                  condition: { maxWidth: 720 },
-                  chartOptions: {
-                    title: { style: { fontSize: "0.85em" } },
-                    subtitle: { style: { fontSize: "0.65em" } },
-                    plotOptions: {
-                      pie: {
-                        dataLabels: [
-                          { style: { fontSize: "0.65em" } },
-                          { style: { fontSize: "0.85em" } },
-                        ],
-                      },
-                    },
-                  },
-                },
-                {
-                  condition: { maxWidth: 420 },
-                  chartOptions: {
-                    title: { style: { fontSize: "0.8em" } },
-                    subtitle: { style: { fontSize: "0.6em" } },
-                    plotOptions: {
-                      pie: {
-                        dataLabels: [
-                          { enabled: false },
-                          { style: { fontSize: "0.7em" }, distance: -20 },
-                        ],
-                        connectorPadding: 4,
-                      },
-                    },
-                  },
-                },
-              ],
-            },
+            plotOptions: COMMON_PIE_PLOT_OPTIONS,
+            // Match PlayerFactionPlayRateChart visual style (simpler labels,
+            // no connectors) — responsive tweaks are intentionally omitted so
+            // both charts present consistently.
             series: [
               {
                 type: "pie",
