@@ -199,15 +199,40 @@ export function useGameAnalytics(): UseGameAnalyticsResult {
   const executeLoad = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     setError(null);
+
+    // Try to load a user's game_history.jsonl first (if deployed with a
+    // custom history file). If it doesn't exist / yields no games, fall
+    // back to the bundled sample (/game_history_sample.jsonl).
+    const primaryPath = "/game_history.jsonl";
+
     try {
-      const result = await loadGameHistory({ signal });
-      setGames(result.games);
-      setParserErrors(result.errors);
-    } catch (err) {
-      if (isAbortError(err)) {
-        return;
+      // First attempt: primary path
+      try {
+        const result = await loadGameHistory({ path: primaryPath, signal });
+        // If we actually got games, use them
+        if (result.games && result.games.length > 0) {
+          setGames(result.games);
+          setParserErrors(result.errors);
+          return;
+        }
+        // If no games returned from primary, continue to fallback
+      } catch (err) {
+        // Ignore primary path errors and try the bundled sample below,
+        // unless it was an abort.
+        if (isAbortError(err)) return;
       }
-      setError(err as Error);
+
+      // Fallback to the default (bundled sample). loadGameHistory() without
+      // a path uses the DEFAULT_SOURCE from the parser module.
+      try {
+        const fallback = await loadGameHistory({ signal });
+        setGames(fallback.games);
+        setParserErrors(fallback.errors);
+      } catch (fallbackErr) {
+        if (isAbortError(fallbackErr)) return;
+        // If fallback also failed, surface the error so UI can show it.
+        setError(fallbackErr as Error);
+      }
     } finally {
       if (!signal?.aborted) {
         setLoading(false);
