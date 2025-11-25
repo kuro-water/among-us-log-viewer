@@ -1,6 +1,7 @@
 import dynamic from "next/dynamic";
 
 import { ChartCard } from "@/components/dashboard/ChartCard";
+import type { DisplayMode } from "@/components/dashboard/FilterSection";
 import type { GameLog } from "@/types/game-data.types";
 import type {
   FactionWinRateData,
@@ -84,6 +85,7 @@ interface ChartGridProps {
   games: GameLog[];
   selectedGameIds: string[];
   selectedPlayerIds: string[];
+  displayMode: DisplayMode;
 }
 
 export function ChartGrid({
@@ -91,6 +93,7 @@ export function ChartGrid({
   games,
   selectedGameIds,
   selectedPlayerIds,
+  displayMode,
 }: ChartGridProps) {
   const chartOptions = {
     games,
@@ -107,7 +110,11 @@ export function ChartGrid({
         description="プレイヤーごとの勝率"
         span="lg:col-span-12"
       >
-        <PlayerWinRateChart data={analytics.playerWinRate} className="h-96" />
+        <PlayerWinRateChart
+          data={analytics.playerWinRate}
+          displayMode={displayMode}
+          className="h-96"
+        />
       </ChartCard>
 
       {/* 役職別勝敗率（プレイヤー勝率の下） */}
@@ -116,7 +123,11 @@ export function ChartGrid({
         description="各役職の勝敗率"
         span="lg:col-span-12"
       >
-        <RoleWinRateChart data={analytics.rolePerformance} className="h-96" />
+        <RoleWinRateChart
+          data={analytics.rolePerformance}
+          displayMode={displayMode}
+          className="h-96"
+        />
       </ChartCard>
 
       {/* 陣営別勝率（役職別勝率の下） */}
@@ -125,7 +136,11 @@ export function ChartGrid({
         description="勝利数・試合数を割合で把握"
         span="lg:col-span-12"
       >
-        <FactionWinRateChart data={analytics.factionWinRate} className="h-96" />
+        <FactionWinRateChart
+          data={analytics.factionWinRate}
+          displayMode={displayMode}
+          className="h-96"
+        />
       </ChartCard>
 
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-12">
@@ -134,7 +149,10 @@ export function ChartGrid({
           description="全プレイヤーの陣営プレイ割合"
           span="lg:col-span-12"
         >
-          <PlayerFactionPlayRateChart options={chartOptions} />
+          <PlayerFactionPlayRateChart
+            options={chartOptions}
+            displayMode={displayMode}
+          />
         </ChartCard>
 
         <ChartCard
@@ -142,7 +160,10 @@ export function ChartGrid({
           description="全プレイヤーの役職プレイ割合"
           span="lg:col-span-12"
         >
-          <PlayerRolePlayRateChart options={chartOptions} />
+          <PlayerRolePlayRateChart
+            options={chartOptions}
+            displayMode={displayMode}
+          />
         </ChartCard>
 
         {/* FactionWinRateChart removed as it is now in WinRateTabs */}
@@ -154,6 +175,7 @@ export function ChartGrid({
         >
           <PlayerFactionHeatmap
             data={analytics.playerFactionHeatmap}
+            displayMode={displayMode}
             className="min-h-[400px]"
           />
         </ChartCard>
@@ -165,6 +187,7 @@ export function ChartGrid({
         >
           <PlayerRoleHeatmap
             data={analytics.playerRoleHeatmap}
+            displayMode={displayMode}
             className="min-h-[400px]"
           />
         </ChartCard>

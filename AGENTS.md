@@ -3,7 +3,7 @@
 このリポジトリで自動化エージェントや開発者が効率よく作業するための機械向けドキュメントです。
 README.md を補完する目的で、プロジェクト構成、開発フロー、テストと CI、よくあるトラブルシュート、そしてエージェントが自律的に安全に変更できるための具体的手順をまとめています。
 
-更新日: 2025-11-22
+更新日: 2025-11-25
 
 ---
 
@@ -24,6 +24,13 @@ README.md を補完する目的で、プロジェクト構成、開発フロー�
 - `types/game-data.types.ts` — ログの型定義（変更時は必ず更新）
 - `components/charts/`, `components/dashboard/`, `components/ui/` — UI / 可視化コンポーネント
 - `__mocks__/highcharts-react-official.tsx` — Jest テストで Highcharts をモックする実装
+
+## 最近の変更（2025-11-25）
+
+- 表示モード（割合 / 回数）切替の UI が追加され、7 つのチャートに適用されました。
+
+  - 影響箇所例: `hooks/useGameAnalytics.ts`, `components/dashboard/FilterSection.tsx`, `components/dashboard/ChartGrid.tsx`, 各チャートコンポーネント
+- 役職別勝敗率チャート (`components/charts/RoleWinRateChart.tsx`) の Y 軸のカテゴリラベルに各役職の総プレイ回数を表示する変更を追加しました。
 
 ---
 
@@ -96,11 +103,15 @@ npm run e2e:ci      # CI 流れ: export -> serve(out) -> run tests
 - Highcharts に関しては Jest 用のモックがあるため（`__mocks__/highcharts-react-official.tsx`）テストは壊れにくいですが、レンダリングや props に変更を加える場合はモックを見直してください。
 - Lint: `npm run lint` / `npm run lint:ci`（CI では警告をエラーにしている）
 
+重要: 変更を行う前に `npm ci && npm test` を必ず実行し、既存テストと lint がパスすることを確認してください。テストが途切れないよう、小さなコミットとテスト追加を心がけてください。
+
 PR チェックリスト（必須推奨）:
 
 - ブランチ名: `feature/<short-desc>` / `fix/<short-desc>`
 - PR タイトル: `[scope] Short description` 例: `[charts] Add movement chart`
 - 必須チェック: `npm ci`、`npm run lint`、`npm test` がすべて通ること
+
+注: チャート周りのユニットテストでは `__mocks__/highcharts-react-official.tsx` が使用されています。チャートの options を検証するテストを追加/更新する場合は、モックがどのように options をシリアライズするかを確認してからアサーションを書いてください。
 
 ---
 
@@ -113,6 +124,11 @@ PR チェックリスト（必須推奨）:
 5. 必要なテスト（変換ロジックとコンポーネント）を追加し全テストを通す
 
 ※ 変更は小さなコミットに分割し、型やインポートが壊れないことをローカルで確認してください。
+
+参考: リポジトリ内の `plan/` ディレクトリには機能追加/変更の小さな実装計画を残す文化があります。直近の実装例:
+
+- `plan/feature-display-mode-switch-1.md` — 表示モード（割合/回数）切替の実装計画（実装済み）
+- `plan/feature-role-play-count-display-1.md` — RoleWinRateChart の Y 軸プレイ回数表示（実装済み）
 
 ---
 

@@ -44,16 +44,20 @@ interface PlayerOption {
   platform: string;
 }
 
+export type DisplayMode = "percent" | "count";
+
 interface FilterState {
   selectedGameIds: string[];
   selectedPlayerIds: string[];
   recentGamesCount: number | null;
+  displayMode: DisplayMode;
 }
 
 interface FilterActions {
   setSelectedGameIds: (ids: string[]) => void;
   setSelectedPlayerIds: (ids: string[]) => void;
   setRecentGamesCount: (count: number | null) => void;
+  setDisplayMode: (mode: DisplayMode) => void;
   resetFilters: () => void;
 }
 
@@ -121,6 +125,7 @@ export function useGameAnalytics(): UseGameAnalyticsResult {
   const [selectedGameIds, setSelectedGameIds] = useState<string[]>([]);
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
   const [recentGamesCount, setRecentGamesCount] = useState<number | null>(null);
+  const [displayMode, setDisplayMode] = useState<DisplayMode>("percent");
 
   const gameIdSet = useMemo(() => new Set(selectedGameIds), [selectedGameIds]);
   const playerIdSet = useMemo(
@@ -194,6 +199,7 @@ export function useGameAnalytics(): UseGameAnalyticsResult {
     setSelectedGameIds([]);
     setSelectedPlayerIds([]);
     setRecentGamesCount(null);
+    setDisplayMode("percent");
   }, []);
 
   const executeLoad = useCallback(async (signal?: AbortSignal) => {
@@ -257,9 +263,11 @@ export function useGameAnalytics(): UseGameAnalyticsResult {
     selectedGameIds,
     selectedPlayerIds,
     recentGamesCount,
+    displayMode,
     setSelectedGameIds,
     setSelectedPlayerIds,
     setRecentGamesCount,
+    setDisplayMode,
     resetFilters,
   };
 

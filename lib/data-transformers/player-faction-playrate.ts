@@ -5,6 +5,7 @@ import { getRoleFaction, getFactionColor } from "../role-mapping";
 export interface FactionPlayDatum {
   faction: string;
   percent: number; // 0-100
+  count: number; // actual play count
   color: string;
 }
 
@@ -43,11 +44,12 @@ export function buildPlayerFactionPlayRateData(
     }
 
     const factionEntries = Array.from(factionCounts.entries()).map(
-      ([faction, count]) => {
-        const percent = (count / total) * 100;
+      ([faction, factionCount]) => {
+        const percent = (factionCount / total) * 100;
         return {
           faction,
           percent: Math.round(percent * 10) / 10,
+          count: factionCount,
           color: getFactionColor(faction as any),
         };
       }

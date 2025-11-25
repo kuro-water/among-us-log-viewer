@@ -6,9 +6,11 @@ import { ChartEmptyState } from "./ChartEmptyState";
 import { getFactionDisplayName } from "../../lib/role-localization";
 import { getFactionColor, FACTION_COLORS } from "../../lib/role-mapping";
 import { getTextColorForBackground } from "../../lib/heatmap-colors";
+import type { DisplayMode } from "../dashboard/FilterSection";
 
 interface PlayerFactionHeatmapProps {
   data: HeatmapData;
+  displayMode?: DisplayMode;
   className?: string;
 }
 
@@ -16,6 +18,7 @@ interface PlayerFactionHeatmapProps {
 
 export function PlayerFactionHeatmap({
   data,
+  displayMode = "percent",
   className,
 }: PlayerFactionHeatmapProps) {
   const { xAxisCategories, yAxisCategories, yAxisRaw, grid } = useMemo(() => {
@@ -131,35 +134,67 @@ export function PlayerFactionHeatmap({
                       }}
                     >
                       {cell && cell.playCount > 0 ? (
-                        <>
-                          <span
-                            className="text-lg font-bold"
-                            style={
-                              textColor === "#ffffff"
-                                ? {
-                                    color: textColor,
-                                    textShadow: "0 1px 2px rgba(2,6,23,0.6)",
-                                  }
-                                : { color: textColor }
-                            }
-                          >
-                            {cell.value?.toFixed(0)}%
-                          </span>
-                          <span
-                            className="text-xs"
-                            style={
-                              textColor === "#ffffff"
-                                ? {
-                                    color: textColor,
-                                    opacity: 0.85,
-                                    textShadow: "0 1px 2px rgba(2,6,23,0.5)",
-                                  }
-                                : { color: textColor, opacity: 0.8 }
-                            }
-                          >
-                            {cell.playCount}回
-                          </span>
-                        </>
+                        displayMode === "percent" ? (
+                          <>
+                            <span
+                              className="text-lg font-bold"
+                              style={
+                                textColor === "#ffffff"
+                                  ? {
+                                      color: textColor,
+                                      textShadow: "0 1px 2px rgba(2,6,23,0.6)",
+                                    }
+                                  : { color: textColor }
+                              }
+                            >
+                              {cell.value?.toFixed(0)}%
+                            </span>
+                            <span
+                              className="text-xs"
+                              style={
+                                textColor === "#ffffff"
+                                  ? {
+                                      color: textColor,
+                                      opacity: 0.85,
+                                      textShadow: "0 1px 2px rgba(2,6,23,0.5)",
+                                    }
+                                  : { color: textColor, opacity: 0.8 }
+                              }
+                            >
+                              {cell.playCount}回
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span
+                              className="text-lg font-bold"
+                              style={
+                                textColor === "#ffffff"
+                                  ? {
+                                      color: textColor,
+                                      textShadow: "0 1px 2px rgba(2,6,23,0.6)",
+                                    }
+                                  : { color: textColor }
+                              }
+                            >
+                              {cell.playCount}回
+                            </span>
+                            <span
+                              className="text-xs"
+                              style={
+                                textColor === "#ffffff"
+                                  ? {
+                                      color: textColor,
+                                      opacity: 0.85,
+                                      textShadow: "0 1px 2px rgba(2,6,23,0.5)",
+                                    }
+                                  : { color: textColor, opacity: 0.8 }
+                              }
+                            >
+                              {cell.wins}勝 / 勝率{cell.value?.toFixed(0)}%
+                            </span>
+                          </>
+                        )
                       ) : (
                         <span className="text-slate-300">-</span>
                       )}

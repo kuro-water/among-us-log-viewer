@@ -5,6 +5,7 @@ import { getFactionColorByRole } from "../role-mapping";
 export interface RolePlayDatum {
   role: string;
   percent: number; // 0-100
+  count: number; // actual play count
   color: string;
 }
 
@@ -43,6 +44,7 @@ export function buildPlayerRolePlayRateData(
       return {
         role,
         percent: Math.round(percent * 10) / 10,
+        count: stats.games,
         color,
       };
     });

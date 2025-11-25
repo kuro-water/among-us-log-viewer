@@ -117,9 +117,11 @@ export default function DashboardPage() {
           gameOptions={gameOptions}
           playerOptions={playerOptions}
           recentGamesCount={filters.recentGamesCount}
+          displayMode={filters.displayMode}
           onGameChange={handleGameChange}
           onPlayerChange={handlePlayerChange}
           onRecentGamesChange={filters.setRecentGamesCount}
+          onDisplayModeChange={filters.setDisplayMode}
           resetFilters={filters.resetFilters}
         />
 
@@ -136,6 +138,7 @@ export default function DashboardPage() {
           games={games}
           selectedGameIds={filters.selectedGameIds}
           selectedPlayerIds={filters.selectedPlayerIds}
+          displayMode={filters.displayMode}
         />
       </div>
     </main>

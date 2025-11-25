@@ -11,24 +11,34 @@ import {
 } from "../../lib/role-localization";
 import { FACTION_COLORS } from "../../lib/role-mapping";
 import { getFactionColorByRole } from "../../lib/role-mapping";
+import type { DisplayMode } from "../dashboard/FilterSection";
 
 interface RoleWinRateChartProps {
   data: RolePerformanceData;
+  displayMode?: DisplayMode;
   className?: string;
 }
 
-export function RoleWinRateChart({ data, className }: RoleWinRateChartProps) {
+export function RoleWinRateChart({
+  data,
+  displayMode = "percent",
+  className,
+}: RoleWinRateChartProps) {
   const {
     categories,
     seriesData,
     legendItems,
     factionLegendItems,
     winLossLegend,
+    maxGamesCount,
   } = useMemo(() => {
     // 役職を勝率で並び替えて表示（プレイヤー勝率チャートと同じ並び）
     const sorted = data.rows.slice().sort((a, b) => b.winRate - a.winRate);
 
-    const categories = sorted.map((row) => getRoleDisplayName(row.role));
+    // Y軸ラベルに役職名とプレイ回数を表示
+    const categories = sorted.map(
+      (row) => `${getRoleDisplayName(row.role)} (${row.games})`
+    );
     // Use a mirrored (negative/positive) stacked bar to show wins vs losses
     // at-a-glance. For each role we add two data series: "勝利" on the
     // negative axis (role-colored) and "敗北" on the positive axis (grey).
@@ -54,9 +64,11 @@ export function RoleWinRateChart({ data, className }: RoleWinRateChartProps) {
             return { y: 0, color: undefined, custom: { games: r.games } };
           }
           const isWin = layerIdx < (r.wins ?? 0);
-          const percent = r.games > 0 ? 100 / r.games : 0;
+          // In count mode, use 1 per game instead of percent
+          const value =
+            displayMode === "count" ? 1 : r.games > 0 ? 100 / r.games : 0;
           return {
-            y: isWin ? -Number(percent.toFixed(2)) : Number(percent.toFixed(2)),
+            y: isWin ? -Number(value.toFixed(2)) : Number(value.toFixed(2)),
             color: isWin ? getFactionColorByRole(r.role) : "#e2e8f0",
             custom: { games: r.games, wins: r.wins ?? 0, winRate: r.winRate },
           };
@@ -90,8 +102,9 @@ export function RoleWinRateChart({ data, className }: RoleWinRateChartProps) {
       legendItems,
       factionLegendItems,
       winLossLegend,
+      maxGamesCount: maxGames,
     };
-  }, [data]);
+  }, [data, displayMode]);
 
   const options = useMemo<Options>(
     () => ({
@@ -101,50 +114,67 @@ export function RoleWinRateChart({ data, className }: RoleWinRateChartProps) {
         categories,
         labels: { style: { color: "#475569", fontWeight: "500" } },
       },
-      yAxis: {
-        min: -100,
-        max: 100,
-        title: { text: "勝敗率 (%)" },
-        labels: {
-          formatter: function (this: any) {
-            // show absolute values for axis labels since negative side indicates losses
-            return `${Math.abs(this.value)}%`;
-          },
-        },
-        allowDecimals: true,
-        stackLabels: {
-          enabled: true,
-          useHTML: true,
-          style: { fontWeight: "bold", color: "#475569" },
-          formatter: function (this: any) {
-            // Show absolute total (wins or losses) on the label.
-            // If the value is very close to 100%, move the label inside the
-            // bar so it doesn't get clipped by the chart container. We use
-            // a small translate to nudge the text inward depending on sign.
-            const total = Number(this.total);
-            const abs = Math.abs(total).toFixed(1);
-            const label = `${abs}%`;
-            if (Math.abs(total) >= 90) {
-              const translate = total > 0 ? "-18px" : "18px";
-              return `<span style=\"display:inline-block;transform:translateX(${translate});\">${label}</span>`;
+      yAxis:
+        displayMode === "percent"
+          ? {
+              min: -100,
+              max: 100,
+              title: { text: "勝敗率 (%)" },
+              labels: {
+                formatter: function (this: any) {
+                  return `${Math.abs(this.value)}%`;
+                },
+              },
+              allowDecimals: true,
+              stackLabels: {
+                enabled: true,
+                useHTML: true,
+                style: { fontWeight: "bold", color: "#475569" },
+                formatter: function (this: any) {
+                  const total = Number(this.total);
+                  const abs = Math.abs(total).toFixed(1);
+                  const label = `${abs}%`;
+                  if (Math.abs(total) >= 90) {
+                    const translate = total > 0 ? "-18px" : "18px";
+                    return `<span style=\"display:inline-block;transform:translateX(${translate});\">${label}</span>`;
+                  }
+                  return label;
+                },
+              },
             }
-            return label;
-          },
-        },
-      },
+          : {
+              min: -maxGamesCount,
+              max: maxGamesCount,
+              title: { text: "勝敗数" },
+              labels: {
+                formatter: function (this: any) {
+                  return `${Math.abs(this.value)}`;
+                },
+              },
+              allowDecimals: false,
+              stackLabels: {
+                enabled: true,
+                useHTML: true,
+                style: { fontWeight: "bold", color: "#475569" },
+                formatter: function (this: any) {
+                  const total = Number(this.total);
+                  const abs = Math.abs(total);
+                  const label = total < 0 ? `${abs}勝` : `${abs}敗`;
+                  if (Math.abs(total) >= maxGamesCount * 0.9) {
+                    const translate = total > 0 ? "-18px" : "18px";
+                    return `<span style=\"display:inline-block;transform:translateX(${translate});\">${label}</span>`;
+                  }
+                  return label;
+                },
+              },
+            },
       plotOptions: {
         series: {
           borderRadius: 6,
           stacking: "normal",
-          // Reduce point padding to make stacked segments tighter vertically
-          // and shrink groupPadding to reduce the horizontal gap between
-          // role categories.
           pointPadding: 0.06,
           groupPadding: 0.08,
           dataLabels: { enabled: false },
-          // Add a border in the color of the card background to visually
-          // separate stacked segments. This creates a small "gap" between
-          // stacked slices without affecting category spacing.
           borderColor: "#ffffff",
           borderWidth: 2,
         },
@@ -153,23 +183,24 @@ export function RoleWinRateChart({ data, className }: RoleWinRateChartProps) {
       tooltip: {
         shared: false,
         useHTML: true,
-        // Show role (category) as a small label above the counts similar to
-        // how player tooltips render the name on top.
         formatter: function (this: any) {
           const p = this.point;
           const role = this.point?.category || "";
           const games = Number(p.custom?.games ?? 0);
           const wins = Number(p.custom?.wins ?? 0);
           const losses = Math.max(0, games - wins);
-          return (
-            `<div style="font-size:12px;color:#64748b;margin-bottom:4px">${role}</div>` +
-            `<div style="font-weight:600">${wins}勝 / ${losses}敗</div>`
-          );
+          const winRate = ((p.custom?.winRate ?? 0) * 100).toFixed(1);
+          return displayMode === "percent"
+            ? `<div style="font-size:12px;color:#64748b;margin-bottom:4px">${role}</div>` +
+                `<div style="font-weight:600">${wins}勝 / ${losses}敗</div>`
+            : `<div style="font-size:12px;color:#64748b;margin-bottom:4px">${role}</div>` +
+                `<div style="font-weight:600">${wins}勝 / ${losses}敗</div>` +
+                `<div style="font-size:12px;color:#64748b">勝率: ${winRate}%</div>`;
         },
       },
       series: seriesData,
     }),
-    [categories, seriesData]
+    [categories, seriesData, displayMode, maxGamesCount]
   );
 
   if (categories.length === 0) {
