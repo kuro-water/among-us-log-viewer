@@ -10,9 +10,11 @@ import {
   getFactionDisplayName,
   getRoleDisplayName,
 } from "../../lib/role-localization";
+import type { DisplayMode } from "../dashboard/FilterSection";
 
 interface Props {
   options: TransformerOptions;
+  displayMode?: DisplayMode;
   height?: number;
   animationDuration?: number; // ms
   finalInnerSize?: string | number; // e.g. '40%' or '40'
@@ -20,6 +22,7 @@ interface Props {
 
 export default function PlayerRolePlayRateChart({
   options,
+  displayMode = "percent",
   height = 280,
   animationDuration = 1500,
   finalInnerSize = "36%",
@@ -65,8 +68,12 @@ export default function PlayerRolePlayRateChart({
         {data.rows.map((row) => {
           const seriesData = row.data.map((d) => ({
             name: getRoleDisplayName(d.role),
-            y: d.percent,
+            y: displayMode === "percent" ? d.percent : d.count,
             color: d.color,
+            custom: {
+              percent: d.percent,
+              count: d.count,
+            },
           }));
 
           const chartOptions: any = {
@@ -86,39 +93,47 @@ export default function PlayerRolePlayRateChart({
               style: { fontSize: "0.75em", color: "#64748b" },
             },
             tooltip: {
-              valueSuffix: "%",
+              useHTML: true,
               headerFormat: "",
-              pointFormat: "<b>{point.name}</b>: {point.y:.1f}%",
+              pointFormatter: function (this: any) {
+                const percent = this.custom?.percent?.toFixed(1) ?? "0";
+                const count = this.custom?.count ?? 0;
+                return displayMode === "percent"
+                  ? `<b>${this.name}</b>: ${percent}%<br/>(${count}回)`
+                  : `<b>${this.name}</b>: ${count}回<br/>(${percent}%)`;
+              },
             },
             exporting: {
-              // Hide the export/context menu for this chart — user requested no options menu
               enabled: false,
               buttons: {
                 contextButton: { enabled: false },
               },
             },
             accessibility: {
-              point: { valueSuffix: "%" },
+              point: { valueSuffix: displayMode === "percent" ? "%" : "回" },
             },
-            plotOptions: COMMON_PIE_PLOT_OPTIONS,
-            // Match PlayerFactionPlayRateChart visual style (simpler labels,
-            // no connectors) — responsive tweaks are intentionally omitted so
-            // both charts present consistently.
+            plotOptions: {
+              ...COMMON_PIE_PLOT_OPTIONS,
+              pie: {
+                ...COMMON_PIE_PLOT_OPTIONS.pie,
+                dataLabels: {
+                  ...COMMON_PIE_PLOT_OPTIONS.pie?.dataLabels,
+                  format:
+                    displayMode === "percent"
+                      ? "{point.y:.1f}%"
+                      : "{point.y}回",
+                },
+              },
+            },
             series: [
               {
                 type: "pie",
-                name: "Percentage",
+                name: displayMode === "percent" ? "Percentage" : "Count",
                 colorByPoint: true,
                 data: seriesData,
-                // Disable mouse events until the custom fan animation completes;
-                // the patched animate method will call update to re-enable
-                // tracking. This series opts into the custom animation by
-                // setting fanAnimate.
                 enableMouseTracking: false,
                 animation: { duration: animationDuration },
                 fanAnimate: true,
-                // Provide per-series final inner size; patched animate will read
-                // this value to transition into a donut look
                 fanInnerSize: finalInnerSize,
               },
             ],

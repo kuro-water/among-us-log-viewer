@@ -5,19 +5,20 @@ import type { Options } from "highcharts";
 import type { PlayerWinRateData } from "../../lib/data-transformers/types";
 import { BaseChart } from "./BaseChart";
 import { ChartEmptyState } from "./ChartEmptyState";
+import type { DisplayMode } from "../dashboard/FilterSection";
 
 interface PlayerWinRateChartProps {
   data: PlayerWinRateData;
+  displayMode?: DisplayMode;
   className?: string;
 }
 
 export function PlayerWinRateChart({
   data,
+  displayMode = "percent",
   className,
 }: PlayerWinRateChartProps) {
-  const { categories, seriesData } = useMemo(() => {
-    // 最大勝率を取得
-
+  const { categories, seriesData, maxWins } = useMemo(() => {
     // すべての役職を収集
     const allRoles = new Set<string>();
     data.rows.forEach((row) => {
@@ -26,12 +27,20 @@ export function PlayerWinRateChart({
       });
     });
 
+    // 最大勝利数を取得（回数モード用）
+    const maxWinsValue = Math.max(...data.rows.map((row) => row.wins), 0);
+
     // 各役職のシリーズデータを作成
     const series = [
       {
-        name: "勝率",
+        name: displayMode === "percent" ? "勝率" : "勝利数",
         data: data.rows.map((row) => ({
-          y: row.winRate * 100,
+          y: displayMode === "percent" ? row.winRate * 100 : row.wins,
+          custom: {
+            wins: row.wins,
+            games: row.games,
+            winRate: row.winRate,
+          },
         })),
         type: "column" as const,
         color: "#3b82f6",
@@ -41,9 +50,9 @@ export function PlayerWinRateChart({
     return {
       categories: data.rows.map((row) => row.name),
       seriesData: series,
-      // Note: `maxWinRate` is not currently used, keep percent axis fixed at 100.
+      maxWins: maxWinsValue,
     };
-  }, [data]);
+  }, [data, displayMode]);
 
   const options = useMemo<Options>(
     () => ({
@@ -54,18 +63,27 @@ export function PlayerWinRateChart({
         crosshair: true,
         labels: { style: { color: "#475569", fontWeight: "500" } },
       },
-      yAxis: {
-        min: 0,
-        max: 100,
-        title: { text: "勝率 (%)" },
-        labels: { format: "{value}%" },
-      },
+      yAxis:
+        displayMode === "percent"
+          ? {
+              min: 0,
+              max: 100,
+              title: { text: "勝率 (%)" },
+              labels: { format: "{value}%" },
+            }
+          : {
+              min: 0,
+              max: maxWins > 0 ? undefined : 10,
+              title: { text: "勝利数" },
+              labels: { format: "{value}" },
+              allowDecimals: false,
+            },
       plotOptions: {
         column: {
           borderRadius: 6,
           dataLabels: {
             enabled: true,
-            format: "{y:.1f}%",
+            format: displayMode === "percent" ? "{y:.1f}%" : "{y}勝",
             style: {
               textOutline: "none",
               fontWeight: "bold",
@@ -76,11 +94,20 @@ export function PlayerWinRateChart({
       },
       legend: { enabled: false },
       tooltip: {
-        pointFormat: "<b>{point.y:.1f}%</b><br/>",
+        useHTML: true,
+        formatter: function (this: any) {
+          const p = this.point;
+          const wins = p.custom?.wins ?? 0;
+          const games = p.custom?.games ?? 0;
+          const winRate = ((p.custom?.winRate ?? 0) * 100).toFixed(1);
+          return displayMode === "percent"
+            ? `<b>${winRate}%</b><br/>${wins}勝 / ${games}試合`
+            : `<b>${wins}勝</b><br/>勝率: ${winRate}%`;
+        },
       },
       series: seriesData,
     }),
-    [categories, seriesData]
+    [categories, seriesData, displayMode, maxWins]
   );
 
   if (categories.length === 0) {

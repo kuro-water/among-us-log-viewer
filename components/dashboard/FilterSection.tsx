@@ -2,6 +2,8 @@ import { type ChangeEvent, useState, useMemo } from "react";
 
 import { MultiSelectDropdown } from "../ui/MultiSelectDropdown";
 
+export type DisplayMode = "percent" | "count";
+
 interface Option {
   value: string;
   label: string;
@@ -13,9 +15,11 @@ interface FilterSectionProps {
   gameOptions: Option[];
   playerOptions: Option[];
   recentGamesCount: number | null;
+  displayMode: DisplayMode;
   onGameChange: (event: ChangeEvent<HTMLSelectElement>) => void;
   onPlayerChange: (event: ChangeEvent<HTMLSelectElement>) => void;
   onRecentGamesChange: (count: number | null) => void;
+  onDisplayModeChange: (mode: DisplayMode) => void;
   resetFilters: () => void;
 }
 
@@ -27,9 +31,11 @@ export function FilterSection({
   gameOptions,
   playerOptions,
   recentGamesCount,
+  displayMode,
   onGameChange,
   onPlayerChange,
   onRecentGamesChange,
+  onDisplayModeChange,
   resetFilters,
 }: FilterSectionProps) {
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
@@ -38,7 +44,8 @@ export function FilterSection({
   // - `isCustomRecent` は外部の `recentGamesCount` がプリセット以外の値かどうかを
   //   派生（derived）して判定します。副作用で setState を呼ばないことで
   //   `react-hooks/set-state-in-effect` ルールに違反しないようにします。
-  const [isCustomRecentLocal, setIsCustomRecentLocal] = useState<boolean>(false);
+  const [isCustomRecentLocal, setIsCustomRecentLocal] =
+    useState<boolean>(false);
   const [customRecentValue, setCustomRecentValue] = useState<string>("");
 
   // recentGamesCount の外部変更と同期（プリセット以外はカスタム扱い）
@@ -310,6 +317,54 @@ export function FilterSection({
             ドロップダウンを開いて選択します。
           </p>
         </div>
+      </div>
+
+      {/* Display Mode Toggle */}
+      <div className="mt-6 border-t border-slate-100 pt-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-slate-700">
+            <span className="text-slate-400">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="h-5 w-5"
+              >
+                <path d="M15.98 1.804a1 1 0 00-1.96 0l-.24 1.192a1 1 0 01-.784.785l-1.192.238a1 1 0 000 1.962l1.192.238a1 1 0 01.785.785l.238 1.192a1 1 0 001.962 0l.238-1.192a1 1 0 01.785-.785l1.192-.238a1 1 0 000-1.962l-1.192-.238a1 1 0 01-.785-.785l-.238-1.192zM6.949 5.684a1 1 0 00-1.898 0l-.683 2.051a1 1 0 01-.633.633l-2.051.683a1 1 0 000 1.898l2.051.684a1 1 0 01.633.632l.683 2.051a1 1 0 001.898 0l.683-2.051a1 1 0 01.633-.633l2.051-.683a1 1 0 000-1.898l-2.051-.683a1 1 0 01-.633-.633L6.95 5.684zM13.949 13.684a1 1 0 00-1.898 0l-.184.551a1 1 0 01-.632.633l-.551.183a1 1 0 000 1.898l.551.183a1 1 0 01.633.633l.183.551a1 1 0 001.898 0l.184-.551a1 1 0 01.632-.633l.551-.183a1 1 0 000-1.898l-.551-.184a1 1 0 01-.633-.632l-.183-.551z" />
+              </svg>
+            </span>
+            <span className="font-bold tracking-tight">表示モード</span>
+          </div>
+          <div className="flex rounded-lg bg-slate-100 p-1">
+            <button
+              type="button"
+              onClick={() => onDisplayModeChange("percent")}
+              className={`rounded-md px-4 py-1.5 text-sm font-medium transition-all ${
+                displayMode === "percent"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              割合 (%)
+            </button>
+            <button
+              type="button"
+              onClick={() => onDisplayModeChange("count")}
+              className={`rounded-md px-4 py-1.5 text-sm font-medium transition-all ${
+                displayMode === "count"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              回数
+            </button>
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-slate-400">
+          {displayMode === "percent"
+            ? "チャートを割合（パーセント）で表示します"
+            : "チャートを実数（回数）で表示します"}
+        </p>
       </div>
 
       <div className="mt-4 flex justify-end">
