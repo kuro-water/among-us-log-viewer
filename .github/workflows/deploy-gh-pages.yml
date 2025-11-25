@@ -4,6 +4,25 @@ on:
   push:
     branches:
       - main
+    paths:
+      # ログファイル (主目的)
+      - "*.jsonl"
+      - "public/*.jsonl"
+      # ソースコード
+      - "app/**"
+      - "components/**"
+      - "lib/**"
+      - "hooks/**"
+      - "config/**"
+      - "types/**"
+      # 設定ファイル
+      - "package.json"
+      - "package-lock.json"
+      - "next.config.ts"
+      - "tsconfig.json"
+      # スタイル
+      - "postcss.config.mjs"
+      - "tailwind.config.*"
   workflow_dispatch:
 
 permissions:
