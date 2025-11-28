@@ -4,7 +4,7 @@ export { ChartEmptyState } from "./ChartEmptyState";
 export { FactionWinRateChart } from "./FactionWinRateChart";
 export { PlayerWinRateChart } from "./PlayerWinRateChart";
 export { PlayerWinRateTable } from "./PlayerWinRateTable";
-export { PlayerStatsTable } from "./PlayerStatsTable";
+export { PlayerStatsTable, PlayerActionsTable } from "./PlayerStatsTable";
 export { PlayerFactionHeatmap } from "./PlayerFactionHeatmap";
 export { PlayerRoleHeatmap } from "./PlayerRoleHeatmap";
 export { RolePerformanceChart } from "./RolePerformanceChart";

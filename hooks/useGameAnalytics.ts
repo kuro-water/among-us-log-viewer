@@ -6,6 +6,7 @@ import {
   buildFactionWinRateData,
   buildGameDurationData,
   buildMovementWithEventsData,
+  buildMovementWithEventsAllGamesData,
   buildPlayerFactionHeatmap,
   buildPlayerRoleHeatmap,
   buildPlayerWinRateData,
@@ -19,6 +20,7 @@ import type {
   GameDurationData,
   HeatmapData,
   MovementWithEventsData,
+  MovementWithEventsAllGamesData,
   PlayerIdentitySummary,
   PlayerWinRateData,
   PlayerAllStatsData,
@@ -71,6 +73,7 @@ interface AnalyticsPayload {
   taskTimeline: TaskTimelineData | null;
   eventDensity: EventDensityData;
   movementWithEvents: MovementWithEventsData | null;
+  movementWithEventsAllGames: MovementWithEventsAllGamesData;
   playerAllStats: PlayerAllStatsData;
 }
 
@@ -191,6 +194,8 @@ export function useGameAnalytics(): UseGameAnalyticsResult {
       taskTimeline: buildTaskTimelineData(transformerOptions),
       eventDensity: buildEventDensityData(transformerOptions),
       movementWithEvents: buildMovementWithEventsData(transformerOptions),
+      movementWithEventsAllGames:
+        buildMovementWithEventsAllGamesData(transformerOptions),
     }),
     [transformerOptions]
   );

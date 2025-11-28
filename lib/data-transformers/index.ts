@@ -8,4 +8,7 @@ export { buildRolePerformanceData } from "./role-performance";
 export { buildGameDurationData } from "./game-duration";
 export { buildTaskTimelineData } from "./task-timeline";
 export { buildEventDensityData } from "./event-density";
-export { buildMovementWithEventsData } from "./movement-with-events";
+export {
+  buildMovementWithEventsData,
+  buildMovementWithEventsAllGamesData,
+} from "./movement-with-events";

@@ -68,7 +68,14 @@ export interface PlayerCounters {
   movement_distance: number;
   emergency_button_uses: number;
   sabotages_triggered: number;
-  [key: string]: number;
+  // v2.1.0 新フィールド
+  sabotages_fixed?: number;
+  vent_moves?: number;
+  door_closes?: number;
+  admin_use_seconds?: number;
+  vital_use_seconds?: number;
+  camera_use_seconds?: number;
+  [key: string]: number | undefined;
 }
 
 export interface PlayerAction {
@@ -131,6 +138,10 @@ export interface EventTimelineEntry {
   victim_id?: number;
   victim_name?: string;
   death_reason?: string;
+  // v2.1.0 新フィールド
+  from_vent_id?: number;
+  to_vent_id?: number;
+  room_type?: string;
   [key: string]: string | number | boolean | null | undefined;
 }
 
@@ -202,6 +213,13 @@ export interface GameAnalytics {
   per_player_tasks_completed: Record<string, number>;
   per_player_sabotages: Record<string, number>;
   per_player_emergency_buttons: Record<string, number>;
+  // v2.1.0 新フィールド
+  per_player_vent_moves?: Record<string, number>;
+  per_player_door_closes?: Record<string, number>;
+  per_player_sabotages_fixed?: Record<string, number>;
+  per_player_admin_use?: Record<string, number>;
+  per_player_vital_use?: Record<string, number>;
+  per_player_camera_use?: Record<string, number>;
 }
 
 export interface GameOutcome {

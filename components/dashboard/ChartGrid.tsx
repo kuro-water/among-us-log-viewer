@@ -11,6 +11,7 @@ import type {
   TaskTimelineData,
   EventDensityData,
   MovementWithEventsData,
+  MovementWithEventsAllGamesData,
   PlayerWinRateData,
 } from "@/lib/data-transformers/types";
 const PlayerWinRateChart = dynamic(
@@ -67,6 +68,11 @@ const PlayerStatsTable = dynamic(
   { ssr: false }
 );
 
+const PlayerActionsTable = dynamic(
+  () => import("@/components/charts").then((m) => m.PlayerActionsTable),
+  { ssr: false }
+);
+
 interface AnalyticsPayload {
   factionWinRate: FactionWinRateData;
   playerWinRate: PlayerWinRateData;
@@ -77,6 +83,7 @@ interface AnalyticsPayload {
   taskTimeline: TaskTimelineData | null;
   eventDensity: EventDensityData;
   movementWithEvents: MovementWithEventsData | null;
+  movementWithEventsAllGames: MovementWithEventsAllGamesData;
   playerAllStats: import("@/lib/data-transformers/types").PlayerAllStatsData;
 }
 
@@ -201,6 +208,15 @@ export function ChartGrid({
           <PlayerStatsTable data={analytics.playerAllStats} />
         </ChartCard>
 
+        {/* プレイヤーアクションテーブル - 統計一覧の下に配置 */}
+        <ChartCard
+          title="プレイヤーアクション一覧"
+          description="緊急ボタン、サボタージュ、修理、ベント移動、ドア閉鎖、アドミン/バイタル/カメラ使用時間"
+          span="lg:col-span-12"
+        >
+          <PlayerActionsTable data={analytics.playerAllStats} />
+        </ChartCard>
+
         <ChartCard
           title="タスク進捗タイムライン"
           description="累計タスク数の推移"
@@ -220,10 +236,10 @@ export function ChartGrid({
         <ChartCard
           title="移動距離 × イベント"
           description="プレイヤー別の移動量と重要イベント"
-          span="lg:col-span-8"
+          span="lg:col-span-12"
         >
           <MovementWithEventsChart
-            data={analytics.movementWithEvents}
+            allGamesData={analytics.movementWithEventsAllGames}
             className="h-95"
           />
         </ChartCard>

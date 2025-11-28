@@ -1,5 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
+jest.mock("animejs");
 import { PlayerStatsTable } from "./PlayerStatsTable";
 
 const sample = {
@@ -56,6 +57,9 @@ const sample = {
 };
 
 describe("PlayerStatsTable", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
   it("renders metrics and players", () => {
     render(<PlayerStatsTable data={sample as any} />);
     // header labels
@@ -101,5 +105,55 @@ describe("PlayerStatsTable", () => {
     expect(rows[1]).toHaveTextContent("Alice");
     expect(rows[2]).toHaveTextContent("Bob");
     expect(rows[3]).toHaveTextContent("Carol");
+  });
+
+  it("animates rows on sort using animejs (FLIP)", () => {
+    render(<PlayerStatsTable data={sample as any} />);
+
+    // set up getBoundingClientRect to simulate before/after positions
+    const aliceRow = screen.getByText("Alice").closest("tr") as HTMLElement;
+    const bobRow = screen.getByText("Bob").closest("tr") as HTMLElement;
+    const carolRow = screen.getByText("Carol").closest("tr") as HTMLElement;
+
+    // helper to create a mock that returns two different rects on subsequent calls
+    function makeRectMock(beforeTop: number, afterTop: number) {
+      let called = 0;
+      return () => {
+        called += 1;
+        const top = called === 1 ? beforeTop : afterTop;
+        return {
+          width: 100,
+          height: 32,
+          top,
+          bottom: top + 32,
+          left: 0,
+          right: 100,
+          x: 0,
+          y: top,
+        } as DOMRect;
+      };
+    }
+
+    // initial order: Carol (0), Alice (1), Bob (2)
+    (carolRow.getBoundingClientRect as any) = makeRectMock(100, 100);
+    (aliceRow.getBoundingClientRect as any) = makeRectMock(150, 200);
+    (bobRow.getBoundingClientRect as any) = makeRectMock(200, 150);
+
+    // Now click kills header to reorder to: Carol, Bob, Alice
+    const killsBtn = screen.getByLabelText("sort-kills");
+    expect(document.querySelectorAll("tr[data-uuid]")).toHaveLength(3);
+    fireEvent.click(killsBtn);
+
+    // After click, the mocked rect calls should have been used; expect animate to have been called
+    const rowsAfter = screen.getAllByRole("row");
+    expect(rowsAfter[1]).toHaveTextContent("Carol");
+    expect(rowsAfter[2]).toHaveTextContent("Bob");
+    expect(rowsAfter[3]).toHaveTextContent("Alice");
+    // the DOM rect method should have been used to compute FLIP
+    // ensure at least one row has inline transform applied by FLIP (before animation completes)
+    const transformedRows = [rowsAfter[1], rowsAfter[2], rowsAfter[3]].filter(
+      (r) => !!(r as HTMLElement).style.transform
+    );
+    expect(transformedRows.length).toBeGreaterThan(0);
   });
 });
