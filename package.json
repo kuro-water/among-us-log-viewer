@@ -21,6 +21,7 @@
     "deploy": "npm run export && npx gh-pages -d out"
   },
   "dependencies": {
+    "animejs": "^4.2.2",
     "gsap": "^3.12.2",
     "highcharts": "^12.4.0",
     "highcharts-react-official": "^3.2.1",

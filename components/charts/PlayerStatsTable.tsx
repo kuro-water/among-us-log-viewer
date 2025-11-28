@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
+import { animate } from "animejs";
 import type { PlayerAllStatsData } from "@/lib/data-transformers/types";
 import { formatNumber, formatDuration } from "@/lib/formatters";
 
@@ -91,6 +92,9 @@ export function PlayerStatsTable({ data, className = "" }: Props) {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
   const players = useMemo(() => (data?.rows ? data.rows.slice() : []), [data]);
+  const rowRefs = useRef<Map<string, HTMLTableRowElement | null>>(new Map());
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const prevRectsRef = useRef<Map<string, DOMRect>>(new Map());
 
   const sortedPlayers = useMemo(() => {
     const arr = players.slice();
@@ -130,8 +134,102 @@ export function PlayerStatsTable({ data, className = "" }: Props) {
     setSortDirection((d) => (d === "desc" ? "asc" : "desc"));
   }
 
+  function captureRects() {
+    const rects = new Map<string, DOMRect>();
+    // use refs if present
+    if (rowRefs.current.size > 0) {
+      rowRefs.current.forEach((el, id) => {
+        if (el) rects.set(id, el.getBoundingClientRect());
+      });
+    } else {
+      // fallback to scan the DOM for rows with data-uuid
+      document.querySelectorAll("tr[data-uuid]").forEach((r) => {
+        const id = (r as HTMLElement).dataset.uuid as string;
+        rects.set(id, (r as HTMLElement).getBoundingClientRect());
+      });
+    }
+    prevRectsRef.current = rects;
+    // expose for tests/debugging
+    // no test-only globals
+  }
+
+  useEffect(() => {
+    // FLIP animation: if we have previous rects captured, animate from old->new
+    if (prevRectsRef.current.size === 0) return;
+    // FLIP effect: animate moved rows from previous rects to current position
+
+    const finishedAnimations: Array<Promise<unknown>> = [];
+    if (rowRefs.current.size > 0) {
+      rowRefs.current.forEach((el, id) => {
+        const before = prevRectsRef.current.get(id);
+        const after = el?.getBoundingClientRect();
+        // debug positions here
+        if (!el || !before || !after) return;
+        const dy = before.top - after.top;
+        // delta computed
+        if (dy === 0) return;
+        // Apply inverse transform immediately
+        el.style.transform = `translateY(${dy}px)`;
+        el.style.willChange = "transform";
+        // animate back to 0
+
+        const animation = animate(el, {
+          translateY: [dy, 0],
+          duration: 350,
+          easing: "easeOutQuad",
+        });
+        // cleanup after animation completes (using Promise)
+        const cleanup = (animation as any).completed?.then?.(() => {
+          el.style.transform = "";
+          el.style.willChange = "";
+        });
+        finishedAnimations.push(cleanup ?? Promise.resolve());
+      });
+    } else {
+      document.querySelectorAll("tr[data-uuid]").forEach((r) => {
+        const el = r as HTMLElement;
+        const id = el.dataset.uuid as string;
+        const before = prevRectsRef.current.get(id);
+        const after = el.getBoundingClientRect();
+        if (!before || !after) return;
+        const dy = before.top - after.top;
+        if (dy === 0) return;
+        el.style.transform = `translateY(${dy}px)`;
+        el.style.willChange = "transform";
+
+        const animation = animate(el, {
+          translateY: [dy, 0],
+          duration: 350,
+          easing: "easeOutQuad",
+        });
+        const cleanup = (animation as any).completed?.then?.(() => {
+          el.style.transform = "";
+          el.style.willChange = "";
+        });
+        finishedAnimations.push(cleanup ?? Promise.resolve());
+      });
+    }
+
+    // Clear stored rects after processing
+    if (finishedAnimations.length > 0) {
+      Promise.all(finishedAnimations).then(() => prevRectsRef.current.clear());
+    } else {
+      // If no element animated (e.g. all dy === 0), fallback: small container animation
+      if (containerRef.current) {
+        animate(containerRef.current, {
+          opacity: [0.95, 1],
+          translateY: [4, 0],
+          duration: 200,
+          easing: "easeOutQuad",
+        });
+      }
+      prevRectsRef.current.clear();
+    }
+  }, [sortedPlayers]);
+
   return (
     <div
+      ref={containerRef}
       className={`overflow-x-auto ${className}`}
       data-testid="player-stats-table"
     >
@@ -156,6 +254,8 @@ export function PlayerStatsTable({ data, className = "" }: Props) {
                 <button
                   aria-label="sort-name"
                   onClick={() => {
+                    // capture positions for FLIP animation
+                    captureRects();
                     if (sortMetric === "name") toggleDirection();
                     else setSortMetric("name");
                   }}
@@ -181,6 +281,8 @@ export function PlayerStatsTable({ data, className = "" }: Props) {
                   <button
                     aria-label={`sort-${metric.key}`}
                     onClick={() => {
+                      // capture positions for FLIP animation
+                      captureRects();
                       if (sortMetric === metric.key) toggleDirection();
                       else {
                         setSortMetric(metric.key);
@@ -207,6 +309,11 @@ export function PlayerStatsTable({ data, className = "" }: Props) {
           <tbody>
             {sortedPlayers.map((p) => (
               <tr
+                data-uuid={p.uuid}
+                ref={(el) => {
+                  if (el) rowRefs.current.set(p.uuid, el);
+                  else rowRefs.current.delete(p.uuid);
+                }}
                 key={p.uuid}
                 className="border-t last:border-b hover:bg-slate-50"
               >

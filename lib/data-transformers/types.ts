@@ -161,3 +161,16 @@ export interface MovementWithEventsData {
   events: EventMarkerPoint[];
   durationSeconds: number;
 }
+
+/** 1試合分の移動×イベントデータ（メタデータ付き） */
+export interface MovementWithEventsGameData extends MovementWithEventsData {
+  gameId: string;
+  mapName: string;
+  startTime: string;
+  playerCount: number;
+}
+
+/** 全試合の移動×イベントデータ */
+export interface MovementWithEventsAllGamesData {
+  games: MovementWithEventsGameData[];
+}

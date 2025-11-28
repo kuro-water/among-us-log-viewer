@@ -11,6 +11,7 @@ import type {
   TaskTimelineData,
   EventDensityData,
   MovementWithEventsData,
+  MovementWithEventsAllGamesData,
   PlayerWinRateData,
 } from "@/lib/data-transformers/types";
 const PlayerWinRateChart = dynamic(
@@ -77,6 +78,7 @@ interface AnalyticsPayload {
   taskTimeline: TaskTimelineData | null;
   eventDensity: EventDensityData;
   movementWithEvents: MovementWithEventsData | null;
+  movementWithEventsAllGames: MovementWithEventsAllGamesData;
   playerAllStats: import("@/lib/data-transformers/types").PlayerAllStatsData;
 }
 
@@ -220,10 +222,10 @@ export function ChartGrid({
         <ChartCard
           title="移動距離 × イベント"
           description="プレイヤー別の移動量と重要イベント"
-          span="lg:col-span-8"
+          span="lg:col-span-12"
         >
           <MovementWithEventsChart
-            data={analytics.movementWithEvents}
+            allGamesData={analytics.movementWithEventsAllGames}
             className="h-95"
           />
         </ChartCard>
