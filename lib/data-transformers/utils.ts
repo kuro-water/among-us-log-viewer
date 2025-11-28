@@ -29,6 +29,13 @@ export interface PlayerAggregate {
   emergencyButtons: number;
   sabotagesTriggered: number;
   timeAlive: number;
+  // v2.1.0 新フィールド
+  sabotagesFix: number;
+  ventMoves: number;
+  doorCloses: number;
+  adminUseSeconds: number;
+  vitalUseSeconds: number;
+  cameraUseSeconds: number;
 }
 
 export function getPlayerKey(record: PlayerRecord): PlayerId {
@@ -109,6 +116,13 @@ function createAggregate(record: PlayerRecord): PlayerAggregate {
     emergencyButtons: 0,
     sabotagesTriggered: 0,
     timeAlive: 0,
+    // v2.1.0 新フィールド（デフォルト値 0）
+    sabotagesFix: 0,
+    ventMoves: 0,
+    doorCloses: 0,
+    adminUseSeconds: 0,
+    vitalUseSeconds: 0,
+    cameraUseSeconds: 0,
   };
 }
 
@@ -142,6 +156,13 @@ export function buildPlayerAggregates(
       aggregate.emergencyButtons += record.counters.emergency_button_uses ?? 0;
       aggregate.sabotagesTriggered += record.counters.sabotages_triggered ?? 0;
       aggregate.timeAlive += record.lifecycle.time_alive_seconds ?? 0;
+      // v2.1.0 新フィールド（Nullish Coalescing で後方互換性維持）
+      aggregate.sabotagesFix += record.counters.sabotages_fixed ?? 0;
+      aggregate.ventMoves += record.counters.vent_moves ?? 0;
+      aggregate.doorCloses += record.counters.door_closes ?? 0;
+      aggregate.adminUseSeconds += record.counters.admin_use_seconds ?? 0;
+      aggregate.vitalUseSeconds += record.counters.vital_use_seconds ?? 0;
+      aggregate.cameraUseSeconds += record.counters.camera_use_seconds ?? 0;
 
       const faction = getRoleFaction(record.role.main_role);
       ensureFactionRecord(aggregate, faction);

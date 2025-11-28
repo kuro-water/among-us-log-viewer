@@ -10,6 +10,8 @@ interface Props {
   className?: string;
 }
 
+// ===== PlayerStatsTable =====
+
 type MetricKey =
   | "appearances"
   | "wins"
@@ -19,8 +21,6 @@ type MetricKey =
   | "kills"
   | "tasksCompleted"
   | "movementDistance"
-  | "emergencyButtons"
-  | "sabotagesTriggered"
   | "timeAlive";
 
 const METRICS: { key: MetricKey; label: string }[] = [
@@ -32,9 +32,34 @@ const METRICS: { key: MetricKey; label: string }[] = [
   { key: "kills", label: "キル" },
   { key: "tasksCompleted", label: "タスク完了" },
   { key: "movementDistance", label: "移動距離" },
-  { key: "emergencyButtons", label: "緊急ボタン" },
-  { key: "sabotagesTriggered", label: "妨害" },
   { key: "timeAlive", label: "平均生存時間" },
+];
+
+// ===== PlayerActionsTable =====
+
+type ActionMetricKey =
+  | "emergencyButtons"
+  | "sabotagesTriggered"
+  | "sabotagesFix"
+  | "ventMoves"
+  | "doorCloses"
+  | "adminUseSeconds"
+  | "vitalUseSeconds"
+  | "cameraUseSeconds";
+
+const ACTION_METRICS: {
+  key: ActionMetricKey;
+  label: string;
+  description?: string;
+}[] = [
+  { key: "emergencyButtons", label: "緊急ボタン使用回数" },
+  { key: "sabotagesTriggered", label: "妨害発動回数" },
+  { key: "sabotagesFix", label: "修理回数" },
+  { key: "ventMoves", label: "ベント移動回数" },
+  { key: "doorCloses", label: "ドア閉鎖回数" },
+  { key: "adminUseSeconds", label: "アドミン使用時間" },
+  { key: "vitalUseSeconds", label: "バイタル使用時間" },
+  { key: "cameraUseSeconds", label: "カメラ使用時間" },
 ];
 
 function SortIcon({ direction }: { direction: "none" | "asc" | "desc" }) {
@@ -350,12 +375,6 @@ export function PlayerStatsTable({ data, className = "" }: Props) {
                     case "movementDistance":
                       val = formatNumber(p.movementDistance);
                       break;
-                    case "emergencyButtons":
-                      val = p.emergencyButtons;
-                      break;
-                    case "sabotagesTriggered":
-                      val = p.sabotagesTriggered;
-                      break;
                     case "timeAlive":
                       val =
                         p.appearances > 0
@@ -373,6 +392,226 @@ export function PlayerStatsTable({ data, className = "" }: Props) {
                       className="px-4 py-3 align-top text-slate-700 text-right"
                     >
                       {val}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ===== PlayerActionsTable Component =====
+
+export function PlayerActionsTable({ data, className = "" }: Props) {
+  type SortKey = ActionMetricKey | "name";
+  const [sortMetric, setSortMetric] = useState<SortKey>("emergencyButtons");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+
+  const players = useMemo(() => (data?.rows ? data.rows.slice() : []), [data]);
+  const rowRefs = useRef<Map<string, HTMLTableRowElement | null>>(new Map());
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const prevRectsRef = useRef<Map<string, DOMRect>>(new Map());
+
+  const sortedPlayers = useMemo(() => {
+    const arr = players.slice();
+    function getMetricValue(row: (typeof arr)[number], key: SortKey): number {
+      if (key === "name") return 0;
+      return (row as unknown as Record<string, number>)[key] ?? 0;
+    }
+
+    arr.sort((a, b) => {
+      if (sortMetric === "name") {
+        const cmp = a.name.localeCompare(b.name, "ja");
+        return sortDirection === "desc" ? cmp * -1 : cmp;
+      }
+
+      const va = getMetricValue(a, sortMetric);
+      const vb = getMetricValue(b, sortMetric);
+      const diff = va - vb;
+      if (diff === 0) {
+        return a.name.localeCompare(b.name, "ja");
+      }
+      return sortDirection === "desc" ? diff * -1 : diff;
+    });
+    return arr;
+  }, [players, sortMetric, sortDirection]);
+
+  function toggleDirection() {
+    setSortDirection((d) => (d === "desc" ? "asc" : "desc"));
+  }
+
+  function captureRects() {
+    const rects = new Map<string, DOMRect>();
+    if (rowRefs.current.size > 0) {
+      rowRefs.current.forEach((el, id) => {
+        if (el) rects.set(id, el.getBoundingClientRect());
+      });
+    }
+    prevRectsRef.current = rects;
+  }
+
+  useEffect(() => {
+    if (prevRectsRef.current.size === 0) return;
+
+    const finishedAnimations: Array<Promise<unknown>> = [];
+    if (rowRefs.current.size > 0) {
+      rowRefs.current.forEach((el, id) => {
+        const before = prevRectsRef.current.get(id);
+        const after = el?.getBoundingClientRect();
+        if (!el || !before || !after) return;
+        const dy = before.top - after.top;
+        if (dy === 0) return;
+        el.style.transform = `translateY(${dy}px)`;
+        el.style.willChange = "transform";
+
+        const animation = animate(el, {
+          translateY: [dy, 0],
+          duration: 350,
+          easing: "easeOutQuad",
+        });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const cleanup = (animation as any).completed?.then?.(() => {
+          el.style.transform = "";
+          el.style.willChange = "";
+        });
+        finishedAnimations.push(cleanup ?? Promise.resolve());
+      });
+    }
+
+    if (finishedAnimations.length > 0) {
+      Promise.all(finishedAnimations).then(() => prevRectsRef.current.clear());
+    } else {
+      if (containerRef.current) {
+        animate(containerRef.current, {
+          opacity: [0.95, 1],
+          translateY: [4, 0],
+          duration: 200,
+          easing: "easeOutQuad",
+        });
+      }
+      prevRectsRef.current.clear();
+    }
+  }, [sortedPlayers]);
+
+  function formatValue(
+    metric: ActionMetricKey,
+    value: number
+  ): React.ReactNode {
+    if (
+      metric === "adminUseSeconds" ||
+      metric === "vitalUseSeconds" ||
+      metric === "cameraUseSeconds"
+    ) {
+      return value > 0 ? formatDuration(Math.round(value)) : "-";
+    }
+    return value;
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className={`overflow-x-auto ${className}`}
+      data-testid="player-actions-table"
+    >
+      <div className="flex items-center justify-between gap-4 px-4 py-3 border-b border-slate-100">
+        <div className="text-sm text-slate-500">
+          列ヘッダーをクリックして並び替えます
+        </div>
+        <div className="text-sm text-slate-500">
+          現在:{" "}
+          {sortMetric === "name"
+            ? "名前"
+            : ACTION_METRICS.find((m) => m.key === sortMetric)?.label}{" "}
+          ({sortDirection === "desc" ? "降順" : "昇順"})
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white px-3 py-4">
+        <table className="min-w-[700px] w-full table-auto text-sm">
+          <thead className="bg-slate-50">
+            <tr>
+              <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600">
+                <button
+                  aria-label="sort-name"
+                  onClick={() => {
+                    captureRects();
+                    if (sortMetric === "name") toggleDirection();
+                    else setSortMetric("name");
+                  }}
+                  className="inline-flex items-center gap-2"
+                >
+                  プレイヤー
+                  <SortIcon
+                    direction={
+                      sortMetric === "name"
+                        ? sortDirection === "desc"
+                          ? "desc"
+                          : "asc"
+                        : "none"
+                    }
+                  />
+                </button>
+              </th>
+              {ACTION_METRICS.map((metric) => (
+                <th
+                  key={metric.key}
+                  className="px-4 py-3 text-left text-xs font-semibold text-slate-600"
+                  title={metric.description}
+                >
+                  <button
+                    aria-label={`sort-${metric.key}`}
+                    onClick={() => {
+                      captureRects();
+                      if (sortMetric === metric.key) toggleDirection();
+                      else {
+                        setSortMetric(metric.key);
+                        setSortDirection("desc");
+                      }
+                    }}
+                    className="inline-flex items-center gap-2"
+                  >
+                    {metric.label}
+                    <SortIcon
+                      direction={
+                        sortMetric === metric.key
+                          ? sortDirection === "desc"
+                            ? "desc"
+                            : "asc"
+                          : "none"
+                      }
+                    />
+                  </button>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {sortedPlayers.map((p) => (
+              <tr
+                data-uuid={p.uuid}
+                ref={(el) => {
+                  if (el) rowRefs.current.set(p.uuid, el);
+                  else rowRefs.current.delete(p.uuid);
+                }}
+                key={p.uuid}
+                className="border-t last:border-b hover:bg-slate-50"
+              >
+                <td className="px-4 py-3 align-top font-medium text-slate-800">
+                  {p.name}
+                </td>
+                {ACTION_METRICS.map((metric) => {
+                  const value =
+                    (p as unknown as Record<string, number>)[metric.key] ?? 0;
+                  return (
+                    <td
+                      key={p.uuid + metric.key}
+                      className="px-4 py-3 align-top text-slate-700 text-right"
+                    >
+                      {formatValue(metric.key, value)}
                     </td>
                   );
                 })}

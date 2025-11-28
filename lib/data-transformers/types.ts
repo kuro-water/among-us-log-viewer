@@ -70,6 +70,13 @@ export interface PlayerAllStatsRow {
   emergencyButtons: number;
   sabotagesTriggered: number;
   timeAlive: number; // seconds
+  // v2.1.0 新フィールド
+  sabotagesFix: number;
+  ventMoves: number;
+  doorCloses: number;
+  adminUseSeconds: number;
+  vitalUseSeconds: number;
+  cameraUseSeconds: number;
   factions: { faction: string; games: number; wins: number }[];
   roles: { role: string; games: number; wins: number }[];
 }

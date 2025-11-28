@@ -23,14 +23,19 @@ export function formatRatio(ratio: number, digits = 1): string {
 
 export function formatDuration(seconds: number): string {
   if (!Number.isFinite(seconds)) {
-    return "00:00";
+    return "0秒";
   }
   const totalSeconds = Math.max(0, Math.floor(seconds));
   const minutes = Math.floor(totalSeconds / 60);
   const remainingSeconds = totalSeconds % 60;
-  return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
-    .toString()
-    .padStart(2, "0")}`;
+
+  if (minutes === 0) {
+    return `${remainingSeconds}秒`;
+  }
+  if (remainingSeconds === 0) {
+    return `${minutes}分`;
+  }
+  return `${minutes}分${remainingSeconds}秒`;
 }
 
 export function formatMinutes(value: number, digits = 1): string {

@@ -210,4 +210,55 @@ describe("buildMovementWithEventsData", () => {
     );
     expect(killEvents.length).toBe(1);
   });
+
+  it("should include v2.1.0 events (VentMove, DoorClose, SabotageFix)", () => {
+    const gameWithV21Events: GameLog = {
+      ...baseGame,
+      events: {
+        timeline: [
+          {
+            event_type: "VentMove",
+            category: "Movement",
+            timestamp: new Date().toISOString(),
+            elapsed_time: 10,
+            player_id: 0,
+            player_name: "P1",
+          },
+          {
+            event_type: "DoorClose",
+            category: "Sabotage",
+            timestamp: new Date().toISOString(),
+            elapsed_time: 20,
+            player_id: 0,
+            player_name: "P1",
+          },
+          {
+            event_type: "SabotageFix",
+            category: "Task",
+            timestamp: new Date().toISOString(),
+            elapsed_time: 30,
+            player_id: 0,
+            player_name: "P1",
+          },
+        ],
+        meetings: [],
+        kills: [],
+      },
+    };
+
+    const result = buildMovementWithEventsData({
+      games: [gameWithV21Events],
+      selectedPlayerIds: new Set(["A"]),
+    });
+
+    expect(result).not.toBeNull();
+    if (!result) return;
+
+    expect(result.events).toHaveLength(3);
+    expect(result.events.map((e) => e.type)).toEqual([
+      "VentMove",
+      "DoorClose",
+      "SabotageFix",
+    ]);
+  });
 });

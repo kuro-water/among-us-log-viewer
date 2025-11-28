@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   Bell,
   CheckCircle,
+  DoorClosed,
   Flame,
   MessageCircle,
   Radiation,
@@ -11,6 +12,7 @@ import {
   Shield,
   Skull,
   Wind,
+  Wrench,
   Zap,
 } from "lucide-react";
 
@@ -26,7 +28,11 @@ export type EventVisualKey =
   | "Task"
   | "Meeting"
   | "Emergency"
-  | "Default";
+  | "Default"
+  // v2.1.0 新イベントタイプ
+  | "VentMove"
+  | "DoorClose"
+  | "SabotageFix";
 
 const ICON_MAP: Record<EventVisualKey, LucideIcon> = {
   Reactor: Radiation,
@@ -41,6 +47,10 @@ const ICON_MAP: Record<EventVisualKey, LucideIcon> = {
   Meeting: MessageCircle,
   Emergency: Bell,
   Default: MessageCircle,
+  // v2.1.0 新イベントタイプ
+  VentMove: Wind,
+  DoorClose: DoorClosed,
+  SabotageFix: Wrench,
 };
 
 const COLOR_MAP: Record<EventVisualKey, string> = {
@@ -56,6 +66,10 @@ const COLOR_MAP: Record<EventVisualKey, string> = {
   Meeting: "#ffd60a",
   Emergency: "#f94144",
   Default: "#94a3b8",
+  // v2.1.0 新イベントタイプ
+  VentMove: "#7c3aed",
+  DoorClose: "#64748b",
+  SabotageFix: "#22c55e",
 };
 
 const SABOTAGE_PATTERNS: Array<{ pattern: RegExp; key: EventVisualKey }> = [
@@ -74,6 +88,8 @@ const CATEGORY_DEFAULTS: Record<string, EventVisualKey> = {
   Combat: "Kill",
   Meeting: "Meeting",
   MeetingControl: "Emergency",
+  // v2.1.0 新カテゴリ
+  Movement: "VentMove",
 };
 
 export interface EventVisualDescriptor {
@@ -104,6 +120,13 @@ function normalizeLabel(key: EventVisualKey): string {
       return "Door Sabotage";
     case "Reactor":
       return "Reactor Meltdown";
+    // v2.1.0 新イベントタイプ
+    case "VentMove":
+      return "Vent Move";
+    case "DoorClose":
+      return "Door Close";
+    case "SabotageFix":
+      return "Sabotage Fix";
     default:
       return key;
   }
@@ -124,6 +147,15 @@ export function resolveEventVisual(
     key = "Meeting";
   } else if (entry.event_type === "TaskCompleted") {
     key = "Task";
+  } else if (entry.event_type === "VentMove") {
+    // v2.1.0 新イベントタイプ
+    key = "VentMove";
+  } else if (entry.event_type === "DoorClose") {
+    // v2.1.0 新イベントタイプ
+    key = "DoorClose";
+  } else if (entry.event_type === "SabotageFix") {
+    // v2.1.0 新イベントタイプ
+    key = "SabotageFix";
   } else if (sabotageKey) {
     key = sabotageKey;
   } else if (categoryKey) {

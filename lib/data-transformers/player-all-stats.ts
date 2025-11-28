@@ -20,6 +20,13 @@ export function buildPlayerAllStatsData(
     emergencyButtons: agg.emergencyButtons,
     sabotagesTriggered: agg.sabotagesTriggered,
     timeAlive: agg.timeAlive,
+    // v2.1.0 新フィールド
+    sabotagesFix: agg.sabotagesFix,
+    ventMoves: agg.ventMoves,
+    doorCloses: agg.doorCloses,
+    adminUseSeconds: agg.adminUseSeconds,
+    vitalUseSeconds: agg.vitalUseSeconds,
+    cameraUseSeconds: agg.cameraUseSeconds,
     factions: Object.entries(agg.factions).map(([f, s]) => ({
       faction: f,
       games: s.games,

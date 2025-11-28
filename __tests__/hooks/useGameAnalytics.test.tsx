@@ -53,9 +53,9 @@ describe("useGameAnalytics load fallback", () => {
 
     render(<HookHarness />);
 
-    // Wait for the hook to finish and load the fallback sample (5 games)
+    // Wait for the hook to finish and load the fallback sample (6 games)
     await waitFor(() =>
-      expect(screen.getByTestId("out").textContent).toContain('"games":5')
+      expect(screen.getByTestId("out").textContent).toContain('"games":6')
     );
   });
 });

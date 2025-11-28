@@ -68,6 +68,11 @@ const PlayerStatsTable = dynamic(
   { ssr: false }
 );
 
+const PlayerActionsTable = dynamic(
+  () => import("@/components/charts").then((m) => m.PlayerActionsTable),
+  { ssr: false }
+);
+
 interface AnalyticsPayload {
   factionWinRate: FactionWinRateData;
   playerWinRate: PlayerWinRateData;
@@ -201,6 +206,15 @@ export function ChartGrid({
           span="lg:col-span-12"
         >
           <PlayerStatsTable data={analytics.playerAllStats} />
+        </ChartCard>
+
+        {/* プレイヤーアクションテーブル - 統計一覧の下に配置 */}
+        <ChartCard
+          title="プレイヤーアクション一覧"
+          description="緊急ボタン、サボタージュ、修理、ベント移動、ドア閉鎖、アドミン/バイタル/カメラ使用時間"
+          span="lg:col-span-12"
+        >
+          <PlayerActionsTable data={analytics.playerAllStats} />
         </ChartCard>
 
         <ChartCard

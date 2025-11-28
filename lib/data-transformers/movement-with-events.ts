@@ -22,6 +22,10 @@ const INTERESTING_EVENTS = new Set([
   "Sabotage",
   "EmergencyButton",
   "Meeting",
+  // v2.1.0 新イベントタイプ
+  "VentMove",
+  "DoorClose",
+  "SabotageFix",
 ]);
 
 function eventMatchesPlayers(
