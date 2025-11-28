@@ -5,8 +5,7 @@ on:
     branches:
       - main
     paths:
-      # ログファイル (主目的)
-      - "*.jsonl"
+      # ログファイル (主目的) - public/ に配置されたものがデプロイ対象
       - "public/*.jsonl"
       # ソースコード
       - "app/**"

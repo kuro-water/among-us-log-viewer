@@ -37,7 +37,13 @@ README.md を補完する目的で、プロジェクト構成、開発フロー�
 ## JSONL 読み込みの挙動（重要）
 
 1. まず相対パス `game_history.jsonl` を参照（サイト管理者が提供する実データを優先）
-2. 見つからない、あるいは games が 0 件なら `public/game_history_sample.jsonl` をフォールバック
+2. 見つからない、あるいは games が 0 件なら `game_history_sample.jsonl` をフォールバック
+
+**実運用データの配置方法:**
+
+- `game_history.jsonl` は必ず **`public/game_history.jsonl`** に配置してください
+- Next.js の静的エクスポートでは `public/` ディレクトリの内容のみが `out/` にコピーされます
+- ルートディレクトリに配置しても gh-pages にはデプロイされません
 
 理由: 静的 export や basePath のある環境で絶対パスをそのまま使うと 404 になるため、相対パス優先で安全に実装されています。
 
