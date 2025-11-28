@@ -2,9 +2,9 @@
 
 # Among Us Log Viewer
 
-![project icon](/file.svg)
-
 Among Us の詳細ログ（JSONL）を読み込み、試合のタイムライン、イベント、プレイヤー統計を可視化するオープンソースの Next.js アプリです。Highcharts と TypeScript を使い、Mod / カスタムロールで生成された詳細ログの解析とダッシュボード表示を行います。
+
+バイブコーディングでどこまでできるかの検証も兼ねている。
 
 主要ポイント
 
